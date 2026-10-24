@@ -97,6 +97,11 @@ body.mobiel section.vlak>.rij:first-child{display:none}
 .mob .mklik{cursor:pointer}.mob .mklik:active{background:#f1ebf7}
 #mobPop{position:fixed;inset:0;background:rgba(0,0,0,.45);display:flex;align-items:flex-end;justify-content:center;z-index:9999}
 #mobPop[hidden]{display:none}
+#balk .mknop.groot{font-size:16px;padding:8px 20px;font-weight:700}
+.tchips{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-bottom:12px}
+.tchip{display:flex;flex-direction:column;align-items:flex-start;padding:6px 12px;border-radius:10px;border:1px solid #cfc6b4;background:#fff;cursor:pointer;line-height:1.2;font-size:14px}
+.tchip small{color:#777;font-size:11px}.tchip:hover{border-color:#4b2a6e;background:#f4effa}
+.tchip.aan{background:#4b2a6e;border-color:#4b2a6e;color:#fff}.tchip.aan small{color:#e4d6f3}
 .wolkAlleen{display:none!important}body.wolk .wolkAlleen{display:block!important}
 body.wolk #btnNieuw,body.wolk #btnOpen,body.wolk #btnVerder,body.wolk #geenApi{display:none!important}
 #login{position:fixed;inset:0;z-index:10000;background:linear-gradient(#6b3f96,#3e2160);display:flex;align-items:center;justify-content:center;padding:20px}
@@ -454,7 +459,8 @@ dialog::backdrop{background:rgba(0,0,0,.45)}
     </div></div>
   <button class="mknop eenvoudigAlleen" data-tab="soorten" type="button">Teelten en soorten</button>
   <button class="mknop" data-tab="oppot" type="button">Oppotplan <span class="vink" data-v="oppot"></span></button>
-  <div class="menu"><button class="mknop" type="button">Overzichten ▾</button>
+  <button class="mknop groot" data-tab="aflever" type="button">Af te leveren</button>
+  <div class="menu"><button class="mknop" type="button">Planning ▾</button>
     <div class="mlijst">
       <button data-tab="plan" class="uitgebreid">Vloerenplan <span class="vink" data-v="plan"></span></button>
       <button data-tab="ruimte" class="uitgebreid">Ruimte</button>
@@ -463,7 +469,6 @@ dialog::backdrop{background:rgba(0,0,0,.45)}
       <button data-tab="gereed" class="uitgebreid">Gereed</button>
       <button data-tab="registraties" class="uitgebreid">Registraties</button>
       <button data-tab="bestel">Bestelplanning</button>
-      <button data-tab="aflever">Afleverplanning</button>
       <button data-tab="werk">Werkplanning</button>
       <button data-tab="weeklijst" class="uitgebreid">Weeklijst (printen)</button>
       <hr class="uitgebreid">
@@ -585,7 +590,7 @@ dialog::backdrop{background:rgba(0,0,0,.45)}
 
 <script>
 "use strict";
-const VERSIE="17.0";
+const VERSIE="17.4";
 const VERSIE_DATUM="23-10-2026";
 /* ---------- Basis ---------- */
 const PALET=["#2d6a4f","#1B5EBE","#E8007D","#c77d1a","#7a4fa0","#0f8b8d","#5b6b2f","#3d5a80","#a0522d","#7AB648"];
@@ -1996,6 +2001,13 @@ $("#inhoud").addEventListener("change",e=>{const el=e.target,k=el.dataset.alle;i
 
 /* ---------- Stamdata: Teelt (producten) ---------- */
 let teeltOpen=new Set(); // welke teelten zijn opengeklapt
+/* Vanuit een overzicht: open het invulscherm van één teelt */
+function naarTeeltId(id){teeltOpen.clear();teeltOpen.add(id);houdOpen=true;naar("soorten");
+  const el=document.querySelector(`[data-teelt="${id}"]`);if(el)el.scrollIntoView({block:"start",behavior:"smooth"})}
+function naarOppot(id){oppotKeuze=id;naar("oppot")}
+function naarTeelt(label){const t=data.teeltduren.find(x=>(x.product||"")+(x.potmaat?" "+x.potmaat+" cm":"")===label);if(!t)return;
+  teeltOpen.clear();teeltOpen.add(t.id);houdOpen=true;naar("soorten");
+  const el=document.querySelector(`[data-teelt="${t.id}"]`);if(el)el.scrollIntoView({block:"start",behavior:"smooth"})}
 function teeltKlap(id){teeltOpen.has(id)?teeltOpen.delete(id):teeltOpen.add(id);render()}
 function toonSoorten(){
   let h="";
@@ -2009,11 +2021,11 @@ function toonSoorten(){
   const levOpties=sel=>`<option value="">— leverancier —</option>`+[...data.leveranciers].filter(x=>x.naam).sort((a,b)=>a.naam.localeCompare(b.naam,"nl")).map(x=>`<option value="${x.id}" ${x.id===sel?"selected":""}>${esc(x.naam)}</option>`).join("");
   data.teeltduren.forEach((t,i)=>{const n=t.totaal.slice(0,52).filter((v,w)=>v!==null&&t.fase1[w]!==null).length,srt=data.rassen.filter(r=>r.teeltId===t.id);
     const open=teeltOpen.has(t.id),ok=t.product&&t.dicht1&&t.dicht2&&n&&srt.length&&srt.every(r=>r.naam);
-    h+=`<div class="teeltkaart ${open?"open":"dicht"}">
+    h+=`<div class="teeltkaart ${open?"open":"dicht"}" data-teelt="${t.id}">
       <div class="tkopregel" onclick="teeltKlap('${t.id}')" title="${open?"Dichtklappen":"Openklappen"}">
         <span class="pijl">${open?"▾":"▸"}</span><b>${esc(t.product||"(nieuwe teelt)")}</b>${t.potmaat!==""?` <span class="status">${esc(t.potmaat)} cm</span>`:""}
         <span class="status">· ${n?esc(duurKort(t)):'<span class="let">teeltduur leeg</span>'} · ${srt.length} soort${srt.length===1?"":"en"}${srt.length?": "+esc(srt.map(r=>r.naam+(eigenDuur(r)?"*":"")).filter(Boolean).join(", ")):""}</span>
-        <span style="flex:1"></span>${ok?`<span style="color:var(--groen)" title="Alles ingevuld">✓</span>`:`<span class="let" title="Nog niet alles ingevuld">⚠</span>`}</div>`;
+        <span style="flex:1"></span><button type="button" class="btn licht klein" onclick="event.stopPropagation();naarOppot('${t.id}')" title="Naar het oppotplan van deze teelt">🪴 Oppotplan ›</button>${ok?`<span style="color:var(--groen)" title="Alles ingevuld">✓</span>`:`<span class="let" title="Nog niet alles ingevuld">⚠</span>`}</div>`;
     if(open)h+=`<table class="tkop"><tr><th style="width:34%">Teelt</th><th style="width:13%">Potmaat (cm)</th><th style="width:15%">Pl/m² oppotten</th><th style="width:15%">Pl/m² uitzetten</th><th>Wijderzetten</th><th style="width:44px"></th></tr>
       <tr><td>${veld(i,"product","100%","t","bijv. Cyclamen")}</td><td>${veld(i,"potmaat","100%","n","cm")}</td>
         <td>${veld(i,"dicht1","100%","n","pl/m²")}</td><td>${veld(i,"dicht2","100%","n","pl/m²")}</td>
@@ -2120,13 +2132,12 @@ function bronArr(b,j){const[k,id]=[b.slice(0,1),b.slice(2)];
   const m=k==="r"?o.aantallen:o.losAantallen;if(!m[j])m[j]=Array(53).fill(null);return{m,arr:m[j],o,k}}
 function toonOppot(){
   const nuWk=new Date().getFullYear()===planJaar?isoWeek(new Date()).w:0;
-  let h=stapBlok(4,`<b>Vul in hoeveel planten je per week oppot.</b> Kies een teelt en vul per <b>soort</b> het aantal in. Het <b>totaal</b> van de teelt rekent het programma uit. Jaar: <button class="btn licht klein" onclick="planJaar--;render()">◀</button> <b style="font-size:16px">${planJaar}</b> <button class="btn licht klein" onclick="planJaar++;render()">▶</button>`,(data.instellingen.eenvoudig?volgende("aflever","Naar Afleverplanning"):volgende("plan","Naar Vloerenplan")),stappen().oppot?"goed":"aandacht");
+  let h=stapBlok(4,`<b>Vul in hoeveel planten je per week oppot.</b> Kies een teelt en vul per <b>soort</b> het aantal in. Het <b>totaal</b> van de teelt rekent het programma uit. Jaar: <button class="btn licht klein" onclick="planJaar--;render()">◀</button> <b style="font-size:16px">${planJaar}</b> <button class="btn licht klein" onclick="planJaar++;render()">▶</button>`,(data.instellingen.eenvoudig?volgende("aflever","Naar Af te leveren"):volgende("plan","Naar Vloerenplan")),stappen().oppot?"goed":"aandacht");
   if(!data.teeltduren.length){$("#inhoud").innerHTML=h+`<div class="leeg">Nog geen teelten. Maak ze eerst aan bij <b>Stamdata → Teelt</b>, of <button class="btn" onclick="openPlak()">📋 Plak een bestellijst</button></div>`;return}
   if(oppotKeuze!=="alle"&&!data.teeltduren.some(t=>t.id===oppotKeuze))oppotKeuze=data.teeltduren[0].id;
-  h+=`<div class="rij" style="margin-bottom:12px"><b>Teelt:</b>
-    <select id="oppotKeuze" style="min-width:260px;font-size:15px;font-weight:600">${data.teeltduren.map(t=>`<option value="${t.id}" ${t.id===oppotKeuze?"selected":""}>${esc(teeltNaam(t))} · ${getal(som(aantalRij(t,planJaar)))} planten</option>`).join("")}
-    <option value="alle" ${oppotKeuze==="alle"?"selected":""}>— overzicht alle teelten —</option></select>
-    <button class="btn licht klein" onclick="oppotStap(-1)">◀ vorige</button><button class="btn licht klein" onclick="oppotStap(1)">volgende ▶</button></div>`;
+  h+=`<div class="tchips">${data.teeltduren.map(t=>{const n=som(aantalRij(t,planJaar));return`<button type="button" class="tchip ${t.id===oppotKeuze?"aan":""}" onclick="oppotKeuze='${t.id}';render()" oncontextmenu="naarTeeltId('${t.id}');return false" title="Klik: oppotplan van deze teelt · Rechtermuisknop: teelt bewerken"><b>${esc(teeltNaamKort(t))}</b><small>${getal(n)}</small></button>`}).join("")}
+    <button type="button" class="tchip ${oppotKeuze==="alle"?"aan":""}" onclick="oppotKeuze='alle';render()"><b>Alle teelten</b><small>overzicht</small></button>
+    ${oppotKeuze!=="alle"?`<span style="flex:1"></span><button type="button" class="btn licht klein" onclick="naarTeeltId(oppotKeuze)" title="Open het invulscherm van deze teelt">✏️ Teelt en soorten bewerken ›</button>`:""}</div>`;
   const NW=wekenIn(planJaar);
   const kop=(eerste)=>`<tr><th class="vast">${eerste}</th>${Array.from({length:NW},(_,w)=>`<th class="wk ${w+1===nuWk?"nu":""}">${w+1}</th>`).join("")}<th>Totaal</th></tr>`;
   if(oppotKeuze==="alle"){
@@ -2928,7 +2939,7 @@ function toonAflever(){syncSoorten();
   const zicht=alleWk.slice(aflSchuif.start,aflSchuif.start+len),z0=zicht[0],z1=zicht[zicht.length-1];
   let regels=afleverRegels().filter(r=>r.t>=z0&&r.t<=z1&&r.aantal>0);
   const eindWk=isoWeek(new Date(totT-6048e5)),lbl=t=>{const{w,y}=isoWeek(new Date(t));return`wk ${w}${y!==jaar?" ("+y+")":""}`};
-  let h=`<div class="rij noprint" style="margin-bottom:12px"><h2 style="margin:0">🚛 Afleverplanning</h2>
+  let h=`<div class="rij noprint" style="margin-bottom:12px"><h2 style="margin:0">🚛 Af te leveren</h2>
     <button class="btn licht klein" onclick="planJaar--;render()">◀</button><b style="font-size:16px">seizoen ${jaar}</b><button class="btn licht klein" onclick="planJaar++;render()">▶</button>
     <span class="status">wk ${S} ${jaar} t/m wk ${eindWk.w} ${eindWk.y}</span>
 
@@ -2943,7 +2954,7 @@ function toonAflever(){syncSoorten();
       <select onchange="aflSchuif.len=+this.value;render()" title="Hoeveel weken zie je">${[[8,"8 wk"],[13,"13 wk"],[26,"26 wk"],[60,"heel seizoen"]].map(([v,t])=>`<option value="${v}" ${aflSchuif.len===v?"selected":""}>${t}</option>`).join("")}</select>
       <button class="btn licht klein" onclick="aflSchuif=null;render()" title="2 weken terug en 10 weken vooruit">Nu</button></div><span style="flex:1"></span><label class="status">seizoen begint in wk <input type="number" min="1" max="52" value="${S}" style="width:52px" onchange="data.instellingen.seizoenStart=Math.max(1,Math.min(52,Math.round(+this.value||11)));wijzig()"></label></div>
     <p class="status noprint" style="margin:0 0 12px">De planten van een partij worden verdeeld over de <b>raaptijd</b>: de laatste weken van de teelt. De <b>uitval</b> gaat er al af. Raaptijd en uitval stel je per soort in bij <a href="#" onclick="naar('soorten');return false">Stamdata → Teelt &amp; soorten</a>.</p>
-    <div class="printkop"><h2>Afleverplanning seizoen ${jaar} (wk ${S} ${jaar} t/m wk ${eindWk.w} ${eindWk.y})</h2></div>`;
+    <div class="printkop"><h2>Af te leveren seizoen ${jaar} (wk ${S} ${jaar} t/m wk ${eindWk.w} ${eindWk.y})</h2></div>`;
   if(!regels.length){$("#inhoud").innerHTML=h+`<div class="leeg">Niets te verkopen in deze weken. Schuif naar andere weken.</div>`;return}
   const kol=[...new Set(regels.map(r=>r.product+"|"+r.soort))].sort((a,b)=>a.localeCompare(b,"nl"));
   const weken=zicht; /* alle weken van de schuif, ook lege */
@@ -2956,13 +2967,13 @@ function toonAflever(){syncSoorten();
     document.body.style.setProperty("--aflW",Math.max(900,Math.min(2400,300+weken.length*70))+"px");
     const wkTot=t=>regels.filter(r=>r.t===t).reduce((a,r)=>a+r.aantal,0);
     h+=`<div class="scroll" style="max-height:none"><table class="besteltabel afltabel"><tr><th class="avast">Teelt / soort</th>${weken.map(t=>`<th class="${t===nu?"nuKol":""}" style="text-align:right">${wkLabel(t,jaar)}</th>`).join("")}<th style="text-align:right">Totaal</th></tr>`;
-    for(const pr of prods){h+=`<tr class="aflteelt"><td class="avast"><b>${esc(pr)}</b></td>${weken.map(()=>"<td></td>").join("")}<td></td></tr>`;
+    for(const pr of prods){h+=`<tr class="aflteelt"><td class="avast"><b class="aklik" data-pr="${esc(pr)}" onclick="naarTeelt(this.dataset.pr)" oncontextmenu="naarTeelt(this.dataset.pr);return false" title="Klik om de teelt te openen">${esc(pr)} ›</b></td>${weken.map(()=>"<td></td>").join("")}<td></td></tr>`;
       for(const k of kol.filter(k=>k.startsWith(pr+"|"))){
         h+=`<tr><td class="avast aklik" style="padding-left:18px" onclick="aflSoort(this.dataset.k)" data-k="${esc(k)}" title="Klik voor de komende weken">${esc(k.split("|")[1])} ›</td>${weken.map(t=>{const l=cel(t,k),n=l.reduce((a,r)=>a+r.aantal,0);
           return`<td class="${t===nu?"nuKol":""}" style="text-align:right" title="${tip(l)}">${n?getal(n):""}</td>`}).join("")}<td style="text-align:right"><b>${getal(totK(k))}</b></td></tr>`}}
     h+=`<tr class="wkstart"><td class="avast"><b>Totaal per week</b></td>${weken.map(t=>`<td style="text-align:right"><b>${getal(wkTot(t))}</b></td>`).join("")}<td style="text-align:right"><b>${getal(tot)}</b></td></tr></table></div>`;
     $("#inhoud").innerHTML=h;return}
-  h+=`<div class="scroll"><table class="besteltabel afltabel"><tr><th rowspan="2">Week</th>${prods.map(pr=>`<th colspan="${kol.filter(k=>k.startsWith(pr+"|")).length}" style="text-align:center">${esc(pr)}</th>`).join("")}<th rowspan="2" style="text-align:right">Totaal</th></tr>
+  h+=`<div class="scroll"><table class="besteltabel afltabel"><tr><th rowspan="2">Week</th>${prods.map(pr=>`<th colspan="${kol.filter(k=>k.startsWith(pr+"|")).length}" style="text-align:center"><span class="aklik" data-pr="${esc(pr)}" onclick="naarTeelt(this.dataset.pr)" oncontextmenu="naarTeelt(this.dataset.pr);return false" title="Klik om de teelt te openen">${esc(pr)} ›</span></th>`).join("")}<th rowspan="2" style="text-align:right">Totaal</th></tr>
     <tr>${kol.map(k=>`<th class="aklik" style="text-align:right" onclick="aflSoort(this.dataset.k)" data-k="${esc(k)}" title="Klik voor de komende weken">${esc(k.split("|")[1])} ›</th>`).join("")}</tr>`;
   for(const t of weken){const som=regels.filter(r=>r.t===t).reduce((a,r)=>a+r.aantal,0);
     h+=`<tr class="${t===nu?"nuRij":""}"><td><b>${wkLabel(t,jaar)}</b>${t===nu?' <span class="status">deze week</span>':""}</td>${kol.map(k=>{const l=cel(t,k),n=l.reduce((a,r)=>a+r.aantal,0);
@@ -3076,7 +3087,7 @@ const PAGINAS=[
   ["✅","Gereed","Overzicht","gereed klaar leeg afleveren",()=>naar("gereed")],
   ["🖨️","Weeklijst (printen)","Overzicht","weeklijst printen afdrukken medewerkers deze week taken lijst",()=>naar("weeklijst")],
   ["👷","Werkplanning","Overzicht","werkplanning werk uren mensen personeel oppotten wijderzetten afleveren arbeid",()=>naar("werk")],
-  ["🚛","Afleverplanning","Overzicht","afleveren afleverplanning verkoop verkooplijst raaptijd rapen klanten",()=>naar("aflever")],
+  ["🚛","Af te leveren","Planning","afleveren afleverplanning verkoop verkooplijst raaptijd rapen klanten",()=>naar("aflever")],
   ["▶️","Vloeren vullen","Actie","vullen start planning maken indelen",()=>vulKappenUitPlan()],
   ["➕","Nieuwe teelt","Actie","nieuw nieuwe teelt product toevoegen",()=>{naar("soorten");duurErbij()}],
   ["➕","Nieuwe leverancier","Actie","nieuw leverancier toevoegen",()=>{naar("leveranciers");leverancierErbij()}],
