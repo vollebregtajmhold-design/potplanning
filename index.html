@@ -65,6 +65,8 @@ body.smal .wrap{max-width:1000px}
 body.mobiel .wrap{max-width:440px}
 body.mobiel section.vlak{padding:0;border-radius:22px;overflow:hidden;border-width:6px;border-color:#2b2b2b!important}
 body.mobiel section.vlak>.rij:first-child{display:none}
+@media (max-width:700px){body.mobiel #grijs{margin:0;border-radius:0;min-height:0}body.mobiel .wrap{padding:0;max-width:none}
+  body.mobiel section.vlak{border:0!important;border-radius:0;box-shadow:none;margin:0}.mob .mstap{padding:10px 10px}}
 .mob{font-size:16px}
 .mob .mkop{background:var(--groen);color:#fff;padding:14px 16px;display:flex;align-items:center;gap:10px}
 .mob .mkop b{font-size:18px}
@@ -94,7 +96,7 @@ body.mobiel section.vlak>.rij:first-child{display:none}
 .mob .mkaart{display:flex;gap:10px;background:#fff;border:1px solid #ddd5c4;border-radius:12px;padding:10px 12px;margin-top:8px;font-size:14px}
 .mob .mkaart .mic{font-size:22px;line-height:1}.mob .mkaart .wlv{white-space:normal}
 .mob .mrij{display:flex;justify-content:space-between;padding:6px 2px;border-bottom:1px solid #eee6d6;font-size:14px}
-.mob .mklik{cursor:pointer}.mob .mtal{padding:2px 8px;margin:-2px -4px -2px 8px;border-radius:6px;background:#e8f5ee;color:#1f4d39;white-space:nowrap}.mob .mklik:active{background:#f1ebf7}
+.mob .mklik{cursor:pointer}.mob .mtal.min{background:#fbeaea;color:#b00020}.mob .mtal{padding:2px 8px;margin:-2px -4px -2px 8px;border-radius:6px;background:#e8f5ee;color:#1f4d39;white-space:nowrap}.mob .mklik:active{background:#f1ebf7}
 #mobPop{position:fixed;inset:0;background:rgba(0,0,0,.45);display:flex;align-items:flex-end;justify-content:center;z-index:9999}
 #mobPop[hidden]{display:none}
 .ovfase{border:0!important;padding:2px 0!important;align-items:center;gap:8px}.ovfase span{flex:1}.ovfase b{min-width:70px;text-align:right}
@@ -631,7 +633,7 @@ dialog::backdrop{background:rgba(0,0,0,.45)}
 
 <script>
 "use strict";
-const VERSIE="20.1";
+const VERSIE="20.3";
 const VERSIE_DATUM="23-10-2026";
 /* ---------- Basis ---------- */
 const PALET=["#2d6a4f","#1B5EBE","#E8007D","#c77d1a","#7a4fa0","#0f8b8d","#5b6b2f","#3d5a80","#a0522d","#7AB648"];
@@ -2733,8 +2735,9 @@ function toonMobiel(){syncSoorten();
   else if(mobTab==="aflever"){
     const regels=afleverRegels();
     for(let i=0;i<8;i++){const d=plusWeken(new Date(t),i),tt=d.getTime(),l=regels.filter(r=>r.t===tt&&r.aantal>0),{w}=isoWeek(d);
-      const per={};l.forEach(r=>{const k=r.product+" · "+r.soort;per[k]=(per[k]||0)+r.aantal});
-      h+=`<div class="mstap"><h3 class="msec fa">wk ${w} · ${getal(l.reduce((a,r)=>a+r.aantal,0))} planten</h3>${Object.keys(per).length?Object.entries(per).map(([k,n])=>`<div class="mrij mklik" onclick="mobSoort(this.dataset.k)" data-k="${esc(k)}"><span>${esc(k)} ›</span><b class="mtal" onclick="mobRaap(event,this.parentNode.dataset.k,${tt})">${getal(n)} 📍</b></div>`).join(""):`<div class="status">Niets.</div>`}</div>`}
+      const per={},raw={};l.forEach(r=>{const k=r.product+" · "+r.soort;per[k]=(per[k]||0)+r.aantal;raw[k]=r.product+"|"+r.soort});
+      const bes=k=>per[k]-verkSom(raw[k],tt),totB=Object.keys(per).reduce((a,k)=>a+bes(k),0);
+      h+=`<div class="mstap"><h3 class="msec fa">wk ${w} · ${getal(totB)} nog beschikbaar</h3>${Object.keys(per).length?Object.keys(per).map(k=>{const n=bes(k);return`<div class="mrij mklik" onclick="mobSoort(this.dataset.k)" data-k="${esc(k)}"><span><span class="status">${esc(raw[k].split("|")[0].slice(0,10).trim())}</span> · ${esc(raw[k].split("|")[1])} ›</span><b class="mtal ${n<0?"min":""}" onclick="mobRaap(event,this.parentNode.dataset.k,${tt})" title="Nog beschikbaar (afleverplan ${getal(per[k])} min verkocht)">${getal(n)} 📍</b></div>`}).join(""):`<div class="status">Niets.</div>`}</div>`}
   }else{
     const z=mobZoek.toLowerCase().trim();
     h+=`<div class="mstap"><input id="mobZoekVeld" value="${esc(mobZoek)}" placeholder="Partij (bijv. P12), teelt of soort" style="width:100%;font-size:16px;padding:10px;border-radius:10px;border:2px solid #c9bfa8"></div>`;
