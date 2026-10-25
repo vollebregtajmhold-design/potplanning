@@ -129,7 +129,10 @@ body.mobiel section.vlak>.rij:first-child{display:none}
 .ovtitel{font-weight:800;letter-spacing:2px;color:#2d6a4f;font-size:14px;text-transform:uppercase;margin-right:6px}
 .ovjaar{background:#2d6a4f;color:#fff;font-weight:700;border-radius:4px;padding:3px 6px;font-size:12px;border:1px solid #1e4d38;cursor:pointer}
 .ovk{background:#e3ecf3;color:#2f4b5e;border:0;border-radius:4px;padding:4px 8px;font-size:12px;font-weight:600;cursor:pointer}.ovk.aan{background:#2d6a4f;color:#fff}
-.ovinfo{font-size:11px;color:#777}#balk .kort{display:none}.ovk.ovlink{background:#fff;border:1px solid #cfc6b4;color:#2d6a4f}.ovnum{width:46px!important;font-size:12px;padding:2px 4px}
+.ovinfo{font-size:11px;color:#777}
+#ovBalk .ovtitel{font-size:16px}#ovBalk .ovjaar{font-size:14px;padding:4px 8px}#ovBalk .ovk{font-size:14px;padding:4px 10px;border:1px solid #222}#ovBalk .ovinfo{font-size:13px}
+#ovBalk input:not([type=range]),#ovBalk .ovnum{border:2px solid #222!important;border-radius:4px;font-size:14px!important;padding:3px 6px!important;width:54px!important;background:#fff}
+#ovBalk .ovjaar{border:2px solid #1e4d38}#balk .kort{display:none}.ovk.ovlink{background:#fff;border:1px solid #cfc6b4;color:#2d6a4f}.ovnum{width:46px!important;font-size:12px;padding:2px 4px}
 .ovtl,.ovsl{cursor:pointer}.ovtl{color:#555;font-weight:600}.ovtl:hover,.ovsl:hover{text-decoration:underline;color:#4b2a6e}
 body.ovmodus .wrap{max-width:none!important}
 body.ovmodus section.vlak{width:max-content;max-width:100%;margin:24px auto;padding:0!important;overflow-x:auto;box-shadow:0 8px 24px rgba(0,0,0,.35)}
@@ -164,7 +167,8 @@ body.wolk #btnNieuw,body.wolk #btnOpen,body.wolk #btnVerder,body.wolk #geenApi{d
 #login button:hover{background:#f4effa}#login .fout{color:#b00020;font-size:13px;margin-top:10px}
 #mobPop.midden{align-items:center}#mobPop.midden .mpop{border-radius:14px;max-width:460px}
 .aklik{cursor:pointer}.aklik:hover{text-decoration:underline;color:#4b2a6e}
-.mpop{background:#fff;width:100%;max-width:520px;max-height:85vh;overflow:auto;border-radius:14px 14px 0 0;font-size:14px}
+.mpop{background:#fff;width:100%;max-width:520px;max-height:85vh;overflow:auto;border-radius:14px 14px 0 0;font-size:14px;border-left:4px solid var(--l);border-right:4px solid var(--l);border-top:4px solid var(--b)}
+#mobPop.midden .mpop{border-bottom:4px solid var(--r);zoom:1.25;max-height:calc(85vh / 1.25)}
 .mpopKop{position:sticky;top:0;background:#4b2a6e;color:#fff;padding:12px 16px;display:flex;justify-content:space-between;align-items:center}
 .mpopKop button{background:none;border:0;color:#fff;font-size:20px;cursor:pointer}
 .mpopIn{padding:8px 16px 20px}.mpopIn h4{margin:14px 0 6px;color:#4b2a6e}
@@ -645,7 +649,7 @@ dialog::backdrop{background:rgba(0,0,0,.45)}
 
 <script>
 "use strict";
-const VERSIE="21.0";
+const VERSIE="21.5";
 const VERSIE_DATUM="23-10-2026";
 /* ---------- Basis ---------- */
 const PALET=["#2d6a4f","#1B5EBE","#E8007D","#c77d1a","#7a4fa0","#0f8b8d","#5b6b2f","#3d5a80","#a0522d","#7AB648"];
@@ -1175,6 +1179,7 @@ function render(){
   onthoudPagina();
   /* Teelt & soorten opent altijd met alles ingeklapt */
   if(tab==="soorten"&&vorigeTab!=="soorten"&&!houdOpen&&typeof teeltOpen!=="undefined")teeltOpen.clear();
+  if(tab==="oppotov"&&vorigeTab!=="oppotov"&&vorigeTab!=="oppot")ovEenheid="planten"; /* oppotoverzicht opent altijd met planten */
   houdOpen=false;vorigeTab=tab;
   if(tab==="plan"||tab==="teelt")venster=maandagIso(planJaar,1);
   document.querySelectorAll("#balk [data-tab]").forEach(b=>b.classList.toggle("actief",b.dataset.tab===tab||(tab==="oppot"&&b.dataset.tab==="oppotov")));
@@ -2749,7 +2754,7 @@ function toonMobiel(){syncSoorten();
     for(let i=0;i<8;i++){const d=plusWeken(new Date(t),i),tt=d.getTime(),l=regels.filter(r=>r.t===tt&&r.aantal>0),{w}=isoWeek(d);
       const per={},raw={};l.forEach(r=>{const k=r.product+" · "+r.soort;per[k]=(per[k]||0)+r.aantal;raw[k]=r.product+"|"+r.soort});
       const bes=k=>per[k]-verkSom(raw[k],tt),totB=Object.keys(per).reduce((a,k)=>a+bes(k),0);
-      h+=`<div class="mstap"><h3 class="msec fa">wk ${w} · ${getal(totB)} nog beschikbaar</h3>${Object.keys(per).length?Object.keys(per).map(k=>{const n=bes(k);return`<div class="mrij mklik" onclick="mobSoort(this.dataset.k)" data-k="${esc(k)}"><span><span class="status">${esc(raw[k].split("|")[0].slice(0,10).trim())}</span> · ${esc(raw[k].split("|")[1])} ›</span><b class="mtal ${n<0?"min":""}" onclick="mobRaap(event,this.parentNode.dataset.k,${tt})" title="Nog beschikbaar (afleverplan ${getal(per[k])} min verkocht)">${getal(n)} 📍</b></div>`}).join(""):`<div class="status">Niets.</div>`}</div>`}
+      h+=`<div class="mstap"><h3 class="msec fa">wk ${w} · ${getal(totB)} nog beschikbaar</h3>${Object.keys(per).length?Object.keys(per).sort((a,b)=>raw[a].localeCompare(raw[b],"nl")).map(k=>{const n=bes(k);return`<div class="mrij mklik" onclick="mobSoort(this.dataset.k)" data-k="${esc(k)}"><span><span class="status">${esc(raw[k].split("|")[0].slice(0,10).trim())}</span> · ${esc(raw[k].split("|")[1])} ›</span><b class="mtal ${n<0?"min":""}" onclick="mobRaap(event,this.parentNode.dataset.k,${tt})" title="Nog beschikbaar (afleverplan ${getal(per[k])} min verkocht)">${getal(n)} 📍</b></div>`}).join(""):`<div class="status">Niets.</div>`}</div>`}
   }else{
     const z=mobZoek.toLowerCase().trim();
     h+=`<div class="mstap"><input id="mobZoekVeld" value="${esc(mobZoek)}" placeholder="Partij (bijv. P12), teelt of soort" style="width:100%;font-size:16px;padding:10px;border-radius:10px;border:2px solid #c9bfa8"></div>`;
@@ -2951,7 +2956,7 @@ $("#inhoud").addEventListener("change",e=>{const el=e.target;if(!el.dataset.kl)r
   if(veld==="naam"&&k.naam&&v!==k.naam){for(const l of Object.values(data.verkoop||{}))for(const x of l)if(x.klant===k.naam)x.klant=v} /* nieuwe naam ook bij de verkopen */
   k[veld]=v;if(veld==="naam")el.classList.toggle("mist",!v);opslaanLater()});
 /* ---------- Oppotoverzicht: per week wat er wordt opgepot (zoals een orderoverzicht) ---------- */
-let ovGroep="soort",ovEenheid="trays",ovStart=null,ovEind=null,ovJaar=0;
+let ovGroep="soort",ovEenheid="planten",ovStart=null,ovEind=null,ovJaar=0;
 const fustAantal=f=>{const m=String(f||"").match(/(\d+)/);return m?+m[1]:0};
 let ovDetail={},ovRas={};
 /* Dubbele schuif: linker- en rechterknop bepalen van welke t/m welke week u ziet */
