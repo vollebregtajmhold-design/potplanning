@@ -645,7 +645,7 @@ dialog::backdrop{background:rgba(0,0,0,.45)}
 
 <script>
 "use strict";
-const VERSIE="20.8";
+const VERSIE="21.0";
 const VERSIE_DATUM="23-10-2026";
 /* ---------- Basis ---------- */
 const PALET=["#2d6a4f","#1B5EBE","#E8007D","#c77d1a","#7a4fa0","#0f8b8d","#5b6b2f","#3d5a80","#a0522d","#7AB648"];
@@ -2993,7 +2993,8 @@ function ovKlik(e){const td=e.target.closest("td[data-k]");if(!td)return;if(e.cu
       ${n?`<label>Trays <input id="ovInT" type="text" inputmode="numeric" pattern="[0-9]*" value="${nu?Math.ceil(nu/n):""}" placeholder="0" oninput="document.getElementById('ovInP').value=this.value?this.value*${n}:''" onkeydown="if(event.key==='Enter')ovZet('${rid}',${w})"> <span class="status">× ${n}</span></label>`:""}
       <span class="status" id="ovInM2"></span>
       <button class="btn" onclick="ovZet('${rid}',${w})">Opslaan</button></div>`}
-  h+=`<div class="status" style="margin-top:8px">Oppotweek ${w} van ${j}.</div>`;
+  const lw=leegWeek(l,j,w);
+  h+=`<div class="status" style="margin-top:8px">Oppotweek ${w} van ${j}${lw?` · <b>leeg week ${lw}</b>`:""}.</div>`;
   toonPop(titel,h);const ip=document.getElementById("ovInP");
   if(ip){const t=teeltVanRas(rid),upd=()=>{const p=+ip.value||0,e=document.getElementById("ovInM2");if(e&&t)e.innerHTML=p?`= <b>${m2Tekst(t.dicht1?p/t.dicht1:0)}</b> m² oppot · <b>${m2Tekst(t.dicht2?p/t.dicht2:0)}</b> m² uitzet`:""};
     upd();ip.addEventListener("input",upd);const it=document.getElementById("ovInT");if(it)it.addEventListener("input",upd);ip.focus();ip.select()}}
@@ -3022,6 +3023,11 @@ function raapSplits(rid,p,n,pre){const P=pre?`<b>${esc(pre)}</b> · `:"";const{w
   if(vl.length<2)return`<div class="raapplek"><span>${P}${afd?"afd "+esc(afd):""}${afd&&vl.length?" · ":""}${vl.length?"vloer "+esc(vl[0]):""}</span><b>${getal(n)}</b></div>`;
   const basis=Math.floor(n/vl.length),rest=n-basis*vl.length;
   return vl.map((x,i)=>`<div class="raapplek"><span>${P}${afd?"afd "+esc(afd)+" · ":""}vloer ${esc(x)}</span><b>± ${getal(basis+(i<rest?1:0))}</b></div>`).join("")}
+/* Leeg-week: wanneer is de partij van deze oppotweek klaar (vloer weer leeg) */
+function leegWeek(l,j,w){const ids=new Set(l.map(r=>r.rasId).filter(Boolean)),tids=new Set([...ids].map(id=>(data.rassen.find(r=>r.id===id)||{}).teeltId));
+  const ws=new Set();for(const p of planPartijen()){const f=fasen(p),o=isoWeek(f.s);if(o.y!==j||o.w!==w||!tids.has(p.soortId))continue;
+    const lw=isoWeek(f.leeg);ws.add(lw.w+(lw.y!==j?" ("+lw.y+")":""))}
+  return[...ws].sort().join(" / ")}
 const teeltVanRas=id=>{const r=data.rassen.find(x=>x.id===id);return r?data.teeltduren.find(t=>t.id===r.teeltId):null};
 const m2Tekst=v=>(Math.round(v*10)/10).toLocaleString("nl-NL");
 /* Aantal uit de popup opslaan in het oppotplan */
@@ -3036,11 +3042,11 @@ function toonOppotOv(){
   const jaar=planJaar,regels=bestelRegels(jaar),nu=isoWeek(new Date()),yy=String(jaar).slice(2),code=w=>yy+String(w).padStart(2,"0");
   const veelT=new Set(regels.map(r=>r.product)).size>1;
   const sleutel={soort:r=>veelT?r.product+" · "+r.soort:r.soort,teelt:r=>r.product,fust:r=>r.fust||"(geen fust)",lev:r=>{const l=data.leveranciers.find(x=>x.id===r.levId);return l&&l.naam?l.naam:"(geen leverancier)"}}[ovGroep]||(r=>r.soort);
-  const trays=ovEenheid==="trays",tekstMod=ovEenheid==="vlop"||ovEenheid==="vluit";let zonderFust=false;
-  const EH={trays:"trays",planten:"planten",m2op:"m² oppot",m2uit:"m² uitzet",vlop:"afd/vloer oppot",vluit:"afd/vloer uitzet"},ehNaam=EH[ovEenheid]||"planten";
+  const trays=ovEenheid==="trays",tekstMod=["afdop","vlop","afduit","vluit"].includes(ovEenheid);let zonderFust=false;
+  const EH={planten:"planten",trays:"trays",m2op:"m² opgepot",m2uit:"m² uitgezet",afdop:"afd opgepot",vlop:"vloer opgepot",afduit:"afd uitgezet",vluit:"vloer uitgezet"},ehNaam=EH[ovEenheid]||"planten";
   const waarde=r=>{if(ovEenheid==="m2op"||ovEenheid==="m2uit"){const t=teeltVanRas(r.rasId),d=t?(ovEenheid==="m2op"?t.dicht1:t.dicht2):0;return d?r.aantal/d:0}
     if(!trays)return r.aantal;const n=fustAantal(r.fust);if(!n){zonderFust=true;return r.aantal}return Math.ceil(r.aantal/n)};
-  const vlTekst=r=>{if(!r.rasId)return"";const v=vloerEff(r.rasId,jaar,r.w),f=ovEenheid==="vlop"?"op":"uit",a=v[f+"Afd"]||"",b=v[f]||"";return a&&b?a+" / "+b:a||b};
+  const vlTekst=r=>{if(!r.rasId)return"";const v=vloerEff(r.rasId,jaar,r.w);return{afdop:v.opAfd,vlop:v.op,afduit:v.uitAfd,vluit:v.uit}[ovEenheid]||""};
   const toon=v=>ovEenheid.startsWith("m2")?getal(Math.round(v)):getal(v);
   let h="";
   h+=`<div class="printkop"><h2>Oppotoverzicht ${jaar} (${ehNaam})</h2></div>`;
@@ -3048,7 +3054,7 @@ function toonOppotOv(){
     ob.innerHTML=`<span class="ovtitel">Oppotoverzicht</span>
     <select class="ovjaar" onchange="planJaar=+this.value;render()">${[-2,-1,0,1,2].map(d=>planJaar+d).map(j=>`<option value="${j}" ${j===jaar?"selected":""}>Jaar ${j}</option>`).join("")}</select>
     ${extra||""}
-    ${[['trays', 'Trays'], ['planten', 'Planten'], ['m2op', 'm² oppot'], ['m2uit', 'm² uitzet'], ['vlop', 'Afd/vloer oppot'], ['vluit', 'Afd/vloer uitzet']].map(([v,n])=>`<button class="ovk ${ovEenheid===v?"aan":""}" onclick="ovEenheid='${v}';render()">${n}</button>`).join("")}
+    <select class="ovjaar" onchange="ovEenheid=this.value;render()" title="Wat ziet u in de cellen">${Object.entries(EH).map(([v,n])=>`<option value="${v}" ${ovEenheid===v?"selected":""}>${n.startsWith("m²")?n:n[0].toUpperCase()+n.slice(1)}</option>`).join("")}</select>
     <button class="ovk" onclick="window.print()">Afdrukken</button><button class="ovk ovlink" onclick="naar('oppot')" title="Aantallen per week invullen">🪴 Oppotplan ›</button><span class="ovinfo" id="ovAantalTxt" data-n="${info||""}"></span>`;return""};
   if(!regels.length){$("#inhoud").innerHTML=kop()+h+`<div class="leeg" style="padding:30px">Nog niets in het <a href="#" onclick="naar('oppot');return false">Oppotplan</a> voor ${jaar}.</div>`;return}
   const alleW=[...new Set(regels.map(r=>r.w))].sort((a,b)=>a-b),cel={},rijen=new Set(),tot={};
