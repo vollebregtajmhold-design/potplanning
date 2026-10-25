@@ -110,10 +110,13 @@ body.mobiel section.vlak>.rij:first-child{display:none}
 }
 .ovfase{border:0!important;padding:2px 0!important;align-items:center;gap:8px}.ovfase span{flex:1}.ovfase b{min-width:70px;text-align:right}
 #toast{z-index:10001!important}.ovvl{width:96px!important;font-size:13px;padding:3px 6px}.ovvl.ovafd{width:70px!important}.ovtabel td.ovtxt{font-size:15px}
-.raapplek{display:flex;justify-content:space-between;gap:10px;background:#e8f5ee;border-radius:6px;padding:5px 8px;margin:4px 0;font-size:14px;color:#1f4d39}.raapplek.leeg{background:#fbeaea;color:#8a1c1c}
+.raapplek{display:flex;justify-content:space-between;gap:10px;background:#e8f5ee;border-radius:6px;padding:5px 8px;margin:4px 0;font-size:14px;color:#1f4d39}.raapplek.geen{background:#fbeaea;color:#8a1c1c}
 .ovtabel th.ovwk{cursor:pointer}.ovtabel th.ovwk:hover{text-decoration:underline}.wkafd{font-size:10px;font-weight:600;color:#2d6a4f;line-height:1}
 .vlinv{margin:2px 0 8px;font-size:13px}.vlinv summary{cursor:pointer;color:#4b2a6e;padding:4px 0}.vlinvrij{display:flex;gap:10px;flex-wrap:wrap;padding:4px 0}
-.vlinvrij label{display:flex;align-items:center;gap:6px}.vlinvrij input{width:90px;font-size:15px;padding:5px 6px}
+.vlinvrij label{display:flex;align-items:center;gap:6px}.vlinvrij input{width:90px;font-size:15px;padding:5px 26px 5px 6px}.vlwis{position:relative;display:inline-flex}.vlwis button{position:absolute;right:2px;top:50%;transform:translateY(-50%);border:0;background:none;color:#999;font-size:15px;padding:4px 6px;cursor:pointer}.vlinvrij>b{align-self:center;min-width:34px}
+.mvl{flex-wrap:nowrap!important;gap:6px!important;align-items:center;border:2px solid #ccc;border-radius:8px;padding:5px 6px!important;margin:5px 0}
+.mvl.ok{border-color:#2d6a4f;background:#e8f5ee}.mvl.nee{border-color:#c62828;background:#fbeaea}
+.mvl label{gap:3px!important;font-size:12px}.mvl input{width:58px!important;padding-right:20px!important}.mvl .mvln{margin-left:auto;text-align:right}
 .verkoop{margin-top:12px;padding:10px;background:#eef4fb;border-radius:8px}.verkrij{display:flex;gap:6px;margin-top:6px;align-items:center}
 .verkrij input{flex:1;font-size:14px;padding:4px 6px;min-width:0}.verkrij input.verkn{flex:none;width:90px;text-align:right}.ovtabel td.ovmin{color:#b00020}
 .ovinvoer{margin-top:12px;padding:10px;background:#f4effa;border-radius:8px;display:flex;flex-wrap:wrap;gap:10px;align-items:center}
@@ -642,7 +645,7 @@ dialog::backdrop{background:rgba(0,0,0,.45)}
 
 <script>
 "use strict";
-const VERSIE="20.4";
+const VERSIE="20.6";
 const VERSIE_DATUM="23-10-2026";
 /* ---------- Basis ---------- */
 const PALET=["#2d6a4f","#1B5EBE","#E8007D","#c77d1a","#7a4fa0","#0f8b8d","#5b6b2f","#3d5a80","#a0522d","#7AB648"];
@@ -2713,7 +2716,7 @@ function mobSoort(k,start){const t=start||+mobWeekStart(),l=afleverRegels().filt
   let m=document.getElementById("mobPop");if(!m){m=document.createElement("div");m.id="mobPop";m.onclick=e=>{if(e.target===m)sluitMobSoort()};document.body.appendChild(m)}
   m.className=start?"midden":"";m.innerHTML=`<div class="mpop">${h}</div></div>`;m.hidden=false}
 function aflSoort(k){const n=isoWeek(new Date());mobSoort(k.replace("|"," · "),+maandagIso(n.y,n.w))}
-function sluitMobSoort(){const m=document.getElementById("mobPop");if(m)m.hidden=true;if(tab==="oppotov"||tab==="aflever")render()}
+function sluitMobSoort(){const m=document.getElementById("mobPop");if(m)m.hidden=true;if(tab==="oppotov"||tab==="aflever"||tab==="mobiel")render()}
 function mobWeek(d){const t=plusWeken(mobWeekStart(),d),n=isoWeek(t);mob.week=n.w;mob.jaar=n.y;mob.partijId="";render()}
 function medewerker(){try{return localStorage.getItem("potplanMedewerker")||""}catch(e){return""}}
 function mobPartijen(){const s=mobWeekStart().getTime();
@@ -3007,15 +3010,15 @@ function ovWeekKlik(w){const j=planJaar,d=weekAfd(j,w),cd=String(j).slice(2)+Str
     <div class="status" style="margin-top:8px">Tip: vult u alleen de oppotfase in, dan neemt de uitzetfase hetzelfde over.</div>`);
   const i=document.getElementById("wkAfdOp");if(i){i.focus();i.addEventListener("change",()=>{const u=document.getElementById("wkAfdUit");if(u&&!u.dataset.zelf&&u.value!==weekAfd(j,w).uit)zetWeekAfd(j,w,"uit",u.value)})}}
 function vloerVan(rid,j,w){const r=data.rassen.find(x=>x.id===rid);if(!r)return null;return(r.vloeren||{})[j+"-"+w]||{}}
-function zetVloerNr(rid,j,w,f,v){const r=data.rassen.find(x=>x.id===rid);if(!r)return;r.vloeren=r.vloeren||{};const k=j+"-"+w,o=r.vloeren[k]||{};
-  v=String(v).trim();if(v)o[f]=v;else delete o[f];if(Object.keys(o).length)r.vloeren[k]=o;else delete r.vloeren[k];opslaanLater();melding("✓ Vloer opgeslagen","#2d6a4f")}
+function zetVloerNr(rid,j,w,f,v,stil){const r=data.rassen.find(x=>x.id===rid);if(!r)return;r.vloeren=r.vloeren||{};const k=j+"-"+w,o=r.vloeren[k]||{};
+  v=String(v).trim();if(v)o[f]=v;else delete o[f];if(Object.keys(o).length)r.vloeren[k]=o;else delete r.vloeren[k];opslaanLater();if(!stil)melding("✓ Vloer opgeslagen","#2d6a4f")}
 /* Waar staat deze soort uit (afd/vloer van de uitzetfase), op basis van de oppotweek van de partij */
 function raapPlek(rid,p){if(!rid)return"";const{w,y}=isoWeek(fasen(p).s),v=vloerEff(rid,y,w);
   const a=v.uitAfd,b=v.uit;return a&&b?`afd ${a} · vloer ${b}`:a?`afd ${a}`:b?`vloer ${b}`:""}
 /* Verdeel het raapaantal over de vloeren van de uitzetfase (gelijk verdeeld als er meer vloeren zijn) */
 function raapSplits(rid,p,n,pre){const P=pre?`<b>${esc(pre)}</b> · `:"";const{w,y}=isoWeek(fasen(p).s),v=rid?vloerEff(rid,y,w):{},afd=v.uitAfd||"";
   const vl=String(v.uit||"").split(/[,;+&\s]+/).map(x=>x.trim()).filter(Boolean);
-  if(!afd&&!vl.length)return`<div class="raapplek leeg"><span>${P}nog geen afd/vloer ingevuld</span><b>${getal(n)}</b></div>`;
+  if(!afd&&!vl.length)return`<div class="raapplek geen"><span>${P}nog geen afd/vloer ingevuld</span><b>${getal(n)}</b></div>`;
   if(vl.length<2)return`<div class="raapplek"><span>${P}${afd?"afd "+esc(afd):""}${afd&&vl.length?" · ":""}${vl.length?"vloer "+esc(vl[0]):""}</span><b>${getal(n)}</b></div>`;
   const basis=Math.floor(n/vl.length),rest=n-basis*vl.length;
   return vl.map((x,i)=>`<div class="raapplek"><span>${P}${afd?"afd "+esc(afd)+" · ":""}vloer ${esc(x)}</span><b>± ${getal(basis+(i<rest?1:0))}</b></div>`).join("")}
@@ -3216,11 +3219,12 @@ function raapPop(k,t,l,onder){if(raapLaatst&&(raapLaatst[0]!==k||raapLaatst[1]!=
     [...per].sort((a,b)=>a[0].localeCompare(b[0],"nl")).forEach(([x,o])=>{som+=o.n;h+=`<div class="mrij"><span>${esc(x)}${o.pl.size?`<br><span class="status">📍 ${esc([...o.pl].join(" + "))}</span>`:""}</span><b>${getal(o.n)}</b></div>`})}
   else{const per=new Map();l.forEach(r=>{const x=per.get(r.p)||{p:r.p,n:0,R:r.R,rasId:r.rasId};x.n+=r.aantal;per.set(r.p,x)});
     [...per.values()].sort((a,b)=>fasen(a.p).s-fasen(b.p).s).forEach(x=>{som+=x.n;const f=fasen(x.p);
-      h+=raapSplits(x.rasId,x.p,x.n,partijNr(x.p));
+      if(!(onder&&x.rasId))h+=raapSplits(x.rasId,x.p,x.n,partijNr(x.p));
       if(x.rasId){const{w:ow,y:oy}=isoWeek(fasen(x.p).s),v=vloerVan(x.rasId,oy,ow)||{},d=weekAfd(oy,ow);
-        h+=`<details class="vlinv" ${window._vlOpen===x.p.id?"open":""} ontoggle="if(this.open)window._vlOpen='${x.p.id}'"><summary>✏️ afd/vloer ${esc(partijNr(x.p))}</summary><div class="vlinvrij">
-          <label>afd <input value="${esc(v.uitAfd||"")}" placeholder="${esc(d.uit||"")}" inputmode="numeric" onchange="zetVloerNr('${x.rasId}',${oy},${ow},'uitAfd',this.value);raapPop(...raapLaatst)"></label>
-          <label>vloer <input value="${esc(v.uit||"")}" placeholder="bijv. 3, 4" inputmode="decimal" onchange="zetVloerNr('${x.rasId}',${oy},${ow},'uit',this.value);raapPop(...raapLaatst)"></label></div></details>`}})}
+        const veld=(f,lbl,ph,im)=>`<label>${lbl} <span class="vlwis"><input value="${esc(v[f]||"")}" placeholder="${esc(ph)}" inputmode="${im}" enterkeyhint="done" onchange="zetVloerNr('${x.rasId}',${oy},${ow},'${f}',this.value,1)"><button type="button" title="Leeg maken" onclick="const i=this.previousElementSibling;i.value='';zetVloerNr('${x.rasId}',${oy},${ow},'${f}','',1);i.focus()">✕</button></span></label>`;
+        const ok=!!(v.uit||"").trim();
+        h+=onder?`<div class="vlinvrij mvl ${ok?"ok":"nee"}" oninput="this.classList.toggle('ok',!!this.querySelectorAll('input')[1].value.trim());this.classList.toggle('nee',!this.querySelectorAll('input')[1].value.trim())" onclick="setTimeout(()=>this.oninput(),0)"><b>${esc(partijNr(x.p))}</b>${veld("uitAfd","afd",d.uit||"",'numeric')}${veld("uit","vloer","",'decimal')}<b class="mvln">${getal(x.n)}</b></div>`
+          :`<details class="vlinv" ${window._vlOpen===x.p.id?"open":""} ontoggle="if(this.open)window._vlOpen='${x.p.id}'"><summary>✏️ afd/vloer ${esc(partijNr(x.p))}</summary><div class="vlinvrij">${veld("uitAfd","afd",d.uit||"",'numeric')}${veld("uit","vloer","bijv. 3, 4",'decimal')}</div></details>`}})}
   if(!l.length)h=`<div class="status" style="padding:6px 0">Deze week wordt hier niets afgeleverd.</div>`;
   else h+=`<div class="mrij tot"><span>Totaal</span><b>${getal(som)} planten</b></div>`;
   if(!isTot){const vl=verkVan(k,t),vs=verkSom(k,t),K="this.closest('.verkoop').dataset.k",rij=(x,i)=>`<div class="verkrij"><input placeholder="klant" list="klantLijst" autocomplete="off" value="${esc(x.klant||"")}" onchange="verkZet(${K},${t},${i},'klant',this.value)"><input class="verkn" type="text" inputmode="numeric" pattern="[0-9]*" enterkeyhint="next" placeholder="aantal" value="${x.n||""}" onchange="verkZet(${K},${t},${i},'n',this.value)">${i<vl.length?`<button class="btn rood klein" onclick="verkWeg(${K},${t},${i})" title="Weg">✕</button>`:'<span style="width:30px"></span>'}</div>`;
