@@ -99,6 +99,10 @@ body.mobiel section.vlak>.rij:first-child{display:none}
 .mob .mklik{cursor:pointer}.mob .mtal.min{background:#fbeaea;color:#b00020}.mob .mtal{padding:2px 8px;margin:-2px -4px -2px 8px;border-radius:6px;background:#e8f5ee;color:#1f4d39;white-space:nowrap}.mob .mklik:active{background:#f1ebf7}
 #mobPop{position:fixed;inset:0;background:rgba(0,0,0,.45);display:flex;align-items:flex-end;justify-content:center;z-index:9999}
 #mobPop[hidden]{display:none}
+#btnStip{width:22px;height:22px;flex:none;border-radius:50%;background:#E8007D;border:3px solid #fff;cursor:pointer;padding:0;box-shadow:0 1px 3px rgba(0,0,0,.4)}
+#btnStip.aan{background:#fff;border-color:#E8007D}
+body.toonKlik :is(button,a,summary,select,.ovtabel td[data-k],.ovtabel th[data-c],[onclick]):not(table):not(#mobPop):not(#btnStip):not(.mstap):not(.mpop){
+  background-image:radial-gradient(circle at calc(100% - 6px) 6px,#E8007D 0,#E8007D 4px,#fff 4.5px,#fff 6px,transparent 6.5px)!important;background-repeat:no-repeat!important}
 @media (max-width:700px){
   #balk{padding:4px 6px!important;gap:4px!important;flex-wrap:nowrap!important}
   #balk .titel .naamtekst,#balk .titel .versie,#btnScherm{display:none}
@@ -507,6 +511,7 @@ dialog::backdrop{background:rgba(0,0,0,.45)}
 <div id="balk">
   <span class="titel" title="Pijltje links = terug · pijltje rechts = vooruit (max. 10 stappen)">🌱 <span class="naamtekst">Potplanten Planning</span> <span class="versie" id="versie"></span></span>
   <span id="kwekerijNaam" hidden></span>
+  <button type="button" id="btnStip" title="Toon alles waar u op kunt klikken (nog een keer klikken = weg)" onclick="document.body.classList.toggle('toonKlik');this.classList.toggle('aan')"></button>
   <div class="navMidden">
   <div class="menu uitgebreid"><button class="mknop" type="button">Stamdata ▾</button>
     <div class="mlijst">
@@ -649,7 +654,7 @@ dialog::backdrop{background:rgba(0,0,0,.45)}
 
 <script>
 "use strict";
-const VERSIE="21.5";
+const VERSIE="21.6";
 const VERSIE_DATUM="23-10-2026";
 /* ---------- Basis ---------- */
 const PALET=["#2d6a4f","#1B5EBE","#E8007D","#c77d1a","#7a4fa0","#0f8b8d","#5b6b2f","#3d5a80","#a0522d","#7AB648"];
@@ -3410,6 +3415,12 @@ $("#versie").textContent="versie "+VERSIE;
 $("#versie").title="Versie "+VERSIE+" – "+VERSIE_DATUM;
 document.title="Potplanten Planning v"+VERSIE;
 
+/* Rechtermuisknop doet hetzelfde als linkermuisknop (behalve in invulvakjes) */
+document.addEventListener("contextmenu",e=>{const t=e.target;if(t.closest("input,textarea,[contenteditable]"))return;
+  const el=t.closest("button,a,summary,label,select,[onclick],[oncontextmenu],.ovtabel td[data-k],.ovtabel th[data-c]");if(!el)return;
+  if(el.hasAttribute("oncontextmenu"))return; /* heeft al een eigen rechtsklik */
+  e.preventDefault();if(el.tagName==="SELECT"){el.focus();try{el.showPicker()}catch(x){}return}
+  t.dispatchEvent(new MouseEvent("click",{bubbles:true,cancelable:true,view:window,clientX:e.clientX,clientY:e.clientY}))});
 /* ---------- Start ---------- */
 (async()=>{
   try{const o=localStorage.getItem("potplanning");if(o)data=normaliseer(JSON.parse(o))}catch(e){}
