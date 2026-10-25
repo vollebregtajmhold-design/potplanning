@@ -99,6 +99,15 @@ body.mobiel section.vlak>.rij:first-child{display:none}
 .mob .mklik{cursor:pointer}.mob .mtal.min{background:#fbeaea;color:#b00020}.mob .mtal{padding:2px 8px;margin:-2px -4px -2px 8px;border-radius:6px;background:#e8f5ee;color:#1f4d39;white-space:nowrap}.mob .mklik:active{background:#f1ebf7}
 #mobPop{position:fixed;inset:0;background:rgba(0,0,0,.45);display:flex;align-items:flex-end;justify-content:center;z-index:9999}
 #mobPop[hidden]{display:none}
+@media (max-width:700px){
+  #balk{padding:4px 6px!important;gap:4px!important;flex-wrap:nowrap!important}
+  #balk .titel .naamtekst,#balk .titel .versie,#btnScherm{display:none}
+  #balk .titel{font-size:16px;margin:0}
+  #balk .lang{display:none!important}#balk .kort{display:inline!important}
+  #balk .navMidden{flex-wrap:nowrap!important;justify-content:flex-start!important;gap:4px!important;scrollbar-width:none;min-width:0}.navMidden::-webkit-scrollbar{display:none}
+  #balk .mknop,#balk .mknop.groot{padding:4px 8px!important;font-size:12px!important;border-width:1px!important;border-radius:7px!important;box-shadow:none!important;font-weight:700!important}
+  #balk .menuRechts>.mknop{padding:4px 7px}
+}
 .ovfase{border:0!important;padding:2px 0!important;align-items:center;gap:8px}.ovfase span{flex:1}.ovfase b{min-width:70px;text-align:right}
 #toast{z-index:10001!important}.ovvl{width:96px!important;font-size:13px;padding:3px 6px}.ovvl.ovafd{width:70px!important}.ovtabel td.ovtxt{font-size:15px}
 .raapplek{display:flex;justify-content:space-between;gap:10px;background:#e8f5ee;border-radius:6px;padding:5px 8px;margin:4px 0;font-size:14px;color:#1f4d39}.raapplek.leeg{background:#fbeaea;color:#8a1c1c}
@@ -117,7 +126,7 @@ body.mobiel section.vlak>.rij:first-child{display:none}
 .ovtitel{font-weight:800;letter-spacing:2px;color:#2d6a4f;font-size:14px;text-transform:uppercase;margin-right:6px}
 .ovjaar{background:#2d6a4f;color:#fff;font-weight:700;border-radius:4px;padding:3px 6px;font-size:12px;border:1px solid #1e4d38;cursor:pointer}
 .ovk{background:#e3ecf3;color:#2f4b5e;border:0;border-radius:4px;padding:4px 8px;font-size:12px;font-weight:600;cursor:pointer}.ovk.aan{background:#2d6a4f;color:#fff}
-.ovinfo{font-size:11px;color:#777}.ovk.ovlink{background:#fff;border:1px solid #cfc6b4;color:#2d6a4f}.ovnum{width:46px!important;font-size:12px;padding:2px 4px}
+.ovinfo{font-size:11px;color:#777}#balk .kort{display:none}.ovk.ovlink{background:#fff;border:1px solid #cfc6b4;color:#2d6a4f}.ovnum{width:46px!important;font-size:12px;padding:2px 4px}
 .ovtl,.ovsl{cursor:pointer}.ovtl{color:#555;font-weight:600}.ovtl:hover,.ovsl:hover{text-decoration:underline;color:#4b2a6e}
 body.ovmodus .wrap{max-width:none!important}
 body.ovmodus section.vlak{width:max-content;max-width:100%;margin:24px auto;padding:0!important;overflow-x:auto;box-shadow:0 8px 24px rgba(0,0,0,.35)}
@@ -498,10 +507,10 @@ dialog::backdrop{background:rgba(0,0,0,.45)}
       <button data-tab="soorten">Teelt &amp; soorten <span class="vink" data-v="soorten"></span></button>
       <button data-tab="leveranciers">Leveranciers</button>
     </div></div>
-  <button class="mknop eenvoudigAlleen" data-tab="soorten" type="button">Teelten en soorten</button>
-  <button class="mknop" data-tab="oppotov" type="button">Oppotoverzicht</button>
-  <button class="mknop groot" data-tab="aflever" type="button">Af te leveren</button>
-  <div class="menu"><button class="mknop" type="button">Planning ▾</button>
+  <button class="mknop eenvoudigAlleen" data-tab="soorten" type="button"><span class="lang">Teelten en soorten</span><span class="kort">Teelten</span></button>
+  <button class="mknop" data-tab="oppotov" type="button"><span class="lang">Oppotoverzicht</span><span class="kort">Oppotten</span></button>
+  <button class="mknop groot" data-tab="aflever" type="button"><span class="lang">Af te leveren</span><span class="kort">Afleveren</span></button>
+  <div class="menu"><button class="mknop" type="button"><span class="lang">Planning </span><span class="kort">Meer </span>▾</button>
     <div class="mlijst">
       <button data-tab="plan" class="uitgebreid">Vloerenplan <span class="vink" data-v="plan"></span></button>
       <button data-tab="ruimte" class="uitgebreid">Ruimte</button>
@@ -517,11 +526,11 @@ dialog::backdrop{background:rgba(0,0,0,.45)}
       <button id="btnPartij" type="button" class="uitgebreid">+ Partij met de hand</button>
       <button id="btnCsv" type="button" class="uitgebreid">Naar Excel (CSV)</button>
     </div></div>
-  <button class="mknop" data-tab="mobiel" type="button" title="Overzicht voor op de telefoon">📱 Mobiel</button>
+  <button class="mknop" data-tab="mobiel" type="button" title="Overzicht voor op de telefoon">📱<span class="lang"> Mobiel</span></button>
   <button id="btnZoek" type="button" class="uitgebreid" title="Zoeken (Ctrl + K)">🔍 Zoeken</button>
   </div>
   <button class="mknop" id="btnVerder" type="button" hidden></button>
-  <div class="menu menuRechts"><button class="mknop" type="button" title="Bestand: nieuw, openen, kopie"><span id="dot" title="Niet opgeslagen in een bestand"></span> Bestand ▾</button>
+  <div class="menu menuRechts"><button class="mknop" type="button" title="Bestand: nieuw, openen, kopie"><span id="dot" title="Niet opgeslagen in een bestand"></span><span class="lang"> Bestand</span> ▾</button>
     <div class="mlijst">
       <div id="status">Geen bestand gekoppeld</div>
 
@@ -633,7 +642,7 @@ dialog::backdrop{background:rgba(0,0,0,.45)}
 
 <script>
 "use strict";
-const VERSIE="20.3";
+const VERSIE="20.4";
 const VERSIE_DATUM="23-10-2026";
 /* ---------- Basis ---------- */
 const PALET=["#2d6a4f","#1B5EBE","#E8007D","#c77d1a","#7a4fa0","#0f8b8d","#5b6b2f","#3d5a80","#a0522d","#7AB648"];
