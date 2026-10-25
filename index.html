@@ -122,6 +122,14 @@ body.mobiel section.vlak>.rij:first-child{display:none}
 .vosug{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}.vosug button{background:#fff;border:2px solid #2d6a4f;color:#1f4d39;border-radius:8px;padding:5px 10px;font-weight:700;cursor:pointer}
 .vosug button:hover{background:#e8f5ee}
 .voKl{position:relative;min-width:0}
+#mobPop.midden .mpop.breed{max-width:820px;zoom:1;max-height:88vh}
+.vktab tr.vkrij{cursor:pointer}.vktab tr.vkrij:hover td{background:#dbeafe}.vktab tr.vkwk td{background:#e9e3d6;font-weight:700}
+.vktab td,.vktab th{white-space:nowrap}.vktab td.vkopm{white-space:normal;color:#555;font-size:12px}
+.pbtab{width:100%;border-collapse:collapse;font-size:14px}.pbtab th,.pbtab td{border:1px solid #c9c2b2;padding:5px 8px;text-align:left}.pbtab th{background:#eee}
+.pbtab td.n{text-align:right;font-weight:700}.pbtab td.vl{font-weight:700;color:#1f4d39}.pbtab tr.tot td{font-weight:700;background:#e3f3ea}
+.pbkop{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:10px}.pbkop h2{margin:0}.pbteken{display:flex;gap:30px;margin-top:24px}.pbteken div{flex:1;border-top:1px solid #333;padding-top:4px;font-size:12px}
+#pakbonPrint{display:none}
+@media print{body.pbprint>*:not(#pakbonPrint){display:none!important}body.pbprint #pakbonPrint{display:block;font-size:12pt}body.pbprint .pbtab th{-webkit-print-color-adjust:exact;print-color-adjust:exact}}
 #voKlLijst{position:absolute;left:0;right:0;top:calc(100% + 2px);background:#fff;border:1px solid #c9bfa8;border-radius:6px;box-shadow:0 6px 16px rgba(0,0,0,.2);max-height:200px;overflow:auto;z-index:5}
 #voKlLijst[hidden],.vorder label[hidden]{display:none}
 #voKlLijst .vokr{padding:6px 10px;font-size:15px;color:#2b2b2b;cursor:pointer}
@@ -547,6 +555,7 @@ dialog::backdrop{background:rgba(0,0,0,.45)}
       <button data-tab="oppot">🪴 Oppotplan (invullen)</button>
       <button data-tab="klanten">👥 Klanten</button>
       <button type="button" onclick="verkoopOrder()">🧾 Verkooporder <span class="status">toets V</span></button>
+      <button data-tab="verkoop">📦 Overzicht verkooporders</button>
       <hr>
       <button data-tab="bestel">🛒 Bestelplanning</button>
       <button data-tab="werk">👷 Werkplanning</button>
@@ -577,6 +586,7 @@ dialog::backdrop{background:rgba(0,0,0,.45)}
       <button data-tab="bestel">Bestelplanning</button>
       <button data-tab="werk">Werkplanning</button>
       <button type="button" onclick="verkoopOrder()">🧾 Verkooporder <span class="status">toets V</span></button>
+      <button data-tab="verkoop">📦 Overzicht verkooporders</button>
       <button data-tab="weeklijst" class="uitgebreid">Weeklijst (printen)</button>
       <hr class="uitgebreid">
       <button id="btnPartij" type="button" class="uitgebreid">+ Partij met de hand</button>
@@ -698,7 +708,7 @@ dialog::backdrop{background:rgba(0,0,0,.45)}
 
 <script>
 "use strict";
-const VERSIE="22.8";
+const VERSIE="22.9";
 const VERSIE_DATUM="25-10-2026";
 /* ---------- Basis ---------- */
 const PALET=["#2d6a4f","#1B5EBE","#E8007D","#c77d1a","#7a4fa0","#0f8b8d","#5b6b2f","#3d5a80","#a0522d","#7AB648"];
@@ -1225,7 +1235,7 @@ function render(){
   /* eenvoudige versie: alleen teelt & soorten, leveranciers, oppotplan, bestel-, aflever- en werkplanning en mobiel */
   const eenv=!!data.instellingen.eenvoudig;document.body.classList.toggle("eenvoudig",eenv);
   {const b=document.getElementById("btnModus");if(b)b.textContent=eenv?"⚙️ Alle functies tonen":"⚙️ Eenvoudige versie"}
-  if(eenv&&!["soorten","leveranciers","klanten","oppot","oppotov","bestel","aflever","werk","mobiel"].includes(tab))tab="oppot"; // Soort en Teeltduur zitten nu bij Teelt & soorten
+  if(eenv&&!["soorten","leveranciers","klanten","oppot","oppotov","bestel","aflever","werk","mobiel","verkoop"].includes(tab))tab="oppot"; // Soort en Teeltduur zitten nu bij Teelt & soorten
   onthoudPagina();
   /* Teelt & soorten opent altijd met alles ingeklapt */
   if(tab==="soorten"&&vorigeTab!=="soorten"&&!houdOpen&&typeof teeltOpen!=="undefined")teeltOpen.clear();
@@ -1237,17 +1247,17 @@ function render(){
   zetVinkjes(); zetNavKnoppen(); toonKwekerij(); $("#btnStart").textContent=(zelfPlannen()?"Partijen klaarzetten ":"Vloeren vullen ")+planJaar;
   $("#btnStart").title=zelfPlannen()?"Maak de partijen uit het oppotplan klaar. Jij sleept ze daarna zelf naar een vloer.":"Zet alle partijen van het oppotplan op de vloeren";
   document.body.classList.toggle("ovmodus",tab==="oppotov"||tab==="aflever"||tab==="bestel");{const ob=document.getElementById("ovBalk");if(ob&&tab!=="oppotov"&&tab!=="aflever"&&tab!=="bestel")ob.hidden=true}
-  document.body.classList.toggle("afl",tab==="aflever"||tab==="werk"||tab==="bestel"||tab==="oppotov");
-  document.body.classList.toggle("smal",["kappen","soorten","rassen","duren","leveranciers","klanten","bestel","oppotov","aflever","werk","weeklijst"].includes(tab));
+  document.body.classList.toggle("afl",tab==="verkoop"||tab==="aflever"||tab==="werk"||tab==="bestel"||tab==="oppotov");
+  document.body.classList.toggle("smal",["kappen","soorten","rassen","duren","leveranciers","klanten","bestel","oppotov","aflever","werk","weeklijst","verkoop"].includes(tab));
   document.body.classList.toggle("duren",tab==="duren");
   document.body.classList.toggle("pgSoorten",tab==="soorten");
   $("#vensterKnoppen").style.display=(tab==="plan"||tab==="teelt")?"":"none";
-  $("#zoek").style.display=["kappen","soorten","rassen","duren","oppot","leveranciers","mobiel","klanten","bestel","oppotov","aflever","werk","weeklijst","proef"].includes(tab)?"none":"";
+  $("#zoek").style.display=["kappen","soorten","rassen","duren","oppot","leveranciers","mobiel","klanten","bestel","oppotov","aflever","werk","weeklijst","proef","verkoop"].includes(tab)?"none":"";
   document.body.classList.toggle("mobiel",tab==="mobiel");
   document.body.classList.toggle("klassiek",data.instellingen.kleuren==="klassiek");
   $("#jaarLabel").textContent=planJaar;
   if($("#duurVenster")&&$("#duurVenster").open)vulDuur();
-  ({soorten:toonSoorten,rassen:toonRassen,leveranciers:toonLeveranciers,mobiel:toonMobiel,registraties:toonRegistraties,bestel:toonBestel,oppotov:toonOppotOv,klanten:toonKlanten,aflever:toonAflever,werk:toonWerk,weeklijst:toonWeeklijst,proef:toonProef,plan:toonPlan,teelt:toonTeelt,partijen:toonPartijen,duren:toonDuren,oppot:toonOppot,ruimte:toonRuimte,gereed:toonGereed,kappen:toonKappen})[tab]();
+  ({verkoop:toonVerkoop,soorten:toonSoorten,rassen:toonRassen,leveranciers:toonLeveranciers,mobiel:toonMobiel,registraties:toonRegistraties,bestel:toonBestel,oppotov:toonOppotOv,klanten:toonKlanten,aflever:toonAflever,werk:toonWerk,weeklijst:toonWeeklijst,proef:toonProef,plan:toonPlan,teelt:toonTeelt,partijen:toonPartijen,duren:toonDuren,oppot:toonOppot,ruimte:toonRuimte,gereed:toonGereed,kappen:toonKappen})[tab]();
 }
 const wkKop=l=>l.map((d,i)=>{const{w,y}=isoWeek(d),jw=i>0&&w===1;return`<th class="wk ${d.getTime()===dezeWeek()?"nu":""} ${jw?"jw":""}" title="wk ${w} (${y})">${jw?`<span class="jaartje">${y}</span>`:""}${w}</th>`}).join("");
 /* Kleuren in het vloerenplan: "zacht" (oppotten oranje, uitgezet groen, zwarte cijfers), "product" (pastel per product), "klassiek" */
@@ -3363,7 +3373,7 @@ function voSplits(d){const t=voWeekT(),k=voKey(),n=voGetal(vo.n),hier=Math.max(0
   let klant=String(vo.klant||"").trim();if(!klant){alert("Vul een klant in.");document.getElementById("voKlant").focus();return}
   const b=data.klanten.find(x=>x.naam.toLowerCase()===klant.toLowerCase());if(b)klant=b.naam;else klantErbij(klant);
   const opm=String(vo.opm||"").trim();data.verkoop=data.verkoop||{};
-  const zet=(tt,m)=>{if(m<=0)return;const key=k+"|"+wkCode(tt);(data.verkoop[key]=data.verkoop[key]||[]).push(opm?{klant,n:m,opmerking:opm}:{klant,n:m})};
+  const zet=(tt,m)=>{if(m<=0)return;const key=k+"|"+wkCode(tt),dt=tt===t?vo.datum:datumTekst(plusWeken(leesDatum(vo.datum),d));(data.verkoop[key]=data.verkoop[key]||[]).push({klant,n:m,datum:dt,...(opm?{opmerking:opm}:{})})};
   zet(t,hier);zet(t2,tek);opslaanLater();vo.n="";vo.opm="";vo.nieuw=false;vo.klant=klant;sluitMobSoort();if(tab!=="aflever"&&tab!=="mobiel"&&tab!=="oppotov")render();
   melding(`✓ Verkocht aan ${esc(klant)}: ${getal(hier)} in wk ${wkCode(t)} + ${getal(tek)} in wk ${wkCode(t2)}`,"#2d6a4f")}
 /* Klantkiezer: eigen lijst onder het vakje, gekozen regel blauw */
@@ -3391,7 +3401,7 @@ function voOpslaan(){const t=voWeekT(),k=voKey(),n=voGetal(vo.n);let klant=Strin
   if(!n){alert("Vul een aantal in.");document.getElementById("voN").focus();return}
   const over=voBes(k,t)-n;if(over<0&&!confirm(`Tekort van ${getal(-over)} planten in week ${wkCode(t)}.\nToch opslaan?`))return;
   const b=data.klanten.find(x=>x.naam.toLowerCase()===klant.toLowerCase());if(b)klant=b.naam;else klantErbij(klant);
-  data.verkoop=data.verkoop||{};const key=k+"|"+wkCode(t);const opm=String(vo.opm||"").trim();(data.verkoop[key]=data.verkoop[key]||[]).push(opm?{klant,n,opmerking:opm}:{klant,n});
+  data.verkoop=data.verkoop||{};const key=k+"|"+wkCode(t);const opm=String(vo.opm||"").trim();(data.verkoop[key]=data.verkoop[key]||[]).push({klant,n,datum:vo.datum,...(opm?{opmerking:opm}:{})});
   opslaanLater();vo.n="";vo.opm="";vo.nieuw=false;vo.klant=klant;sluitMobSoort();if(tab!=="aflever"&&tab!=="mobiel"&&tab!=="oppotov")render();
   melding(`✓ Verkocht: ${getal(n)} × ${esc(k.replace("|"," · "))} aan ${esc(klant)} · week ${wkCode(t)}`,"#2d6a4f")}
 /* sneltoets: alleen V (niet tijdens typen), of Alt + V */
@@ -3399,6 +3409,59 @@ document.addEventListener("keydown",e=>{if(e.code!=="KeyV"||e.ctrlKey||e.metaKey
   if(!e.altKey){const el=document.activeElement;if(e.shiftKey||(el&&el.closest("input,textarea,select,[contenteditable]"))||document.querySelector("dialog[open]"))return;
     const m=document.getElementById("mobPop");if(m&&!m.hidden)return}
   e.preventDefault();verkoopOrder()});
+
+/* ---------- Overzicht verkooporders + pakbon ---------- */
+let vkVanaf=true,vkKlant="",vkPlek=null;
+function verkoopLijst(){const l=[];for(const[key,arr]of Object.entries(data.verkoop||{})){const p=key.split("|");if(p.length<3)continue;
+    const code=p[2],y=2000+ +code.slice(0,2),w=+code.slice(2),t=+maandagIso(y,w);
+    (arr||[]).forEach((x,i)=>{if(!(+x.n))return;l.push({key,i,k:p[0]+"|"+p[1],gewas:p[0],soort:p[1],code,t,y,w,klant:x.klant||"(geen klant)",n:+x.n||0,opm:x.opmerking||"",datum:x.datum||""})})}
+  return l.sort((a,b)=>a.t-b.t||a.klant.localeCompare(b.klant,"nl")||a.gewas.localeCompare(b.gewas,"nl")||a.soort.localeCompare(b.soort,"nl"))}
+/* waar staan de planten: afd en vloer (uitzetfase) van de partijen die in die week rapen */
+function maakPlekMap(){vkPlek=new Map();
+  for(const r of afleverRegels()){if(!(r.aantal>0))continue;const k=r.product+"|"+r.soort+"|"+r.t,s=vkPlek.get(k)||[];
+    if(r.rasId){const{w,y}=isoWeek(fasen(r.p).s),v=vloerEff(r.rasId,y,w);if(v.uitAfd||v.uit)s.push({afd:v.uitAfd||"",vloer:v.uit||""})}
+    if(!data.instellingen.eenvoudig&&r.p.kappen2&&r.p.kappen2.length){const vl=[...new Set(r.p.kappen2.map(x=>{const kk=data.kappen.find(q=>q.naam===x.kap);return kk?kk.vloerNaam:x.kap}))];s.push({afd:"",vloer:vl.join(", ").replace(/Vloer\s*/gi,"")})}
+    vkPlek.set(k,s)}}
+function plekVan(k,t){const l=(vkPlek.get(k+"|"+t)||[]),uniek=[...new Map(l.map(x=>[x.afd+"|"+x.vloer,x])).values()];
+  return{afd:[...new Set(uniek.map(x=>x.afd).filter(Boolean))].join(", "),vloer:[...new Set(uniek.map(x=>x.vloer).filter(Boolean))].join(", ")}}
+const datNL=d=>d?d.split("-").reverse().join("-"):"";
+function toonVerkoop(){maakPlekMap();const nu=dezeWeek();let l=verkoopLijst();
+  const klanten=[...new Set(l.map(r=>r.klant))].sort((a,b)=>a.localeCompare(b,"nl"));
+  if(vkVanaf)l=l.filter(r=>r.t>=nu);if(vkKlant)l=l.filter(r=>r.klant===vkKlant);
+  let h=`<div class="rij noprint" style="margin-bottom:10px"><h2 style="margin:0">📦 Verkooporders</h2>
+    <label class="status"><input type="checkbox" ${vkVanaf?"checked":""} onchange="vkVanaf=this.checked;render()"> vanaf deze week</label>
+    <select onchange="vkKlant=this.value;render()"><option value="">Alle klanten</option>${klanten.map(k=>`<option value="${esc(k)}" ${k===vkKlant?"selected":""}>${esc(k)}</option>`).join("")}</select>
+    <span style="flex:1"></span><button class="btn" onclick="verkoopOrder()">+ Verkooporder</button><button class="btn licht klein" onclick="window.print()">Afdrukken</button></div>
+    <div class="printkop"><h2>Verkooporders${vkKlant?" · "+esc(vkKlant):""}</h2></div>`;
+  if(!l.length){$("#inhoud").innerHTML=h+`<div class="leeg">Geen verkooporders${vkVanaf?" vanaf deze week":""}. Maak er een met <b>toets V</b>.</div>`;return}
+  h+=`<p class="status noprint" style="margin:0 0 6px">Klik op een regel voor de pakbon van die klant in die week.</p>
+    <table class="besteltabel afltabel vktab"><tr><th>Week</th><th>Datum</th><th>Klant</th><th>Gewas</th><th>Soort</th><th style="text-align:right">Aantal</th><th>Afd</th><th>Vloer</th><th>Opmerking</th><th class="noprint"></th></tr>`;
+  let vorige=null;
+  for(const r of l){if(r.code!==vorige){vorige=r.code;const som=l.filter(x=>x.code===r.code).reduce((a,x)=>a+x.n,0);
+      h+=`<tr class="vkwk"><td colspan="10">Week ${r.code}${r.t===nu?" · deze week":""} · ${getal(som)} planten</td></tr>`}
+    const pl=plekVan(r.k,r.t);
+    h+=`<tr class="vkrij" data-klant="${esc(r.klant)}" data-code="${r.code}" onclick="pakbonVan(this)"><td>${r.code}</td><td>${datNL(r.datum)}</td><td><b>${esc(r.klant)}</b></td><td>${esc(r.gewas)}</td><td>${esc(r.soort)}</td>
+      <td style="text-align:right"><b>${getal(r.n)}</b></td><td>${esc(pl.afd)}</td><td><b>${esc(pl.vloer)||'<span class="let">?</span>'}</b></td><td class="vkopm">${esc(r.opm)}</td>
+      <td class="noprint"><button class="btn rood klein" title="Order verwijderen" onclick="event.stopPropagation();vkWeg('${esc(r.key)}',${r.i})">✕</button></td></tr>`}
+  $("#inhoud").innerHTML=h+`</table>`}
+function vkWeg(key,i){const l=(data.verkoop||{})[key];if(!l||!l[i])return;if(!confirm(`Order verwijderen?\n${l[i].klant}: ${getal(l[i].n)} planten`))return;
+  l.splice(i,1);if(!l.length)delete data.verkoop[key];opslaanLater();render()}
+function pakbonInhoud(klant,code){if(!vkPlek)maakPlekMap();const l=verkoopLijst().filter(r=>r.klant===klant&&r.code===code),k=data.klanten.find(x=>x.naam===klant)||{};
+  const y=2000+ +code.slice(0,2),w=+code.slice(2),dat=[...new Set(l.map(r=>datNL(r.datum)).filter(Boolean))];
+  let tp=0,tt=0;const rijen=l.map(r=>{const ras=data.rassen.find(x=>x.naam===r.soort&&data.teeltduren.some(t=>t.id===x.teeltId&&voLabel(t)===r.gewas)),f=ras?ras.fust:"",fn=fustAantal(f),tr=fn?Math.ceil(r.n/fn):0,pl=plekVan(r.k,r.t);tp+=r.n;tt+=tr;
+    return`<tr><td>${esc(r.gewas)}</td><td>${esc(r.soort)}</td><td>${esc(f)}</td><td class="n">${getal(r.n)}</td><td class="n">${fn?getal(tr):""}</td><td>${esc(pl.afd)}</td><td class="vl">${esc(pl.vloer)||"?"}</td><td>☐</td></tr>${r.opm?`<tr><td colspan="8" style="font-size:12px;color:#555">💬 ${esc(r.opm)}</td></tr>`:""}`}).join("");
+  return`<div class="pbkop"><div><h2>Pakbon</h2><div><b>${esc(KLANT.appNaam)}</b></div></div>
+    <div style="text-align:right"><div>Week <b>${code}</b> (week ${w} van ${y})</div>${dat.length?`<div>Datum: <b>${dat.join(", ")}</b></div>`:""}</div></div>
+    <div style="margin-bottom:10px"><b>Klant:</b> ${esc(klant)}${k.plaats?" · "+esc(k.plaats):""}${k.contact?`<br>${esc(k.contact)}`:""}${k.telefoon?" · "+esc(k.telefoon):""}</div>
+    <table class="pbtab"><tr><th>Gewas</th><th>Soort</th><th>Fust</th><th style="text-align:right">Aantal</th><th style="text-align:right">Trays</th><th>Afd</th><th>Vloer</th><th>✓</th></tr>${rijen}
+    <tr class="tot"><td colspan="3">Totaal</td><td class="n">${getal(tp)}</td><td class="n">${tt?getal(tt):""}</td><td colspan="3"></td></tr></table>
+    <div class="pbteken"><div>Klaargezet door</div><div>Handtekening klant</div></div>`}
+function pakbonVan(tr){const klant=tr.dataset.klant,code=tr.dataset.code;
+  toonPop("📦 Pakbon · "+klant+" · week "+code,pakbonInhoud(klant,code)+`<div class="rij" style="margin-top:14px"><span style="flex:1"></span><button class="btn" onclick="pakbonPrint(this)" data-klant="${esc(klant)}" data-code="${code}">🖨️ Pakbon afdrukken</button></div>`);
+  const m=document.querySelector("#mobPop .mpop");if(m)m.classList.add("breed")}
+function pakbonPrint(b){let d=document.getElementById("pakbonPrint");if(!d){d=document.createElement("div");d.id="pakbonPrint";document.body.appendChild(d)}
+  d.innerHTML=pakbonInhoud(b.dataset.klant,b.dataset.code);document.body.classList.add("pbprint");
+  const uit=()=>{document.body.classList.remove("pbprint");window.removeEventListener("afterprint",uit)};window.addEventListener("afterprint",uit);window.print();setTimeout(uit,1500)}
 
 /* ---------- Weeklijst om te printen: wat moet er deze week gebeuren, en waar ---------- */
 let wlWeek=null;
@@ -3492,6 +3555,7 @@ function bestelCsv(){const jaar=planJaar,lev=data.leveranciers.find(l=>l.id===be
 
 /* ---------- Zoeken (blauwe knop / Ctrl+K): snel naar een pagina, product, partij, soort of leverancier ---------- */
 const PAGINAS=[
+  ["📦","Overzicht verkooporders","Pagina","verkooporders overzicht pakbon pakbonnen orders verkocht klant",()=>naar("verkoop")],
   ["🧾","Verkooporder (toets V)","Actie","verkoop verkooporder order verkopen klant bestelling",()=>verkoopOrder()],
   ["🏠","Vloeren","Stamdata","vloeren kappen kas vakken oppotvloer m2 rijen",()=>naar("kappen")],
   ["🌱","Teelt & soorten","Stamdata","teelt producten potmaat planten per m2 wijderzetten soort soorten ras rassen kleur leverancier teeltduur duur weken oppotfase",()=>naar("soorten")],
@@ -3520,6 +3584,7 @@ const PAGINAS=[
 ];
 function naar(t){tab=t;render()}
 const PAGINAS_E=[
+  ["📦","Overzicht verkooporders","Pagina","verkooporders overzicht pakbon pakbonnen orders verkocht klant",()=>naar("verkoop")],
   ["🧾","Verkooporder (toets V)","Actie","verkoop verkooporder order verkopen klant bestelling",()=>verkoopOrder()],
   ["🚛","Af te leveren","Pagina","afleveren afleverplan verkoop verkocht beschikbaar rapen vloer",()=>naar("aflever")],
   ["🪴","Op te potten","Pagina","oppotten oppotoverzicht trays m2 afdeling vloer",()=>naar("oppotov")],
