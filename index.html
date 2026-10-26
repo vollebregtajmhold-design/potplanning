@@ -716,7 +716,7 @@ dialog::backdrop{background:rgba(0,0,0,.45)}
 
 <script>
 "use strict";
-const VERSIE="23.6";
+const VERSIE="23.7";
 const VERSIE_DATUM="25-10-2026";
 /* ---------- Basis ---------- */
 const PALET=["#2d6a4f","#1B5EBE","#E8007D","#c77d1a","#7a4fa0","#0f8b8d","#5b6b2f","#3d5a80","#a0522d","#7AB648"];
@@ -3297,11 +3297,10 @@ function toonAflever(){syncSoorten();
     h+=`<table class="ovtabel" data-st="afl" data-codes='${JSON.stringify(alleWk.map(code))}' onmouseover="ovKruis(event)" onmouseleave="ovKruis(event)">
       <tr><th class="ovnaam">${kop}</th>${alleWk.map((t,c)=>`<th data-c="${c}"${vis(c)} class="${t===nu?"nu":""}" title="Week ${isoWeek(new Date(t)).w} van ${isoWeek(new Date(t)).y}">${code(t)}</th>`).join("")}</tr>`;
     if(!kls.length)h+=`<tr><td class="ovnaam" colspan="${alleWk.length+1}"><span class="status">Nog geen verkoop in dit seizoen.</span></td></tr>`;
-    const cl=(v,t)=>`${v?` class="ovmin" style="cursor:pointer" title="Klik: pakbon" onclick="pakbonVan({dataset:{klant:this.parentNode.dataset.kl,code:'${code(t)}'}})"`:""}>${v?getal(-v):'<span class="ovleeg">—</span>'}`;
+    const cl=(v,t)=>`${v?` class="ovmin" style="cursor:pointer" title="Klik: verkoop bekijken of wijzigen" onclick="klantWeekPop(this.parentNode.dataset.kl,'${code(t)}')"`:""}>${v?getal(-v):'<span class="ovleeg">—</span>'}`;
     for(const kl of kls){
       h+=`<tr data-kl="${esc(kl)}" class="ovklrij"><td class="ovnaam"><b>${esc(kl)}</b></td>${alleWk.map((t,c)=>`<td data-c="${c}" data-v="${pk[kl][code(t)]||0}"${vis(c)}${cl(pk[kl][code(t)]||0,t)}</td>`).join("")}</tr>`;
-      for(const ks of Object.keys(pkS[kl]).sort((a,b)=>a.localeCompare(b,"nl"))){const[pr,so]=ks.split("|");
-        h+=`<tr data-kl="${esc(kl)}" class="ovklsub"><td class="ovnaam"><span class="status">${esc(pr)}</span> · ${esc(so)}</td>${alleWk.map((t,c)=>`<td data-c="${c}" data-v="${pkS[kl][ks][code(t)]||0}"${vis(c)}${cl(pkS[kl][ks][code(t)]||0,t)}</td>`).join("")}</tr>`}}
+}
     h+=`<tr class="ovtot"><td class="ovnaam">Totaal verkocht</td>${alleWk.map((t,c)=>{const v=kls.reduce((a,kl)=>a+(pk[kl][code(t)]||0),0);return`<td data-c="${c}"${vis(c)}${v?' class="ovmin"':""}>${v?getal(-v):'<span class="ovleeg">—</span>'}</td>`}).join("")}</tr></table>`;
     $("#inhoud").innerHTML=h;ovSchuifLive();return}
   h+=`<table class="ovtabel" data-st="afl" data-codes='${JSON.stringify(alleWk.map(code))}' onmouseover="ovKruis(event)" onmouseleave="ovKruis(event)" onclick="ovKlik(event)">
@@ -3440,6 +3439,21 @@ const ZV=()=>{try{return localStorage.getItem("potplanning-zv")==="1"}catch(e){r
 function zvKlaar(){const z=ZV();document.body.classList.toggle("zv",z);const a=document.getElementById("zvAlles"),b=document.getElementById("zvBes");if(a)a.classList.toggle("aan",!z);if(b)b.classList.toggle("aan",z);
   if(z&&["afdop","vlop","afduit","vluit"].includes(ovEenheid))ovEenheid="planten"}
 function zetZV(z){try{localStorage.setItem("potplanning-zv",z?"1":"0")}catch(e){}zvKlaar();render();melding(z?"Alleen beschikbaarheid: afd en vloer zijn verborgen":"Alles wordt weer getoond","#2d6a4f")}
+/* Popup: verkoop van één klant in één week, aantal en opmerking wijzigen */
+function klantWeekPop(klant,code){const l=verkoopLijst().filter(r=>r.klant===klant&&r.code===code);let som=0;
+  let h=l.map(r=>{som+=r.n;return`<div class="mpart"><b>${esc(r.soort)}</b> <span class="status">· ${esc(r.gewas)}</span>
+    <div class="verkrij" style="margin-top:4px"><span class="status" style="width:60px">Aantal</span><input class="verkn" type="text" inputmode="numeric" value="${r.n}" onchange="kwZet('${esc(r.key)}',${r.i},'n',this.value,'${esc(klant)}','${code}')">
+      <button class="btn rood klein" title="Weg" onclick="kwZet('${esc(r.key)}',${r.i},'weg','','${esc(klant)}','${code}')">✕</button></div>
+    <div class="verkrij"><span class="status" style="width:60px">Opmerking</span><input value="${esc(r.opm)}" placeholder="opmerking" onchange="kwZet('${esc(r.key)}',${r.i},'opmerking',this.value,'${esc(klant)}','${code}')"></div></div>`}).join("");
+  if(!l.length)h=`<div class="status" style="padding:8px 0">Geen verkoop meer in deze week.</div>`;
+  else h+=`<div class="mrij tot"><span>Totaal</span><b>${getal(som)} planten</b></div>`;
+  h+=`<div class="rij" style="margin-top:12px"><button class="btn licht" onclick="vo=Object.assign(vo||{},{klant:'${esc(klant)}',nieuw:false,datum:datumTekst(maandagIso(2000+${+code.slice(0,2)},${+code.slice(2)})),n:''});verkoopOrder()">+ Regel erbij</button><span style="flex:1"></span>${l.length?`<button class="btn" onclick="pakbonVan({dataset:{klant:'${esc(klant)}',code:'${code}'}})">📦 Pakbon</button>`:""}</div>`;
+  toonPop(klant+" · week "+code,h)}
+function kwZet(key,i,veld,v,klant,code){const l=(data.verkoop||{})[key];if(!l||!l[i])return;
+  if(veld==="weg"){if(!confirm("Deze regel verwijderen?"))return;l.splice(i,1)}
+  else if(veld==="n"){const n=Math.max(0,Math.round(+String(v).replace(/[.\s]/g,"").replace(",",".")||0));if(n)l[i].n=n;else l.splice(i,1)}
+  else{v=String(v).trim();if(v)l[i].opmerking=v;else delete l[i].opmerking}
+  if(!l.length)delete data.verkoop[key];opslaanLater();render();klantWeekPop(klant,code)}
 /* ---------- Overzicht verkooporders + pakbon ---------- */
 let vkVanaf=true,vkKlant="",vkPlek=null;
 function verkoopLijst(){const l=[];for(const[key,arr]of Object.entries(data.verkoop||{})){const p=key.split("|");if(p.length<3)continue;
