@@ -187,6 +187,7 @@ body.ovmodus section.vlak>.rij:first-child{display:none!important}
 .ovtabel th,.ovtabel td{border:1px solid #c9c2b6;padding:5px 9px;text-align:center;font-weight:700;white-space:nowrap}
 .ovtabel th{background:#b9b9b9;color:#222}.ovtabel th.nu{background:#fff7b3}
 .ovtabel .ovnaam{text-align:left;min-width:220px}
+.ovtabel tr.ovklrij td{background:#e9e3d6;font-weight:700;border-top:2px solid #999}.ovtabel tr.ovklsub td{font-weight:400}.ovtabel tr.ovklsub td.ovnaam{padding-left:26px}
 .ovrijkeus{font:inherit;font-weight:700;background:#fff;border:1px solid #999;border-radius:6px;padding:2px 6px;cursor:pointer}.ovtabel .ovleeg{color:#aaa;font-weight:400}
 .ovtabel tr.ovtot td{background:#e3f3ea}
 .ovtabel td[data-k]{cursor:pointer}.ovtabel tr.hlr td,.ovtabel .hlc{background:#dbeafe!important}.ovtabel tr td.hlx{background:#a9cdfa!important}.ovtabel th.hlc{background:#dbeafe!important}
@@ -715,7 +716,7 @@ dialog::backdrop{background:rgba(0,0,0,.45)}
 
 <script>
 "use strict";
-const VERSIE="23.4";
+const VERSIE="23.5";
 const VERSIE_DATUM="25-10-2026";
 /* ---------- Basis ---------- */
 const PALET=["#2d6a4f","#1B5EBE","#E8007D","#c77d1a","#7a4fa0","#0f8b8d","#5b6b2f","#3d5a80","#a0522d","#7AB648"];
@@ -3289,14 +3290,18 @@ function toonAflever(){syncSoorten();
   const kop=`<select class="ovrijkeus" onclick="event.stopPropagation()" onchange="aflRij=this.value;if(aflRij==='klant')aflMod='verk';render()" title="Rijen: per teelt · soort of per klant"><option value="teelt" ${aflRij==="teelt"?"selected":""}>Teelt · soort</option><option value="klant" ${aflRij==="klant"?"selected":""}>Klant</option></select>`;
   if(aflRij==="klant"){
     /* per klant: alleen klanten met een verkoop, zelfde weken en totalen */
-    const pk={};for(const[key,arr]of Object.entries(data.verkoop||{})){const p=key.split("|");if(p.length!==3||!codes.has(p[2])||(teeltFilter&&p[0]!==tlF))continue;
-      for(const x of arr||[]){const n=+x.n||0;if(!n)continue;const kl=x.klant||"(geen klant)";pk[kl]=pk[kl]||{};pk[kl][p[2]]=(pk[kl][p[2]]||0)+n}}
+    const pk={},pkS={};for(const[key,arr]of Object.entries(data.verkoop||{})){const p=key.split("|");if(p.length!==3||!codes.has(p[2])||(teeltFilter&&p[0]!==tlF))continue;
+      for(const x of arr||[]){const n=+x.n||0;if(!n)continue;const kl=x.klant||"(geen klant)",ks=p[0]+"|"+p[1];pk[kl]=pk[kl]||{};pk[kl][p[2]]=(pk[kl][p[2]]||0)+n;
+        const sp=(pkS[kl]=pkS[kl]||{});sp[ks]=sp[ks]||{};sp[ks][p[2]]=(sp[ks][p[2]]||0)+n}}
     const kls=Object.keys(pk).sort((a,b)=>a.localeCompare(b,"nl"));
     h+=`<table class="ovtabel" data-codes='${JSON.stringify(alleWk.map(code))}' onmouseover="ovKruis(event)" onmouseleave="ovKruis(event)">
       <tr><th class="ovnaam">${kop}</th>${alleWk.map((t,c)=>`<th data-c="${c}"${vis(c)} class="${t===nu?"nu":""}" title="Week ${isoWeek(new Date(t)).w} van ${isoWeek(new Date(t)).y}">${code(t)}</th>`).join("")}</tr>`;
     if(!kls.length)h+=`<tr><td class="ovnaam" colspan="${alleWk.length+1}"><span class="status">Nog geen verkoop in dit seizoen.</span></td></tr>`;
-    for(const kl of kls)h+=`<tr><td class="ovnaam"><b>${esc(kl)}</b></td>${alleWk.map((t,c)=>{const v=pk[kl][code(t)]||0;
-      return`<td data-c="${c}"${vis(c)}${v?` class="ovmin" style="cursor:pointer" title="Klik: pakbon" onclick="pakbonVan({dataset:{klant:this.parentNode.dataset.kl,code:'${code(t)}'}})"`:""}>${v?getal(-v):'<span class="ovleeg">—</span>'}</td>`}).join("")}</tr>`.replace("<tr>",`<tr data-kl="${esc(kl)}">`);
+    const cl=(v,t)=>`${v?` class="ovmin" style="cursor:pointer" title="Klik: pakbon" onclick="pakbonVan({dataset:{klant:this.parentNode.dataset.kl,code:'${code(t)}'}})"`:""}>${v?getal(-v):'<span class="ovleeg">—</span>'}`;
+    for(const kl of kls){
+      h+=`<tr data-kl="${esc(kl)}" class="ovklrij"><td class="ovnaam"><b>${esc(kl)}</b></td>${alleWk.map((t,c)=>`<td data-c="${c}"${vis(c)}${cl(pk[kl][code(t)]||0,t)}</td>`).join("")}</tr>`;
+      for(const ks of Object.keys(pkS[kl]).sort((a,b)=>a.localeCompare(b,"nl"))){const[pr,so]=ks.split("|");
+        h+=`<tr data-kl="${esc(kl)}" class="ovklsub"><td class="ovnaam"><span class="status">${esc(pr)}</span> · ${esc(so)}</td>${alleWk.map((t,c)=>`<td data-c="${c}"${vis(c)}${cl(pkS[kl][ks][code(t)]||0,t)}</td>`).join("")}</tr>`}}
     h+=`<tr class="ovtot"><td class="ovnaam">Totaal verkocht</td>${alleWk.map((t,c)=>{const v=kls.reduce((a,kl)=>a+(pk[kl][code(t)]||0),0);return`<td data-c="${c}"${vis(c)}${v?' class="ovmin"':""}>${v?getal(-v):'<span class="ovleeg">—</span>'}</td>`}).join("")}</tr></table>`;
     $("#inhoud").innerHTML=h;ovSchuifLive();return}
   h+=`<table class="ovtabel" data-st="afl" data-codes='${JSON.stringify(alleWk.map(code))}' onmouseover="ovKruis(event)" onmouseleave="ovKruis(event)" onclick="ovKlik(event)">
