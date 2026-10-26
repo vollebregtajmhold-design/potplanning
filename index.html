@@ -728,7 +728,7 @@ dialog::backdrop{background:rgba(0,0,0,.45)}
 
 <script>
 "use strict";
-const VERSIE="25.4";
+const VERSIE="25.6";
 const VERSIE_DATUM="25-10-2026";
 /* ---------- Basis ---------- */
 const PALET=["#2d6a4f","#1B5EBE","#E8007D","#c77d1a","#7a4fa0","#0f8b8d","#5b6b2f","#3d5a80","#a0522d","#7AB648"];
@@ -3170,9 +3170,10 @@ function toonOppotOv(){
     ob.innerHTML=`<span class="ovtitel">Op te potten</span>
     <select class="ovjaar" onchange="planJaar=+this.value;render()">${[-2,-1,0,1,2].map(d=>planJaar+d).map(j=>`<option value="${j}" ${j===jaar?"selected":""}>Jaar ${j}</option>`).join("")}</select>
     ${teeltKeuze()}
-    ${extra||""}
     <select class="ovjaar" onchange="ovEenheid=this.value;render()" title="Wat ziet u in de cellen">${Object.entries(EH).filter(([v])=>!ZV()||!["afdop","vlop","afduit","vluit"].includes(v)).map(([v,n])=>`<option value="${v}" ${ovEenheid===v?"selected":""}>${n.startsWith("m²")?n:n[0].toUpperCase()+n.slice(1)}</option>`).join("")}</select>
-    <button class="ovk ovlink" onclick="naar('oppot')" title="Aantallen per week invullen">🪴 Oppotplan ›</button><button class="ovk ovlink" onclick="naar('ruimtegraf')" title="Hoeveel m² is er per week nodig, per teelt">📊 Ruimte ›</button><span class="ovinfo" id="ovAantalTxt" data-n="${info||""}"></span>`;return""};
+    ${extra||""}
+    <span style="flex:1"></span>
+    <button class="ovk ovlink" onclick="naar('ruimtegraf')" title="Hoeveel m² is er per week nodig, per teelt">📊 Ruimte ›</button><button class="ovk ovlink" onclick="naar('oppot')" title="Aantallen per week invullen">🪴 Oppotplan ›</button>`;return""};
   if(!regels.length){$("#inhoud").innerHTML=kop()+h+`<div class="leeg" style="padding:30px">Nog niets in het <a href="#" onclick="naar('oppot');return false">Oppotplan</a> voor ${jaar}.</div>`;return}
   const alleW=[...new Set(regels.map(r=>r.w))].sort((a,b)=>a-b),cel={},rijen=new Set(),tot={};
   if(ovJaar!==jaar||ovStart===null){ovJaar=jaar;const nuW0=nu.y===jaar?nu.w:0;let i=alleW.findIndex(w=>w>=nuW0);ovStart=i<0?0:i;ovEind=alleW.length-1}
@@ -3320,8 +3321,7 @@ function toonAflever(){syncSoorten();
         <input type="range" id="ovHi" min="0" max="${M}" value="${aflS.eind}" oninput="ovSchuifLive()" onchange="ovSchuifLive()"></div>
       <span id="ovSchuifTxt" class="ovinfo"></span></div>
     ${[["afl","Afleverplan"],["verk","Verkocht"],["vers","Nog beschikbaar"]].map(([v,n])=>`<button class="ovk ${aflMod===v?"aan":""} ${v!=="afl"?"nivVerk":""}" onclick="aflMod='${v}';if(aflMod!=='verk')aflRij='teelt';render()">${n}</button>`).join("")}
-
-    <span class="ovinfo" id="ovAantalTxt" data-n="soorten"></span>`;
+`;
   let h=`<div class="printkop"><h2>Af te leveren seizoen ${jaar} (wk ${S} ${jaar} t/m wk ${eindWk.w} ${eindWk.y})</h2></div>`;
   if(!regels.length&&!Object.keys(data.verkoop||{}).length){$("#inhoud").innerHTML=h+`<div class="leeg" style="padding:30px">Niets af te leveren in dit seizoen.</div>`;return}
   const cel={},tot={},rijen=new Set();aflDetail={};
@@ -3759,13 +3759,13 @@ const PAGINAS=[
 ];
 function naar(t){tab=t;render()}
 const PAGINAS_E=[
+  ["🚛","Af te leveren (overzicht)","Pagina","afleveren afleverplan verkoop verkocht beschikbaar rapen vloer",()=>naar("aflever")],
+  ["🪴","Op te potten (overzicht)","Pagina","oppotten oppotoverzicht trays m2 afdeling vloer",()=>naar("oppotov")],
+  ["✏️","Oppotplan (invullen)","Pagina","oppotplan aantallen invullen per week",()=>naar("oppot")],
+  ["🌱","Teelten en soorten (instellen)","Pagina","teelt soorten raaptijd uitval fust prijs teeltduur invoer soortnummer",()=>naar("soorten")],
   ["📊","Ruimte (m² per week)","Pagina","ruimte m2 grafiek bezetting kas beschikbaarheid",()=>naar("ruimtegraf")],
   ["📦","Overzicht verkooporders","Pagina","verkooporders overzicht pakbon pakbonnen orders verkocht klant",()=>naar("verkoop")],
   ["🧾","Verkooporder (toets V)","Actie","verkoop verkooporder order verkopen klant bestelling",()=>verkoopOrder()],
-  ["🚛","Af te leveren","Pagina","afleveren afleverplan verkoop verkocht beschikbaar rapen vloer",()=>naar("aflever")],
-  ["🪴","Op te potten","Pagina","oppotten oppotoverzicht trays m2 afdeling vloer",()=>naar("oppotov")],
-  ["✏️","Oppotplan (invullen)","Pagina","oppotplan aantallen invullen per week",()=>naar("oppot")],
-  ["🌱","Teelten en soorten","Pagina","teelt soorten raaptijd uitval fust prijs teeltduur",()=>naar("soorten")],
   ["👥","Klanten","Pagina","klanten klant lijst verkoop",()=>naar("klanten")],
   ["🛒","Bestelplanning","Pagina","bestellen bestelplanning bestellijst",()=>naar("bestel")],
   ["👷","Werkplanning","Pagina","werkplanning uren werk",()=>naar("werk")],
