@@ -716,7 +716,7 @@ dialog::backdrop{background:rgba(0,0,0,.45)}
 
 <script>
 "use strict";
-const VERSIE="23.7";
+const VERSIE="23.9";
 const VERSIE_DATUM="25-10-2026";
 /* ---------- Basis ---------- */
 const PALET=["#2d6a4f","#1B5EBE","#E8007D","#c77d1a","#7a4fa0","#0f8b8d","#5b6b2f","#3d5a80","#a0522d","#7AB648"];
@@ -1243,7 +1243,7 @@ function render(){zvKlaar();
   /* eenvoudige versie: alleen teelt & soorten, leveranciers, oppotplan, bestel-, aflever- en werkplanning en mobiel */
   const eenv=!!data.instellingen.eenvoudig;document.body.classList.toggle("eenvoudig",eenv);
   {const b=document.getElementById("btnModus");if(b)b.textContent=eenv?"⚙️ Alle functies tonen":"⚙️ Eenvoudige versie"}
-  if(eenv&&!["soorten","leveranciers","klanten","oppot","oppotov","bestel","aflever","werk","mobiel","verkoop"].includes(tab))tab="oppot"; // Soort en Teeltduur zitten nu bij Teelt & soorten
+  if(eenv&&!["soorten","leveranciers","klanten","oppot","oppotov","bestel","aflever","werk","mobiel","verkoop","ruimtegraf"].includes(tab))tab="oppot"; // Soort en Teeltduur zitten nu bij Teelt & soorten
   onthoudPagina();
   /* Teelt & soorten opent altijd met alles ingeklapt */
   if(tab==="soorten"&&vorigeTab!=="soorten"&&!houdOpen&&typeof teeltOpen!=="undefined")teeltOpen.clear();
@@ -1254,18 +1254,18 @@ function render(){zvKlaar();
   document.querySelectorAll("#balk .menu").forEach(m=>m.querySelector(".mknop").classList.toggle("actief",!!m.querySelector(".mlijst .actief")));
   zetVinkjes(); zetNavKnoppen(); toonKwekerij(); $("#btnStart").textContent=(zelfPlannen()?"Partijen klaarzetten ":"Vloeren vullen ")+planJaar;
   $("#btnStart").title=zelfPlannen()?"Maak de partijen uit het oppotplan klaar. Jij sleept ze daarna zelf naar een vloer.":"Zet alle partijen van het oppotplan op de vloeren";
-  document.body.classList.toggle("ovmodus",tab==="oppotov"||tab==="aflever"||tab==="bestel");{const ob=document.getElementById("ovBalk");if(ob&&tab!=="oppotov"&&tab!=="aflever"&&tab!=="bestel")ob.hidden=true}
-  document.body.classList.toggle("afl",tab==="verkoop"||tab==="aflever"||tab==="werk"||tab==="bestel"||tab==="oppotov");
-  document.body.classList.toggle("smal",["kappen","soorten","rassen","duren","leveranciers","klanten","bestel","oppotov","aflever","werk","weeklijst","verkoop"].includes(tab));
+  document.body.classList.toggle("ovmodus",tab==="oppotov"||tab==="aflever"||tab==="bestel"||tab==="ruimtegraf");{const ob=document.getElementById("ovBalk");if(ob&&tab!=="oppotov"&&tab!=="aflever"&&tab!=="bestel"&&tab!=="ruimtegraf")ob.hidden=true}
+  document.body.classList.toggle("afl",tab==="ruimtegraf"||tab==="verkoop"||tab==="aflever"||tab==="werk"||tab==="bestel"||tab==="oppotov");
+  document.body.classList.toggle("smal",["kappen","soorten","rassen","duren","leveranciers","klanten","bestel","oppotov","aflever","werk","weeklijst","verkoop","ruimtegraf"].includes(tab));
   document.body.classList.toggle("duren",tab==="duren");
   document.body.classList.toggle("pgSoorten",tab==="soorten");
   $("#vensterKnoppen").style.display=(tab==="plan"||tab==="teelt")?"":"none";
-  $("#zoek").style.display=["kappen","soorten","rassen","duren","oppot","leveranciers","mobiel","klanten","bestel","oppotov","aflever","werk","weeklijst","proef","verkoop"].includes(tab)?"none":"";
+  $("#zoek").style.display=["kappen","soorten","rassen","duren","oppot","leveranciers","mobiel","klanten","bestel","oppotov","aflever","werk","weeklijst","proef","verkoop","ruimtegraf"].includes(tab)?"none":"";
   document.body.classList.toggle("mobiel",tab==="mobiel");
   document.body.classList.toggle("klassiek",data.instellingen.kleuren==="klassiek");
   $("#jaarLabel").textContent=planJaar;
   if($("#duurVenster")&&$("#duurVenster").open)vulDuur();
-  ({verkoop:toonVerkoop,soorten:toonSoorten,rassen:toonRassen,leveranciers:toonLeveranciers,mobiel:toonMobiel,registraties:toonRegistraties,bestel:toonBestel,oppotov:toonOppotOv,klanten:toonKlanten,aflever:toonAflever,werk:toonWerk,weeklijst:toonWeeklijst,proef:toonProef,plan:toonPlan,teelt:toonTeelt,partijen:toonPartijen,duren:toonDuren,oppot:toonOppot,ruimte:toonRuimte,gereed:toonGereed,kappen:toonKappen})[tab]();
+  ({ruimtegraf:toonRuimteGraf,verkoop:toonVerkoop,soorten:toonSoorten,rassen:toonRassen,leveranciers:toonLeveranciers,mobiel:toonMobiel,registraties:toonRegistraties,bestel:toonBestel,oppotov:toonOppotOv,klanten:toonKlanten,aflever:toonAflever,werk:toonWerk,weeklijst:toonWeeklijst,proef:toonProef,plan:toonPlan,teelt:toonTeelt,partijen:toonPartijen,duren:toonDuren,oppot:toonOppot,ruimte:toonRuimte,gereed:toonGereed,kappen:toonKappen})[tab]();
 }
 const wkKop=l=>l.map((d,i)=>{const{w,y}=isoWeek(d),jw=i>0&&w===1;return`<th class="wk ${d.getTime()===dezeWeek()?"nu":""} ${jw?"jw":""}" title="wk ${w} (${y})">${jw?`<span class="jaartje">${y}</span>`:""}${w}</th>`}).join("");
 /* Kleuren in het vloerenplan: "zacht" (oppotten oranje, uitgezet groen, zwarte cijfers), "product" (pastel per product), "klassiek" */
@@ -3133,7 +3133,7 @@ function toonOppotOv(){
     ${teeltKeuze()}
     ${extra||""}
     <select class="ovjaar" onchange="ovEenheid=this.value;render()" title="Wat ziet u in de cellen">${Object.entries(EH).filter(([v])=>!ZV()||!["afdop","vlop","afduit","vluit"].includes(v)).map(([v,n])=>`<option value="${v}" ${ovEenheid===v?"selected":""}>${n.startsWith("m²")?n:n[0].toUpperCase()+n.slice(1)}</option>`).join("")}</select>
-    <button class="ovk" onclick="window.print()">Afdrukken</button><button class="ovk ovlink" onclick="naar('oppot')" title="Aantallen per week invullen">🪴 Oppotplan ›</button><span class="ovinfo" id="ovAantalTxt" data-n="${info||""}"></span>`;return""};
+    <button class="ovk" onclick="window.print()">Afdrukken</button><button class="ovk ovlink" onclick="naar('oppot')" title="Aantallen per week invullen">🪴 Oppotplan ›</button><button class="ovk ovlink" onclick="naar('ruimtegraf')" title="Hoeveel m² is er per week nodig, per teelt">📊 Ruimte ›</button><span class="ovinfo" id="ovAantalTxt" data-n="${info||""}"></span>`;return""};
   if(!regels.length){$("#inhoud").innerHTML=kop()+h+`<div class="leeg" style="padding:30px">Nog niets in het <a href="#" onclick="naar('oppot');return false">Oppotplan</a> voor ${jaar}.</div>`;return}
   const alleW=[...new Set(regels.map(r=>r.w))].sort((a,b)=>a-b),cel={},rijen=new Set(),tot={};
   if(ovJaar!==jaar||ovStart===null){ovJaar=jaar;const nuW0=nu.y===jaar?nu.w:0;let i=alleW.findIndex(w=>w>=nuW0);ovStart=i<0?0:i;ovEind=alleW.length-1}
@@ -3519,6 +3519,47 @@ function pakbonPrint(b){let d=document.getElementById("pakbonPrint");if(!d){d=do
   d.innerHTML=pakbonInhoud(b.dataset.klant,b.dataset.code);document.body.classList.add("pbprint");
   const uit=()=>{document.body.classList.remove("pbprint");window.removeEventListener("afterprint",uit)};window.addEventListener("afterprint",uit);window.print();setTimeout(uit,1500)}
 
+/* ---------- Ruimte: grafiek m² per week, gestapeld per teelt (link vanuit Op te potten) ---------- */
+let rgS=null;const RG_KLEUR=["#2d6a4f","#7AB648","#4b2a6e","#1B5EBE","#E8007D","#F6B26B","#3cb4c4","#8e5ea2","#b5651d","#9aa33a","#d1495b","#6b7177"];
+function toonRuimteGraf(){const jaar=planJaar,{kaart}=ruimteBerekening(),nu=dezeWeek();
+  const aw=isoWeek(new Date(jaar,11,28)).w,wkn=Array.from({length:aw},(_,i)=>+maandagIso(jaar,i+1)),M=aw-1;
+  if(!rgS||rgS.jaar!==jaar){const i=wkn.indexOf(nu);rgS={jaar,start:0,eind:M};if(i>=0){rgS.start=Math.max(0,i-4);rgS.eind=Math.min(M,i+26)}}
+  const tl=data.teeltduren.filter(t=>wkn.some(w=>((kaart.get(w)||{}).per||{})[t.id])).filter(t=>!teeltFilter||t.id===teeltFilter);
+  const kl=t=>RG_KLEUR[data.teeltduren.indexOf(t)%RG_KLEUR.length],pc=v=>M?v/M*100:0;
+  const ob=document.getElementById("ovBalk");ob.hidden=false;
+  ob.innerHTML=`<span class="ovtitel">Ruimte (m²)</span>
+    <select class="ovjaar" onchange="planJaar=+this.value;render()">${[-2,-1,0,1,2].map(d=>jaar+d).map(j=>`<option value="${j}" ${j===jaar?"selected":""}>Jaar ${j}</option>`).join("")}</select>
+    ${teeltKeuze()}
+    <div class="ovschuif" title="Sleep de linker- of rechterknop: van welke t/m welke week u ziet">
+      <div class="dual"><div class="dualtrack"><div class="dualfill" id="rgFill" style="left:${pc(rgS.start)}%;width:${pc(rgS.eind-rgS.start)}%"></div></div>
+        <input type="range" id="rgLo" min="0" max="${M}" value="${rgS.start}" oninput="rgSchuif()">
+        <input type="range" id="rgHi" min="0" max="${M}" value="${rgS.eind}" oninput="rgSchuif()"></div>
+      <span id="rgTxt" class="ovinfo"></span></div>
+    <button class="ovk" onclick="window.print()">Afdrukken</button><button class="ovk ovlink" onclick="naar('oppotov')">🪴 Op te potten ›</button>`;
+  $("#inhoud").innerHTML=`<div class="printkop"><h2>Ruimte ${jaar} (m² per week)</h2></div><div id="rgGraf" style="padding:16px 18px 10px"></div>`;
+  window.__rg={kaart,wkn,tl,kl,nu,jaar};rgSchuif()}
+function rgSchuif(){const lo=document.getElementById("rgLo"),hi=document.getElementById("rgHi");if(!lo||!window.__rg)return;
+  let a=+lo.value,b=+hi.value;if(a>b){if(document.activeElement===lo){a=b;lo.value=a}else{b=a;hi.value=b}}rgS.start=a;rgS.eind=b;
+  const M=+lo.max||1,f=document.getElementById("rgFill");if(f){f.style.left=a/M*100+"%";f.style.width=(b-a)/M*100+"%"}
+  const{kaart,wkn,tl,kl,nu}=window.__rg,ws=wkn.slice(a,b+1),n=ws.length;
+  document.getElementById("rgTxt").textContent=`${wkCode(ws[0])} – ${wkCode(ws[n-1])} · ${n} wk`;
+  const besch=data.kappen.reduce((s,k)=>s+(+k.m2||0),0);
+  const som=w=>tl.reduce((s,t)=>s+(((kaart.get(w)||{}).per||{})[t.id]||0),0),max=Math.max(0,...ws.map(som));
+  const bw=Math.max(18,Math.min(44,Math.floor(1100/n))),L=56,B=26,top=14,H=Math.max(420,Math.min(620,window.innerHeight-260)),W=L+n*bw+14,hoog=Math.max(max,besch)*1.1||1,y=v=>top+(H-top-B)*(1-v/hoog);
+  let g=`<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" style="display:block;background:#f3efe6;border:1px solid #c9c2b6;border-radius:6px">`;
+  for(let i=0;i<=4;i++){const v=hoog/1.1*i/4;g+=`<line x1="${L}" x2="${W-8}" y1="${y(v)}" y2="${y(v)}" stroke="#ddd5c4"/><text x="${L-6}" y="${y(v)+4}" font-size="11" text-anchor="end" fill="#6b6558">${getal(Math.round(v))}</text>`}
+  ws.forEach((w,i)=>{const x=L+i*bw+2,bb=bw-4,isNu=w===nu,per=(kaart.get(w)||{}).per||{};let acc=0;
+    if(isNu)g+=`<rect x="${x-2}" y="${top}" width="${bw}" height="${H-top-B}" fill="#fff6c2"/>`;
+    for(const t of tl){const m=per[t.id]||0;if(!m)continue;
+      g+=`<rect x="${x}" y="${y(acc+m)}" width="${bb}" height="${y(acc)-y(acc+m)}" fill="${kl(t)}"><title>wk ${wkCode(w)} · ${esc(teeltNaam(t))}: ${getal(Math.round(m))} m²</title></rect>`;acc+=m}
+    if(acc)g+=`<rect x="${x}" y="${y(acc)}" width="${bb}" height="${y(0)-y(acc)}" fill="none"><title>wk ${wkCode(w)} · totaal ${getal(Math.round(acc))} m²</title></rect>`;
+    if(n<=20||i%2===0||isNu)g+=`<text x="${x+bb/2}" y="${H-9}" font-size="11" text-anchor="middle" fill="${isNu?"#E8007D":"#6b6558"}" font-weight="${isNu?700:400}">${wkCode(w)}</text>`});
+  if(besch)g+=`<line x1="${L}" x2="${W-8}" y1="${y(besch)}" y2="${y(besch)}" stroke="#E8007D" stroke-width="2" stroke-dasharray="6 4"/><text x="${W-10}" y="${y(besch)-5}" font-size="11" text-anchor="end" fill="#E8007D" font-weight="700">beschikbaar ${getal(besch)} m²</text>`;
+  g+=`</svg>`;
+  const leg=tl.map(t=>`<span><i style="background:${kl(t)}"></i>${esc(teeltNaam(t))}</span>`).join("")+(besch?`<span><i style="background:#E8007D;height:3px"></i>Beschikbaar</span>`:"");
+  document.getElementById("rgGraf").innerHTML=tl.length?g+`<div class="legenda" style="margin-top:8px;max-width:${W}px">${leg}</div><div class="status" style="margin-top:4px">Meeste ruimte nodig: <b>${getal(Math.round(max))} m²</b>. Ga met de muis op een balk voor de m² per teelt.</div>`
+    :`<div class="leeg" style="padding:30px">Geen ruimte nodig in deze weken. Vul eerst het Oppotplan in.</div>`}
+
 /* ---------- Weeklijst om te printen: wat moet er deze week gebeuren, en waar ---------- */
 let wlWeek=null;
 function vloerGroep(l,dicht){const m=new Map();
@@ -3611,6 +3652,7 @@ function bestelCsv(){const jaar=planJaar,lev=data.leveranciers.find(l=>l.id===be
 
 /* ---------- Zoeken (blauwe knop / Ctrl+K): snel naar een pagina, product, partij, soort of leverancier ---------- */
 const PAGINAS=[
+  ["📊","Ruimte (m² per week)","Pagina","ruimte m2 grafiek bezetting kas beschikbaarheid",()=>naar("ruimtegraf")],
   ["📦","Overzicht verkooporders","Pagina","verkooporders overzicht pakbon pakbonnen orders verkocht klant",()=>naar("verkoop")],
   ["🧾","Verkooporder (toets V)","Actie","verkoop verkooporder order verkopen klant bestelling",()=>verkoopOrder()],
   ["🏠","Vloeren","Stamdata","vloeren kappen kas vakken oppotvloer m2 rijen",()=>naar("kappen")],
@@ -3640,6 +3682,7 @@ const PAGINAS=[
 ];
 function naar(t){tab=t;render()}
 const PAGINAS_E=[
+  ["📊","Ruimte (m² per week)","Pagina","ruimte m2 grafiek bezetting kas beschikbaarheid",()=>naar("ruimtegraf")],
   ["📦","Overzicht verkooporders","Pagina","verkooporders overzicht pakbon pakbonnen orders verkocht klant",()=>naar("verkoop")],
   ["🧾","Verkooporder (toets V)","Actie","verkoop verkooporder order verkopen klant bestelling",()=>verkoopOrder()],
   ["🚛","Af te leveren","Pagina","afleveren afleverplan verkoop verkocht beschikbaar rapen vloer",()=>naar("aflever")],
