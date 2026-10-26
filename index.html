@@ -730,7 +730,7 @@ dialog::backdrop{background:rgba(0,0,0,.45)}
 
 <script>
 "use strict";
-const VERSIE="26.0";
+const VERSIE="26.1";
 const VERSIE_DATUM="25-10-2026";
 /* ---------- Basis ---------- */
 const PALET=["#2d6a4f","#1B5EBE","#E8007D","#c77d1a","#7a4fa0","#0f8b8d","#5b6b2f","#3d5a80","#a0522d","#7AB648"];
@@ -3067,7 +3067,7 @@ $("#inhoud").addEventListener("change",e=>{const el=e.target;if(!el.dataset.kl)r
   if(veld==="naam"&&k.naam&&v!==k.naam){for(const l of Object.values(data.verkoop||{}))for(const x of l)if(x.klant===k.naam)x.klant=v} /* nieuwe naam ook bij de verkopen */
   k[veld]=v;if(veld==="naam")el.classList.toggle("mist",!v);opslaanLater()});
 /* ---------- Oppotoverzicht: per week wat er wordt opgepot (zoals een orderoverzicht) ---------- */
-let ovGroep="soort",ovEenheid="planten",ovStart=null,ovEind=null,ovJaar=0;
+let ovGroep="soort",ovEenheid="planten",ovWSig="",ovStart=null,ovEind=null,ovJaar=0;
 const fustAantal=f=>{const m=String(f||"").match(/(\d+)/);return m?+m[1]:0};
 let ovDetail={},ovRas={},teeltFilter="";
 /* Keuze van één teelt (of alle teelten) – geldt voor Op te potten, Af te leveren en Bestelplanning */
@@ -3180,6 +3180,8 @@ function toonOppotOv(){
     <button class="ovk ovlink" onclick="naar('ruimtegraf')" title="Hoeveel m² is er per week nodig, per teelt">Ruimte ›</button><button class="ovk ovlink" onclick="naar('oppot')" title="Aantallen per week invullen">Oppotplan ›</button>`;return""};
   if(!regels.length){$("#inhoud").innerHTML=kop()+h+`<div class="leeg" style="padding:30px">Nog niets in het <a href="#" onclick="naar('oppot');return false">Oppotplan</a> voor ${jaar}.</div>`;return}
   const alleW=[...new Set(regels.map(r=>r.w))].sort((a,b)=>a-b),cel={},rijen=new Set(),tot={};
+  /* komen er weken bij of gaan er weken af? dan de schuif opnieuw zetten, zodat niets buiten beeld valt */
+  const wSig=alleW.join(",");if(wSig!==ovWSig){ovWSig=wSig;ovStart=null}
   if(ovJaar!==jaar||ovStart===null){ovJaar=jaar;const nuW0=nu.y===jaar?nu.w:0;let i=alleW.findIndex(w=>w>=nuW0);ovStart=i<0?0:i;ovEind=alleW.length-1}
   const M=alleW.length-1;ovEind=Math.max(0,Math.min(M,ovEind==null?M:ovEind));ovStart=Math.max(0,Math.min(ovEind,ovStart));
   const weken=alleW;ovDetail={};ovRas={};
@@ -3327,7 +3329,9 @@ function toonAflever(){syncSoorten();
     ${[["afl","Afleverplan"],["verk","Verkocht"],["vers","Nog beschikbaar"]].map(([v,n])=>`<button class="ovk ${aflMod===v?"aan":""} ${v!=="afl"?"nivVerk":""}" onclick="aflMod='${v}';if(aflMod!=='verk')aflRij='teelt';render()">${n}</button>`).join("")}
     <span style="flex:1"></span><button class="ovk ovlink" onclick="naar('oppotov')" title="Op te potten (overzicht)">Op te potten ›</button>
 `;
-  let h=`<div class="printkop"><h2>Af te leveren seizoen ${jaar} (wk ${S} ${jaar} t/m wk ${eindWk.w} ${eindWk.y})</h2></div>`;
+  const mistAfl=ruimteBerekening().fouten;
+  let h=mistAfl.length?`<div class="melding noprint" style="margin:10px 14px"><b>⚠ Niet in het afleverplan</b> (teeltduur of dichtheid ontbreekt):<br>${mistAfl.map(esc).join("<br>")}<br><a href="#" onclick="naar('soorten');return false">Teelten en soorten ›</a></div>`:"";
+  h+=`<div class="printkop"><h2>Af te leveren seizoen ${jaar} (wk ${S} ${jaar} t/m wk ${eindWk.w} ${eindWk.y})</h2></div>`;
   if(!regels.length&&!Object.keys(data.verkoop||{}).length){$("#inhoud").innerHTML=h+`<div class="leeg" style="padding:30px">Niets af te leveren in dit seizoen.</div>`;return}
   const cel={},tot={},rijen=new Set();aflDetail={};
   const codes=new Set(alleWk.map(code));for(const key of Object.keys(data.verkoop||{})){const p=key.split("|");if(p.length===3&&codes.has(p[2])&&(!teeltFilter||p[0]===tlF))rijen.add(p[0]+"|"+p[1])}
