@@ -188,6 +188,7 @@ body.ovmodus section.vlak>.rij:first-child{display:none!important}
 .ovtabel th{background:#b9b9b9;color:#222}.ovtabel th.nu{background:#fff7b3}
 .ovtabel .ovnaam{text-align:left;min-width:220px}
 .ovtabel tr.ovklrij td{background:#e9e3d6;font-weight:700;border-top:2px solid #999}.ovtabel tr.ovklsub td{font-weight:400}.ovtabel tr.ovklsub td.ovnaam{padding-left:26px}
+tr.soortflits td{background:#fff3a6!important;transition:background .3s}
 .ovrijkeus{font:inherit;font-weight:700;background:#fff;border:1px solid #999;border-radius:6px;padding:2px 6px;cursor:pointer}.ovtabel .ovleeg{color:#aaa;font-weight:400}
 .ovtabel tr.ovtot td{background:#e3f3ea}
 .ovtabel td[data-k]{cursor:pointer}.ovtabel tr.hlr td,.ovtabel .hlc{background:#dbeafe!important}.ovtabel tr td.hlx{background:#a9cdfa!important}.ovtabel th.hlc{background:#dbeafe!important}
@@ -716,7 +717,7 @@ dialog::backdrop{background:rgba(0,0,0,.45)}
 
 <script>
 "use strict";
-const VERSIE="23.9";
+const VERSIE="24.2";
 const VERSIE_DATUM="25-10-2026";
 /* ---------- Basis ---------- */
 const PALET=["#2d6a4f","#1B5EBE","#E8007D","#c77d1a","#7a4fa0","#0f8b8d","#5b6b2f","#3d5a80","#a0522d","#7AB648"];
@@ -2150,6 +2151,11 @@ let teeltOpen=new Set(); // welke teelten zijn opengeklapt
 /* Vanuit een overzicht: open het invulscherm van één teelt */
 function naarTeeltId(id){teeltOpen.clear();teeltOpen.add(id);houdOpen=true;naar("soorten");
   const el=document.querySelector(`[data-teelt="${id}"]`);if(el)el.scrollIntoView({block:"start",behavior:"smooth"})}
+/* Teelten en soorten openen op de regel van één soort */
+function naarSoort(id){const r=data.rassen.find(x=>x.id===id);if(!r)return;teeltOpen.clear();teeltOpen.add(r.teeltId);houdOpen=true;naar("soorten");
+  setTimeout(()=>{const el=[...document.querySelectorAll(`input[data-ras="${id}"][data-rk="naam"]`)].find(x=>x.offsetParent);if(!el)return;
+    const tr=el.closest("tr");el.scrollIntoView({block:"center",behavior:"smooth"});if(tr){tr.classList.add("soortflits");setTimeout(()=>tr.classList.remove("soortflits"),30000)}
+    el.focus({preventScroll:true});el.select()},60)}
 function naarOppot(id){oppotKeuze=id;naar("oppot")}
 function naarTeelt(label){const t=data.teeltduren.find(x=>(x.product||"")+(x.potmaat?" "+x.potmaat+" cm":"")===label);if(!t)return;
   teeltOpen.clear();teeltOpen.add(t.id);houdOpen=true;naar("soorten");
@@ -3140,7 +3146,8 @@ function toonOppotOv(){
   const M=alleW.length-1;ovEind=Math.max(0,Math.min(M,ovEind==null?M:ovEind));ovStart=Math.max(0,Math.min(ovEind,ovStart));
   const weken=alleW;ovDetail={};ovRas={};
   const pl={},txt={};
-  for(const r of regels){const k=sleutel(r),v=waarde(r);rijen.add(k);cel[k+"|"+r.w]=(cel[k+"|"+r.w]||0)+v;tot[r.w]=(tot[r.w]||0)+v;pl[k+"|"+r.w]=(pl[k+"|"+r.w]||0)+r.aantal;
+  const kRas={},kTeelt={};
+  for(const r of regels){const k=sleutel(r),v=waarde(r);rijen.add(k);if(r.rasId)kRas[k]=r.rasId;if(r.teeltId)kTeelt[k]=r.teeltId;cel[k+"|"+r.w]=(cel[k+"|"+r.w]||0)+v;tot[r.w]=(tot[r.w]||0)+v;pl[k+"|"+r.w]=(pl[k+"|"+r.w]||0)+r.aantal;
     if(tekstMod){const x=vlTekst(r);if(x)(txt[k+"|"+r.w]=txt[k+"|"+r.w]||new Set()).add(x)}
     if(ovGroep==="soort"&&r.rasId)ovRas[k]=r.rasId;
     (ovDetail[k+"|"+r.w]=ovDetail[k+"|"+r.w]||[]).push(r);(ovDetail["__tot|"+r.w]=ovDetail["__tot|"+r.w]||[]).push(r)}
@@ -3155,7 +3162,9 @@ function toonOppotOv(){
   h=kop(schuif,{soort:"soorten",teelt:"teelten",fust:"fusten",lev:"leveranciers"}[ovGroep])+h;
   const vis=c=>c>=ovStart&&c<=ovEind?"":' style="display:none"';
   h+=`<table class="ovtabel" data-codes='${JSON.stringify(weken.map(code))}' onmouseover="ovKruis(event)" onmouseleave="ovKruis(event)" onclick="ovKlik(event)"><tr><th class="ovnaam"><select class="ovkies noprint" onchange="ovGroep=this.value;render()">${[["soort","Soort"],["teelt","Teelt"],["fust","Fust"],["lev","Leverancier"]].map(([v,n])=>`<option value="${v}" ${v===ovGroep?"selected":""}>${n}</option>`).join("")}</select><span class="printalleen">${{soort:"Soort",teelt:"Teelt",fust:"Fust",lev:"Leverancier"}[ovGroep]}</span></th>${weken.map((w,c)=>{const d=weekAfd(jaar,w);return`<th data-c="${c}"${vis(c)} class="ovwk ${w===nuW?"nu":""}" onclick="if(!ZV())ovWeekKlik(${w})" title="Klik: standaard afdeling voor week ${w}${d.op||d.uit?` (nu: ${d.op||"–"} / ${d.uit||"–"})`:""}">${code(w)}${d.op||d.uit?`<div class="wkafd">afd ${esc(d.op||"–")}${d.uit&&d.uit!==d.op?"/"+esc(d.uit):""}</div>`:""}</th>`}).join("")}</tr>`;
-  for(const k of lijst){h+=`<tr><td class="ovnaam">${esc(k)}</td>${weken.map((w,c)=>{const v=cel[k+"|"+w]||0,p=pl[k+"|"+w]||0,x=txt[k+"|"+w];
+  for(const k of lijst){const nm=ovGroep==="soort"&&kRas[k]?`<span class="ovsl" onclick="event.stopPropagation();naarSoort('${kRas[k]}')" title="Klik: soort openen om te wijzigen">${esc(k)}</span>`
+      :ovGroep==="teelt"&&kTeelt[k]?`<span class="ovsl" onclick="event.stopPropagation();naarTeeltId('${kTeelt[k]}')" title="Klik: teelt openen om te wijzigen">${esc(k)}</span>`:esc(k);
+    h+=`<tr><td class="ovnaam">${nm}</td>${weken.map((w,c)=>{const v=cel[k+"|"+w]||0,p=pl[k+"|"+w]||0,x=txt[k+"|"+w];
       const inh=tekstMod?(x?esc([...x].join(", ")):p?'<span class="ovleeg">?</span>':'<span class="ovleeg">—</span>'):(v?toon(v):'<span class="ovleeg">—</span>');
       return`<td data-c="${c}" data-v="${p}" data-k="${esc(k)}" data-w="${w}"${vis(c)}${tekstMod&&x?' class="ovtxt"':""}>${inh}</td>`}).join("")}</tr>`}
   h+=`<tr class="ovtot"><td class="ovnaam">Totaal ${tekstMod?"":ehNaam}</td>${weken.map((w,c)=>`<td data-c="${c}" data-v="${tot[w]||0}" data-k="__tot" data-w="${w}"${vis(c)}>${tekstMod?'<span class="ovleeg">—</span>':toon(tot[w]||0)}</td>`).join("")}</tr></table>
