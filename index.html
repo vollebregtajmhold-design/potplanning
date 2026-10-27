@@ -416,7 +416,7 @@ dialog.vgl{border:0;padding:0;border-radius:12px;max-width:640px;width:95vw}dial
 body.eenvoudig .uitgebreid{display:none!important}
 body:not(.eenvoudig) .eenvoudigAlleen{display:none!important}
 .navMidden{flex:1;display:flex;justify-content:center;align-items:center;gap:8px;flex-wrap:wrap}
-body.eenvoudig .mob .mtabs{display:none}
+body.eenvoudig .mob .mtabs{grid-template-columns:1fr 1fr;gap:8px;padding:10px}body.eenvoudig .mob .mtabs button{font-size:17px;padding:14px 4px;border-radius:12px}
 .aflschuif{display:inline-flex;align-items:center;gap:8px;background:#fff;border:1px solid #ddd5c4;border-radius:9px;padding:4px 10px}
 .aflschuif input[type=range]{width:220px;accent-color:var(--groen)}
 .ovkop{margin-bottom:12px;gap:8px;flex-wrap:nowrap;white-space:nowrap}.ovschuif{display:inline-flex;align-items:center;gap:8px;padding:0 4px;background:transparent;border:0}.ovschuif input[type=range]{width:160px}
@@ -736,7 +736,7 @@ dialog::backdrop{background:rgba(0,0,0,.45)}
 
 <script>
 "use strict";
-const VERSIE="27.2";
+const VERSIE="27.4";
 const VERSIE_DATUM="25-10-2026";
 /* ---------- Basis ---------- */
 const PALET=["#2d6a4f","#1B5EBE","#E8007D","#c77d1a","#7a4fa0","#0f8b8d","#5b6b2f","#3d5a80","#a0522d","#7AB648"];
@@ -2863,7 +2863,7 @@ let mobTab="week",mobZoek="";
 function toonMobiel(){syncSoorten();
   mobWeekStart();const t=mobWeekStart().getTime();
   let tabs=[["week","📋 Deze week"],["vloer","🏠 Vloeren"],["aflever","🚛 Afleveren"],["zoek","🔍 Partij"]];
-  if(data.instellingen.eenvoudig){tabs=[["aflever","🚛 Afleveren"]];mobTab="aflever"}
+  if(data.instellingen.eenvoudig){tabs=[["aflever","🚛 Afleveren"],["oppot","🪴 Oppotten"]];if(mobTab!=="oppot")mobTab="aflever"}
   let h=`<div class="mob"><div class="mkop"><b>📱 Overzicht</b>
     <div class="wkkeuze"><button onclick="mobWeek(-1)">◀</button><b>wk ${mob.week}</b><button onclick="mobWeek(1)">▶</button></div></div>
     <div class="mtabs">${tabs.map(([k,n])=>`<button class="${mobTab===k?"aan":""}" onclick="mobTab='${k}';render()">${n}</button>`).join("")}</div>`;
@@ -2876,6 +2876,13 @@ function toonMobiel(){syncSoorten();
     h+=sec(`🪴 Oppotten · ${getal(op.reduce((a,p)=>a+planten(p),0))}`,"f1",op.map(p=>kaart("🪴",`${naam(p)} · <b>${getal(planten(p))}</b>`,`${p.ras?esc(p.ras)+"<br>":""}naar: ${vloerGroep(p.kappen1,p.dicht1)}`)));
     h+=sec(`🌿 Wijderzetten · ${getal(wd.reduce((a,p)=>a+planten(p),0))}`,"f2",wd.map(p=>kaart("🌿",`${naam(p)} · <b>${getal(planten(p))}</b>`,`van: ${vloerGroep(p.kappen1,0)}naar: ${vloerGroep(p.kappen2,p.dicht2)}`)));
     h+=sec(`🚛 Afleveren · ${getal([...af.values()].flat().reduce((a,r)=>a+r.aantal,0))}`,"fa",[...af].map(([p,l])=>kaart("🚛",`${naam(p)} · <b>${getal(l.reduce((a,r)=>a+r.aantal,0))}</b>`,`${l.map(r=>esc(r.soort)+": "+getal(r.aantal)).join("<br>")}<br>staat op: ${vloerGroep(p.kappen2,0)}`)));
+  }else if(mobTab==="oppot"){
+    /* wat komt er de komende weken aan om op te potten: per soort aantal, fust en trays (niveau 3: afd/vloer) */
+    for(let i=0;i<8;i++){const d=plusWeken(new Date(t),i),{w,y}=isoWeek(d),l=bestelRegels(y).filter(r=>r.w===w);
+      const per=new Map();l.forEach(r=>{const k=r.product+"|"+r.soort,o=per.get(k)||{n:0,fust:r.fust,rasId:r.rasId};o.n+=r.aantal;per.set(k,o)});
+      const tot=[...per.values()].reduce((a,o)=>a+o.n,0),trT=[...per.values()].reduce((a,o)=>{const fn=fustAantal(o.fust);return a+(fn?Math.ceil(o.n/fn):0)},0);
+      h+=`<div class="mstap"><h3 class="msec f1">wk ${w}${y!==isoWeek(new Date()).y?` (${y})`:""} · ${getal(tot)} oppotten${trT?` · ${getal(trT)} trays`:""}</h3>${per.size?[...per].sort((a,b)=>a[0].localeCompare(b[0],"nl")).map(([k,o])=>{const[pr,so]=k.split("|"),fn=fustAantal(o.fust),tr=fn?Math.ceil(o.n/fn):0,v=!ZV()&&o.rasId?vloerEff(o.rasId,y,w):{};
+        return`<div class="mrij"><span style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;flex:1" title="${esc(pr+" · "+so)}"><span class="status">${esc(pr.replace(" · "," "))}</span> · ${esc(so)}${v.opAfd||v.op?` <span class="status" style="font-size:12px">📍${v.opAfd?" afd "+esc(v.opAfd):""}${v.op?" vl "+esc(v.op):""}</span>`:""}</span><span style="white-space:nowrap">${tr?`<span class="status">(${getal(tr)})</span> `:""}<b class="mtal">${getal(o.n)}</b></span></div>`}).join(""):`<div class="status">Niets.</div>`}</div>`}
   }else if(mobTab==="vloer"){h+=mobBekijk().replace('<h3><span class="n">2</span> Welke vloer?</h3>','<h3>Kies een vloer</h3>')}
   else if(mobTab==="aflever"){
     const regels=afleverRegels();
