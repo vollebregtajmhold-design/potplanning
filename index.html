@@ -734,7 +734,7 @@ dialog::backdrop{background:rgba(0,0,0,.45)}
 
 <script>
 "use strict";
-const VERSIE="26.7";
+const VERSIE="26.8";
 const VERSIE_DATUM="25-10-2026";
 /* ---------- Basis ---------- */
 const PALET=["#2d6a4f","#1B5EBE","#E8007D","#c77d1a","#7a4fa0","#0f8b8d","#5b6b2f","#3d5a80","#a0522d","#7AB648"];
@@ -3204,8 +3204,12 @@ function toonOppotOv(){
   if(!regels.length){$("#inhoud").innerHTML=kop()+h+`<div class="leeg" style="padding:30px">Nog niets in het <a href="#" onclick="naar('oppot');return false">Oppotplan</a> voor ${jaar}.</div>`;return}
   const alleW=[...new Set(regels.map(r=>r.w))].sort((a,b)=>a-b),cel={},rijen=new Set(),tot={};
   /* komen er weken bij of gaan er weken af? dan de schuif opnieuw zetten, zodat niets buiten beeld valt */
-  const wSig=alleW.join(",");if(wSig!==ovWSig){ovWSig=wSig;ovStart=null}
-  if(ovJaar!==jaar||ovStart===null){ovJaar=jaar;const nuW0=nu.y===jaar?nu.w:0;let i=alleW.findIndex(w=>w>=nuW0);ovStart=i<0?0:i;ovEind=alleW.length-1}
+  /* de schuif onthoudt weeknummers (niet de plek), zodat wisselen van teelt de keuze niet verschuift */
+  const wSig=alleW.join(",");if(wSig!==ovWSig){const oud=ovWSig?ovWSig.split(",").map(Number):[],vw=oud[ovStart],tw=oud[ovEind];ovWSig=wSig;
+    if(ovJaar===jaar&&vw!=null&&tw!=null){const a=ovStart===0?0:alleW.findIndex(w=>w>=vw);let b=-1;if(ovEind===oud.length-1)b=alleW.length-1;else alleW.forEach((w,i)=>{if(w<=tw)b=i});ovStart=a<0||b<0||a>b?null:a;ovEind=b<0?null:b}else ovStart=null}
+  if(ovJaar!==jaar||ovStart===null){ovJaar=jaar;const M0=alleW.length-1,nuW0=nu.y===jaar?nu.w:0;let i=alleW.findIndex(w=>w>=nuW0);
+    /* vanaf deze week, maar altijd minstens 13 weken in beeld */
+    ovStart=i<0?Math.max(0,M0-12):Math.max(0,Math.min(i,M0-12));ovEind=M0}
   const M=alleW.length-1;ovEind=Math.max(0,Math.min(M,ovEind==null?M:ovEind));ovStart=Math.max(0,Math.min(ovEind,ovStart));
   const weken=alleW;ovDetail={};ovRas={};
   const pl={},txt={};
