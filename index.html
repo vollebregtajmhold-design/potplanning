@@ -730,7 +730,7 @@ dialog::backdrop{background:rgba(0,0,0,.45)}
 
 <script>
 "use strict";
-const VERSIE="26.2";
+const VERSIE="26.3";
 const VERSIE_DATUM="25-10-2026";
 /* ---------- Basis ---------- */
 const PALET=["#2d6a4f","#1B5EBE","#E8007D","#c77d1a","#7a4fa0","#0f8b8d","#5b6b2f","#3d5a80","#a0522d","#7AB648"];
@@ -3171,13 +3171,13 @@ function toonOppotOv(){
   let h="";
   h+=`<div class="printkop"><h2>Oppotoverzicht ${jaar} (${ehNaam})</h2></div>`;
   const kop=(extra,info)=>{const ob=document.getElementById("ovBalk");ob.hidden=false;
-    ob.innerHTML=`<span class="ovtitel">Op te potten</span>
+    ob.innerHTML=`<button class="ovk ovlink" onclick="naar('oppot')" title="Oppotplan (invullen)">‹ Oppotplan</button><span class="ovtitel">Op te potten</span>
     <select class="ovjaar" onchange="planJaar=+this.value;render()">${[-2,-1,0,1,2].map(d=>planJaar+d).map(j=>`<option value="${j}" ${j===jaar?"selected":""}>Jaar ${j}</option>`).join("")}</select>
     ${teeltKeuze()}
     <select class="ovjaar" onchange="ovEenheid=this.value;render()" title="Wat ziet u in de cellen">${Object.entries(EH).filter(([v])=>!ZV()||!["afdop","vlop","afduit","vluit"].includes(v)).map(([v,n])=>`<option value="${v}" ${ovEenheid===v?"selected":""}>${n.startsWith("m²")?n:n[0].toUpperCase()+n.slice(1)}</option>`).join("")}</select>
     ${extra||""}
     <span style="flex:1"></span>
-    <button class="ovk ovlink" onclick="naar('ruimtegraf')" title="Hoeveel m² is er per week nodig, per teelt">Ruimte ›</button><button class="ovk ovlink" onclick="naar('oppot')" title="Aantallen per week invullen">Oppotplan ›</button>`;return""};
+    <button class="ovk ovlink" onclick="naar('ruimtegraf')" title="Hoeveel m² is er per week nodig, per teelt">Ruimte ›</button><button class="ovk ovlink" onclick="naar('aflever')" title="Af te leveren (overzicht)">Af te leveren ›</button>`;return""};
   if(!regels.length){$("#inhoud").innerHTML=kop()+h+`<div class="leeg" style="padding:30px">Nog niets in het <a href="#" onclick="naar('oppot');return false">Oppotplan</a> voor ${jaar}.</div>`;return}
   const alleW=[...new Set(regels.map(r=>r.w))].sort((a,b)=>a-b),cel={},rijen=new Set(),tot={};
   /* komen er weken bij of gaan er weken af? dan de schuif opnieuw zetten, zodat niets buiten beeld valt */
@@ -3319,7 +3319,7 @@ function toonAflever(){syncSoorten();
   const regels=afleverRegels().filter(r=>r.t>=van&&r.t<totT&&r.aantal>0&&(!teeltFilter||r.p.soortId===teeltFilter)),tlF=teeltLabelF();
   const eindWk=isoWeek(new Date(totT-6048e5)),pc=v=>M?v/M*100:0;
   const ob=document.getElementById("ovBalk");ob.hidden=false;
-  ob.innerHTML=`<span class="ovtitel">Af te leveren</span>
+  ob.innerHTML=`<button class="ovk ovlink" onclick="naar('oppotov')" title="Op te potten (overzicht)">‹ Op te potten</button><span class="ovtitel">Af te leveren</span>
     <select class="ovjaar" onchange="planJaar=+this.value;render()" title="Seizoen: wk ${S} t/m wk ${eindWk.w}">${[-2,-1,0,1,2].map(d=>jaar+d).map(j=>`<option value="${j}" ${j===jaar?"selected":""}>Seizoen ${j}/${String(j+1).slice(2)}</option>`).join("")}</select>
     ${teeltKeuze()}
     <div class="ovschuif" title="Sleep de linker- of rechterknop: van welke t/m welke week u ziet">
@@ -3328,7 +3328,7 @@ function toonAflever(){syncSoorten();
         <input type="range" id="ovHi" min="0" max="${M}" value="${aflS.eind}" oninput="ovSchuifLive()" onchange="ovSchuifLive()"></div>
       <span id="ovSchuifTxt" class="ovinfo"></span></div>
     ${[["afl","Afleverplan"],["verk","Verkocht"],["vers","Nog beschikbaar"]].map(([v,n])=>`<button class="ovk ${aflMod===v?"aan":""} ${v!=="afl"?"nivVerk":""}" onclick="aflMod='${v}';if(aflMod!=='verk')aflRij='teelt';render()">${n}</button>`).join("")}
-    <span style="flex:1"></span><button class="ovk ovlink" onclick="naar('oppotov')" title="Op te potten (overzicht)">Op te potten ›</button>
+
 `;
   const mistAfl=ruimteBerekening().fouten;
   let h=mistAfl.length?`<div class="melding noprint" style="margin:10px 14px"><b>⚠ Niet in het afleverplan</b> (teeltduur of dichtheid ontbreekt):<br>${mistAfl.map(esc).join("<br>")}<br><a href="#" onclick="naar('soorten');return false">Teelten en soorten ›</a></div>`:"";
