@@ -144,6 +144,11 @@ body.zv .ovvl,body.zv .raapplek,body.zv .vlinvrij,body.zv .vlinv,body.zv .zvweg{
 #voKlLijst .vokr.sel,#voKlLijst .vokr:hover{background:#1B5EBE;color:#fff}#voKlLijst .vokr.sel small,#voKlLijst .vokr:hover small{color:#dbe7fb}
 .menuLinks>.mknop,#balk .zoekknop{background:transparent!important;color:#fff!important;border:1px solid rgba(255,255,255,.75)!important;box-shadow:none!important}
 .menuLinks>.mknop:hover,#balk .zoekknop:hover,.menuLinks.open>.mknop{background:rgba(255,255,255,.15)!important}
+#btnPostit{position:relative;flex:none;background:#fff59d;border:2px solid #fff;border-radius:6px;font-size:16px;line-height:1;padding:3px 6px;cursor:pointer;box-shadow:0 1px 3px rgba(0,0,0,.4);transform:rotate(-4deg)}
+#btnPostit:hover{transform:rotate(0)}#postitN{position:absolute;top:-8px;right:-9px;background:#E8007D;color:#fff;border-radius:10px;font-size:11px;font-weight:800;padding:1px 5px}#postitN[hidden]{display:none}
+.postit{background:#fff59d;border-radius:4px;padding:8px 10px;margin:8px 0;box-shadow:0 2px 5px rgba(0,0,0,.18);position:relative}.postit.klaar{background:#eee;opacity:.75}.postit.klaar .pt{text-decoration:line-through}
+.postit .pt{white-space:pre-wrap;font-size:15px}.postit .pm{font-size:12px;color:#6b6558;margin-top:4px;display:flex;gap:8px;align-items:center}.postit .pm button{border:0;background:none;cursor:pointer;font-size:13px;padding:2px 4px}.postit .pm button:hover{text-decoration:underline}
+.postit .antw{margin:6px 0 0 14px;padding:5px 8px;background:#fffbd0;border-left:3px solid #e6d65a;font-size:14px;white-space:pre-wrap}.postit .antw small{display:block;color:#6b6558;font-size:11px}
 #btnStip{width:22px;height:22px;flex:none;border-radius:50%;background:#E8007D;border:3px solid #fff;cursor:pointer;padding:0;box-shadow:0 1px 3px rgba(0,0,0,.4)}
 #btnStip.aan{background:#fff;border-color:#E8007D}
 body.toonKlik :is(button,a,summary,select,.ovtabel td[data-k],.ovtabel th[data-c],[onclick]):not(table):not(#mobPop):not(#btnStip):not(.mstap):not(.mpop){
@@ -609,6 +614,7 @@ dialog::backdrop{background:rgba(0,0,0,.45)}
     </div></div>
   <button id="btnZoekE" type="button" class="eenvoudigAlleen mknop zoekknop" title="Zoeken (Ctrl + K)" onclick="zoekOpen()">🔍<span class="lang"> Zoeken</span></button>
   <button type="button" id="btnStip" title="Toon alles waar u op kunt klikken (nog een keer klikken = weg)" onclick="document.body.classList.toggle('toonKlik');this.classList.toggle('aan')"></button>
+  <button type="button" id="btnPostit" title="Post-it: opmerkingen en vragen voor iedereen" onclick="toonPostit()">📝<span id="postitN" hidden></span></button>
   <div class="navMidden">
   <div class="menu uitgebreid"><button class="mknop" type="button">Stamdata ▾</button>
     <div class="mlijst">
@@ -757,7 +763,7 @@ dialog::backdrop{background:rgba(0,0,0,.45)}
 
 <script>
 "use strict";
-const VERSIE="29.7";
+const VERSIE="29.9";
 const VERSIE_DATUM="25-10-2026";
 /* ---------- Basis ---------- */
 const PALET=["#2d6a4f","#1B5EBE","#E8007D","#c77d1a","#7a4fa0","#0f8b8d","#5b6b2f","#3d5a80","#a0522d","#7AB648"];
@@ -1293,7 +1299,7 @@ document.addEventListener("keydown",e=>{
   if(document.querySelector("dialog[open]"))return;
   e.preventDefault();bladeren(e.key==="ArrowLeft"?-1:1)});
 let vorigeTab="",houdOpen=false;
-function render(){if(tab==="bestel")tab="oppotov";if(tab==="ruimtegraf")tab="oppot"; /* ruimte zit nu bij Inkoop / opzetten */ /* bestelplanning zit nu in Opzetplanning */
+function render(){if(typeof postitTel==="function")postitTel();if(tab==="bestel")tab="oppotov";if(tab==="ruimtegraf")tab="oppot"; /* ruimte zit nu bij Inkoop / opzetten */ /* bestelplanning zit nu in Opzetplanning */
   zvKlaar();
   if(tab==="rassen"||tab==="duren")tab="soorten";
   if(tab==="proef")tab="oppot"; /* proberen is teruggedraaid */
@@ -2237,10 +2243,10 @@ function toonSoorten(){
         <span class="status">· ${n?esc(duurKort(t)):'<span class="let">teeltduur leeg</span>'} · ${srt.length} soort${srt.length===1?"":"en"}${srt.length?": "+esc(srt.map(r=>r.naam+(eigenDuur(r)?"*":"")).filter(Boolean).join(", ")):""}</span>
         <span style="flex:1"></span><button type="button" class="ovk ovlink" onclick="event.stopPropagation();naarOppot('${t.id}')" title="Naar de inkoop van deze teelt">Inkoop / opzetten ›</button>${ok?`<span style="color:var(--groen)" title="Alles ingevuld">✓</span>`:`<span class="let" title="Nog niet alles ingevuld">⚠</span>`}</div>`;
     if(open)h+=`<table class="tkop"><tr><th style="width:34%">Teelt</th><th style="width:13%">Potmaat (cm)</th><th style="width:15%">Pl/m² oppotten</th><th style="width:15%">Pl/m² uitzetten</th><th>Wijderzetten</th><th style="width:44px"></th></tr>
-      <tr><td>${veld(i,"product","100%","t","bijv. Cyclamen")}</td><td>${veld(i,"potmaat","100%","n","cm")}</td>
+      <tr><td>${isVast(t)?`<input value="${esc(t.product)}" readonly title="Deze naam ligt vast" style="width:100%;background:#eee;color:#444;font-weight:700;cursor:not-allowed"> <span title="Naam ligt vast">🔒</span>`:veld(i,"product","100%","t","bijv. Cyclamen")}</td><td>${veld(i,"potmaat","100%","n","cm")}</td>
         <td>${veld(i,"dicht1","100%","n","pl/m²")}</td><td>${veld(i,"dicht2","100%","n","pl/m²")}</td>
         <td class="status" id="wz-${i}" style="white-space:nowrap">${t.dicht1&&t.dicht2?"1 m² → "+String(Math.round(t.dicht1/t.dicht2*10)/10).replace(".",",")+" m²":""}</td>
-        <td style="text-align:right"><button class="btn rood klein" onclick="duurWeg(${i})" title="Teelt verwijderen">✕</button></td></tr></table>
+        <td style="text-align:right">${isVast(t)?"":`<button class="btn rood klein" onclick="duurWeg(${i})" title="Teelt verwijderen">✕</button>`}</td></tr></table>
       <div class="tsoorten"><div class="rij" style="margin-bottom:4px"><b>Soorten</b><span class="status">${srt.length}</span>
         <span class="status">· standaard teeltduur: ${n?`<a href="#" onclick="openDuur('${t.id}');return false">${duurKort(t)} ›</a>`:`<a href="#" class="let" onclick="openDuur('${t.id}');return false">nog invullen ›</a>`}</span>
         </div>
@@ -2315,7 +2321,9 @@ $("#inhoud").addEventListener("paste",e=>{const c=e.target;if(!c.classList.conta
 });
 function duurErbij(){data.teeltduren.push({id:uid(),product:"",potmaat:"",perioden:[{van:1,totaal:null,fase1:null}],totaal:Array(52).fill(null),fase1:Array(52).fill(null),fase2:Array(52).fill(null)});wijzig();
   const v=document.querySelectorAll('[data-sk="product"]');if(v.length)v[v.length-1].focus()}
-function duurWeg(i){const t=data.teeltduren[i];if(confirm(`${t.product||"Deze teeltsoort"} ${t.potmaat?t.potmaat+" cm":""} verwijderen?`)){data.rassen=data.rassen.filter(r=>r.teeltId!==t.id);data.teeltduren.splice(i,1);wijzig()}}
+/* De eerste teelt met de naam "Cyclamen" ligt vast: naam niet wijzigen, teelt niet verwijderen */
+const isVast=t=>{const v=data.teeltduren.find(x=>(x.product||"").trim().toLowerCase()==="cyclamen");return!!v&&v===t};
+function duurWeg(i){const t=data.teeltduren[i];if(isVast(t)){alert("De teelt Cyclamen ligt vast en kan niet weg.");return}if(confirm(`${t.product||"Deze teeltsoort"} ${t.potmaat?t.potmaat+" cm":""} verwijderen?`)){data.rassen=data.rassen.filter(r=>r.teeltId!==t.id);data.teeltduren.splice(i,1);wijzig()}}
 function duurUitTeelten(){let n=0;
   for(const p of data.partijen){const pot=String(p.potmaat??"");
     if(data.teeltduren.some(t=>t.product.toLowerCase()===String(p.product).toLowerCase()&&String(t.potmaat)===pot))continue;
@@ -3009,6 +3017,24 @@ function mobSoort(k,start){const t=start||+mobWeekStart(),l=afleverRegels().filt
 function aflSoort(k){const n=isoWeek(new Date());mobSoort(k.replace("|"," · "),+maandagIso(n.y,n.w))}
 function sluitMobSoort(){const m=document.getElementById("mobPop");if(m)m.hidden=true;if(tab==="oppotov"||tab==="aflever"||tab==="mobiel")render()}
 function mobWeek(d){const t=plusWeken(mobWeekStart(),d),n=isoWeek(t);mob.week=n.w;mob.jaar=n.y;mob.partijId="";render()}
+/* ---------- Post-it: opmerkingen en vragen voor iedereen (gedeeld via de online planning) ---------- */
+let postitAlles=false;
+const postitNaam=()=>wolkMail||medewerker()||"";
+function postitTel(){const n=(data.notities||[]).filter(x=>!x.klaar).length,b=document.getElementById("postitN");if(b){b.hidden=!n;b.textContent=n}}
+function toonPostit(){const l=(data.notities||[]).slice().sort((a,b)=>b.t-a.t),open=l.filter(x=>!x.klaar),zicht=postitAlles?l:open,dt=t=>new Date(t).toLocaleString("nl-NL",{day:"numeric",month:"short",hour:"2-digit",minute:"2-digit"});
+  toonPop("📝 Post-it",`<textarea id="ptNieuw" rows="3" placeholder="Schrijf een opmerking of vraag…" style="width:100%;font-size:15px;padding:8px;border-radius:6px;border:1px solid #c9c2b6;box-sizing:border-box"></textarea>
+    <div class="rij" style="margin:6px 0 4px;gap:8px">${wolkMail?"":`<input id="ptNaam" placeholder="uw naam" value="${esc(medewerker())}" style="width:140px;font-size:14px;padding:5px">`}<span style="flex:1"></span><button class="btn" onclick="postitPlaats()">📌 Plaatsen</button></div>
+    <div class="rij" style="margin-top:6px"><b>${open.length} open</b>${l.length>open.length?`<label class="status" style="margin-left:auto"><input type="checkbox" ${postitAlles?"checked":""} onchange="postitAlles=this.checked;toonPostit()"> ook afgehandeld (${l.length-open.length})</label>`:""}</div>
+    ${zicht.map(x=>`<div class="postit ${x.klaar?"klaar":""}"><div class="pt">${esc(x.tekst)}</div>${(x.antw||[]).map(a=>`<div class="antw">${esc(a.tekst)}<small>${esc(a.door||"?")} · ${dt(a.t)}</small></div>`).join("")}
+      <div class="pm"><span>${esc(x.door||"?")} · ${dt(x.t)}</span><span style="flex:1"></span><button onclick="postitAntw('${x.id}')">💬 Antwoord</button><button onclick="postitKlaar('${x.id}')">${x.klaar?"↺ Weer open":"✓ Afgehandeld"}</button><button onclick="postitWeg('${x.id}')" title="Verwijderen">🗑</button></div></div>`).join("")||`<div class="status" style="padding:10px 0">Geen open post-its.</div>`}`);
+  setTimeout(()=>{const t=document.getElementById("ptNieuw");if(t)t.focus()},50)}
+function postitPlaats(){const t=document.getElementById("ptNieuw"),tekst=(t&&t.value||"").trim();if(!tekst)return;
+  const ni=document.getElementById("ptNaam");if(ni&&ni.value.trim())try{localStorage.setItem("potplanMedewerker",ni.value.trim())}catch(e){}
+  (data.notities=data.notities||[]).push({id:uid(),tekst,door:postitNaam(),t:Date.now(),klaar:false});wijzig();postitTel();toonPostit();melding("📌 Post-it geplaatst","#2d6a4f")}
+function postitAntw(id){const x=(data.notities||[]).find(n=>n.id===id);if(!x)return;const a=prompt("Uw antwoord:");if(!a||!a.trim())return;
+  (x.antw=x.antw||[]).push({tekst:a.trim(),door:postitNaam(),t:Date.now()});wijzig();toonPostit()}
+function postitKlaar(id){const x=(data.notities||[]).find(n=>n.id===id);if(!x)return;x.klaar=!x.klaar;wijzig();postitTel();toonPostit()}
+function postitWeg(id){if(!confirm("Deze post-it verwijderen?"))return;data.notities=(data.notities||[]).filter(n=>n.id!==id);wijzig();postitTel();toonPostit()}
 function medewerker(){try{return localStorage.getItem("potplanMedewerker")||""}catch(e){return""}}
 function mobPartijen(){const s=mobWeekStart().getTime();
   return data.partijen.filter(p=>{const f=fasenT(p);return mob.actie==="1"?f.s===s:mob.actie==="2"?f.f2===s:false})
