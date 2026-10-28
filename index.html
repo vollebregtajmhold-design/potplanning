@@ -754,7 +754,7 @@ dialog::backdrop{background:rgba(0,0,0,.45)}
 
 <script>
 "use strict";
-const VERSIE="29.3";
+const VERSIE="29.4";
 const VERSIE_DATUM="25-10-2026";
 /* ---------- Basis ---------- */
 const PALET=["#2d6a4f","#1B5EBE","#E8007D","#c77d1a","#7a4fa0","#0f8b8d","#5b6b2f","#3d5a80","#a0522d","#7AB648"];
@@ -2334,7 +2334,16 @@ const som=a=>a.reduce((x,v)=>x+(v||0),0);
 let oppotKeuze="";
 /* De invulregels van een teelt: elke soort + (zonder soort) als die er moet zijn */
 /* Inkoop van het ene jaar naar het andere kopiëren (week voor week) */
-function kopieJaar(){const van=+$("#kjVan").value,naar=+$("#kjNaar").value,alle=$("#kjWat").value==="alle";
+/* vaste bezetting (2 regels) van het ene jaar naar het andere */
+function kopieVast(van,naar,vraag){const i=data.instellingen,heeft=k=>((i[k]||{})[van]||[]).some(v=>v),vol=k=>((i[k]||{})[naar]||[]).some(v=>v);
+  if(!heeft("vast")&&!heeft("vastB")){if(vraag)alert(`Er staat geen vaste bezetting in ${van}.`);return false}
+  if(vraag&&!confirm(`Vaste bezetting ${van} kopiëren naar ${naar}?`+(vol("vast")||vol("vastB")?`\n\nLet op: in ${naar} staat al vaste bezetting. Die wordt overschreven.`:"")))return false;
+  const nw=wekenIn(naar);for(const k of["vast","vastB"]){const a=[...(((i[k]||{})[van])||Array(53).fill(null))];while(a.length<53)a.push(null);
+    if(nw<53&&a[52])a[51]=Math.max(a[51]||0,a[52]);if(nw<53)a[52]=null;if(!i[k])i[k]={};i[k][naar]=a.map(v=>v||null)}return true}
+function kopieJaar(){const van=+$("#kjVan").value,naar=+$("#kjNaar").value,wat=$("#kjWat").value,alle=wat==="alle"||wat==="allesv";
+  if(van===naar){alert("Kies twee verschillende jaren.");return}
+  if(wat==="vast"){if(kopieVast(van,naar,true)){planJaar=naar;wijzig();melding(`✓ Vaste bezetting ${van} gekopieerd naar ${naar} (Ctrl + Z = terug)`,"#2d6a4f")}return}
+  if(wat==="allesv")kopieVast(van,naar,false);
   if(van===naar){alert("Kies twee verschillende jaren.");return}
   const tl=alle?data.teeltduren:data.teeltduren.filter(t=>t.id===oppotKeuze),ids=new Set(tl.map(t=>t.id));
   const bronnen=[...data.rassen.filter(r=>ids.has(r.teeltId)).map(r=>r.aantallen),...tl.map(t=>t.losAantallen)];
@@ -2399,7 +2408,7 @@ function toonOppot(){
   h+=`<div class="rij" style="margin-bottom:10px"><span class="status">Kopie van jaar</span>
     <select id="kjVan">${[-2,-1,0,1].map(d=>planJaar+d).map(j=>`<option ${j===planJaar-1?"selected":""}>${j}</option>`).join("")}</select>
     <span class="status">naar jaar</span><select id="kjNaar">${[-1,0,1,2].map(d=>planJaar+d).map(j=>`<option ${j===planJaar?"selected":""}>${j}</option>`).join("")}</select>
-    <select id="kjWat"><option value="t">alleen ${esc(teeltNaam(t))}</option><option value="alle">alle teelten</option></select>
+    <select id="kjWat"><option value="t">alleen ${esc(teeltNaam(t))}</option><option value="alle">alle teelten</option><option value="vast">vaste bezetting</option><option value="allesv">alle teelten + vaste bezetting</option></select>
     <button class="btn licht klein" onclick="kopieJaar()">📋 Kopiëren</button></div>`;
   h+=`<div class="rij" style="margin-bottom:10px"><button class="btn" onclick="openPlak()" title="Plak een bestellijst (Gewas, Soort, Fust, €/st, weken) uit Excel of een website">📋 Plakken uit bestellijst</button></div>`;
   h+=`<div id="inkGraf" class="inkgraf"></div>`;
