@@ -765,7 +765,7 @@ dialog::backdrop{background:rgba(0,0,0,.45)}
 
 <script>
 "use strict";
-const VERSIE="30.5";
+const VERSIE="30.6";
 const VERSIE_DATUM="25-10-2026";
 /* ---------- Basis ---------- */
 const PALET=["#2d6a4f","#1B5EBE","#E8007D","#c77d1a","#7a4fa0","#0f8b8d","#5b6b2f","#3d5a80","#a0522d","#7AB648"];
@@ -4121,8 +4121,13 @@ $("#versie").title="Versie "+VERSIE+" – "+VERSIE_DATUM;
 document.title=KLANT.appNaam+" v"+VERSIE;document.querySelectorAll(".naamtekst").forEach(x=>x.textContent=KLANT.appNaam);
 
 /* Rechtermuisknop doet hetzelfde als linkermuisknop (behalve in invulvakjes) */
-document.addEventListener("contextmenu",e=>{const t=e.target;if(t.closest("input,textarea,[contenteditable]"))return;
-  const el=t.closest("button,a,summary,label,select,[onclick],[oncontextmenu],.ovtabel td[data-k],.ovtabel th[data-c]");if(!el)return;
+/* Rechtermuisknop: nooit het menu van de browser (behalve in tekstvakken, voor knippen/plakken).
+   Waar de linkerknop iets doet, doet de rechterknop hetzelfde – tenzij er al een eigen rechtsklik is. */
+document.addEventListener("contextmenu",e=>{const t=e.target;
+  const tekstvak=t.closest("textarea,[contenteditable]")||(t.tagName==="INPUT"&&!/^(checkbox|radio|button|submit|range|color|file)$/i.test(t.type));
+  if(tekstvak)return;
+  e.preventDefault();
+  const el=t.closest("button,a,summary,label,select,input,[onclick],[oncontextmenu],[data-tab],.klik,.mklik,.ovtabel td[data-k],.ovtabel th[data-c]");if(!el)return;
   if(el.hasAttribute("oncontextmenu"))return; /* heeft al een eigen rechtsklik */
   e.preventDefault();if(el.tagName==="SELECT"){el.focus();try{el.showPicker()}catch(x){}return}
   t.dispatchEvent(new MouseEvent("click",{bubbles:true,cancelable:true,view:window,clientX:e.clientX,clientY:e.clientY}))});
