@@ -624,8 +624,9 @@ dialog::backdrop{background:rgba(0,0,0,.45)}
       <button data-tab="leveranciers">Leveranciers</button>
     </div></div>
   <button class="mknop uitgebreid" data-tab="soorten" type="button"><span class="lang">Parameters</span><span class="kort">Teelten</span></button>
+  <button class="mknop groot" data-tab="oppot" type="button"><span class="lang">Inkoop / opzetten</span><span class="kort">Inkoop</span></button>
+  <button class="mknop groot" data-tab="oppotov" type="button"><span class="lang">Opzetplanning</span><span class="kort">Opzetten</span></button>
   <button class="mknop groot" data-tab="aflever" type="button"><span class="lang">Afleverplanning</span><span class="kort">Afleveren</span></button>
-  <button class="mknop groot" data-tab="oppotov" type="button"><span class="lang">Opzetplanning</span><span class="kort">Oppotten</span></button>
   <div class="menu uitgebreid"><button class="mknop" type="button"><span class="lang">Planning </span><span class="kort">Meer </span>▾</button>
     <div class="mlijst">
       <button data-tab="plan" class="uitgebreid">Vloerenplan <span class="vink" data-v="plan"></span></button>
@@ -763,7 +764,7 @@ dialog::backdrop{background:rgba(0,0,0,.45)}
 
 <script>
 "use strict";
-const VERSIE="30.3";
+const VERSIE="30.4";
 const VERSIE_DATUM="25-10-2026";
 /* ---------- Basis ---------- */
 const PALET=["#2d6a4f","#1B5EBE","#E8007D","#c77d1a","#7a4fa0","#0f8b8d","#5b6b2f","#3d5a80","#a0522d","#7AB648"];
@@ -1315,7 +1316,7 @@ function render(){if(typeof postitTel==="function")postitTel();if(tab==="bestel"
   if(tab==="oppot"&&vorigeTab!=="oppot"&&typeof inkNul!=="undefined"){inkNul=null;inkVol=null;inkWijz.clear()} /* nieuw nulpunt bij openen Inkoop */ /* oppotoverzicht opent altijd met planten */
   houdOpen=false;vorigeTab=tab;
   if(tab==="plan"||tab==="teelt")venster=maandagIso(planJaar,1);
-  document.querySelectorAll("#balk [data-tab]").forEach(b=>b.classList.toggle("actief",b.dataset.tab===tab||(tab==="oppot"&&b.dataset.tab==="oppotov")));
+  document.querySelectorAll("#balk [data-tab]").forEach(b=>b.classList.toggle("actief",b.dataset.tab===tab));
   document.querySelectorAll("#balk .menu").forEach(m=>m.querySelector(".mknop").classList.toggle("actief",!!m.querySelector(".mlijst .actief")));
   zetVinkjes(); zetNavKnoppen(); toonKwekerij(); $("#btnStart").textContent=(zelfPlannen()?"Partijen klaarzetten ":"Vloeren vullen ")+planJaar;
   $("#btnStart").title=zelfPlannen()?"Maak de partijen uit het oppotplan klaar. Jij sleept ze daarna zelf naar een vloer.":"Zet alle partijen van het oppotplan op de vloeren";
