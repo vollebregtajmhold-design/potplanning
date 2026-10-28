@@ -222,6 +222,8 @@ details.leegloop{margin-top:8px;background:#fff;border:1px solid #c9c2b6;border-
 details.leegloop table{border-collapse:collapse;margin-top:6px;font-size:13px}details.leegloop th,details.leegloop td{border:1px solid #ddd5c4;padding:3px 10px;text-align:right}
 details.leegloop th{background:#eee}details.leegloop td:first-child,details.leegloop th:first-child{text-align:left}details.leegloop tr.lgtot td{font-weight:800;background:#e3f3ea}
 .inkgraf{margin:0 0 12px;width:100%;overflow:hidden}
+.inkgraf.groot{position:fixed;inset:60px 16px 16px 16px;width:auto;z-index:500;background:#f3efe6;border:2px solid #4b2a6e;border-radius:10px;padding:12px 14px;box-shadow:0 10px 40px rgba(0,0,0,.45);margin:0}
+.inkgraf.groot svg text{font-size:13px}
 tr.verschilrij td{font-size:14px;font-weight:800;height:30px;text-align:center;background:#f3efe6}tr.verschilrij td.vast{background:#e9e3d6;text-align:left!important}
 tr.ruimterij td{font-size:11px;font-weight:700;text-align:center;background:#f3efe6}tr.ruimterij td.vast{background:#e9e3d6;text-align:left!important}
 .ovrijkeus{font:inherit;font-weight:700;background:#fff;border:1px solid #999;border-radius:6px;padding:2px 6px;cursor:pointer}.ovtabel .ovleeg{color:#aaa;font-weight:400}
@@ -754,7 +756,7 @@ dialog::backdrop{background:rgba(0,0,0,.45)}
 
 <script>
 "use strict";
-const VERSIE="29.4";
+const VERSIE="29.6";
 const VERSIE_DATUM="25-10-2026";
 /* ---------- Basis ---------- */
 const PALET=["#2d6a4f","#1B5EBE","#E8007D","#c77d1a","#7a4fa0","#0f8b8d","#5b6b2f","#3d5a80","#a0522d","#7AB648"];
@@ -1290,7 +1292,7 @@ document.addEventListener("keydown",e=>{
   if(document.querySelector("dialog[open]"))return;
   e.preventDefault();bladeren(e.key==="ArrowLeft"?-1:1)});
 let vorigeTab="",houdOpen=false;
-function render(){if(tab==="bestel")tab="oppotov"; /* bestelplanning zit nu in Opzetplanning */
+function render(){if(tab==="bestel")tab="oppotov";if(tab==="ruimtegraf")tab="oppot"; /* ruimte zit nu bij Inkoop / opzetten */ /* bestelplanning zit nu in Opzetplanning */
   zvKlaar();
   if(tab==="rassen"||tab==="duren")tab="soorten";
   if(tab==="proef")tab="oppot"; /* proberen is teruggedraaid */
@@ -2340,10 +2342,15 @@ function kopieVast(van,naar,vraag){const i=data.instellingen,heeft=k=>((i[k]||{}
   if(vraag&&!confirm(`Vaste bezetting ${van} kopiëren naar ${naar}?`+(vol("vast")||vol("vastB")?`\n\nLet op: in ${naar} staat al vaste bezetting. Die wordt overschreven.`:"")))return false;
   const nw=wekenIn(naar);for(const k of["vast","vastB"]){const a=[...(((i[k]||{})[van])||Array(53).fill(null))];while(a.length<53)a.push(null);
     if(nw<53&&a[52])a[51]=Math.max(a[51]||0,a[52]);if(nw<53)a[52]=null;if(!i[k])i[k]={};i[k][naar]=a.map(v=>v||null)}return true}
+function kopieKost(van,naar){const r=kostenRij(van),nw=wekenIn(naar),cp=a=>{const x=[...a];while(x.length<53)x.push(null);if(nw<53&&x[52]!=null&&x[51]==null)x[51]=x[52];if(nw<53)x[52]=null;return x};
+  const i=data.instellingen;if(!i.kostenJ)i.kostenJ={};i.kostenJ[naar]={a:cp(r.a),b:cp(r.b)}}
 function kopieJaar(){const van=+$("#kjVan").value,naar=+$("#kjNaar").value,wat=$("#kjWat").value,alle=wat==="alle"||wat==="allesv";
   if(van===naar){alert("Kies twee verschillende jaren.");return}
   if(wat==="vast"){if(kopieVast(van,naar,true)){planJaar=naar;wijzig();melding(`✓ Vaste bezetting ${van} gekopieerd naar ${naar} (Ctrl + Z = terug)`,"#2d6a4f")}return}
-  if(wat==="allesv")kopieVast(van,naar,false);
+  if(wat==="kost"){const i=data.instellingen,vol=!!(i.kostenJ&&i.kostenJ[naar]);
+    if(!confirm(`Kosten per week·m² van ${van} kopiëren naar ${naar}?`+(vol?`\n\nLet op: ${naar} heeft al eigen kosten. Die worden overschreven.`:"")))return;
+    kopieKost(van,naar);planJaar=naar;wijzig();melding(`✓ Kosten ${van} gekopieerd naar ${naar} (Ctrl + Z = terug)`,"#2d6a4f");return}
+  if(wat==="allesv"){kopieVast(van,naar,false);kopieKost(van,naar)}
   if(van===naar){alert("Kies twee verschillende jaren.");return}
   const tl=alle?data.teeltduren:data.teeltduren.filter(t=>t.id===oppotKeuze),ids=new Set(tl.map(t=>t.id));
   const bronnen=[...data.rassen.filter(r=>ids.has(r.teeltId)).map(r=>r.aantallen),...tl.map(t=>t.losAantallen)];
@@ -2362,14 +2369,17 @@ const vastData=(j,f)=>{const i=data.instellingen,k=f==="b"?"vastB":"vast";if(!i[
 const vastLabels=()=>{const i=data.instellingen;if(!i.vastL)i.vastL={a:"Verhuur",b:"Stekopslag"};return i.vastL};
 let inkOpen={v:true,k:false};try{const o=JSON.parse(localStorage.getItem("potplanning-inkopen")||"null");if(o)inkOpen=o}catch(e){}
 function inkGroep(id){inkOpen[id]=!inkOpen[id];try{localStorage.setItem("potplanning-inkopen",JSON.stringify(inkOpen))}catch(e){}render()}
-const kostWeek=w=>{const k=kostenData();return(+k.a[w-1]||0)+(+k.b[w-1]||0)};
+/* kosten per jaar (namen gelden voor alle jaren). Nog niets voor een jaar? dan de oude, algemene waarden */
+const kostenRij=j=>{const i=data.instellingen,K=kostenData();return(i.kostenJ&&i.kostenJ[j])||{a:K.a,b:K.b}};
+const kostenSchrijf=j=>{const i=data.instellingen;if(!i.kostenJ)i.kostenJ={};if(!i.kostenJ[j]){const r=kostenRij(j);i.kostenJ[j]={a:[...r.a],b:[...r.b]}}return i.kostenJ[j]};
+const kostWeek=(w,j)=>{const k=kostenRij(j??planJaar);return(+k.a[w-1]||0)+(+k.b[w-1]||0)};
 $("#inhoud").addEventListener("change",e=>{const el=e.target;
   if(el.classList.contains("vastin")){const w=+el.dataset.w,v=String(el.value).trim().replace(/[.\s]/g,"").replace(",",".");const n=v===""||isNaN(+v)?null:Math.max(0,Math.round(+v));
     vastData(planJaar,el.dataset.kf==="vastb"?"b":"a")[w]=n;el.value=n?getal(n):"";const t=document.getElementById("vt-"+w);if(t){const s=(+vastData(planJaar)[w]||0)+(+vastData(planJaar,"b")[w]||0);t.innerHTML=s?"<b>"+getal(s)+"</b>":""}
     opslaanLater();if(typeof inkRuimteLater==="function")inkRuimteLater();return}
   if(el.classList.contains("vastnaam")){vastLabels()[el.dataset.kf]=el.value.trim();opslaanLater();return}
   if(el.classList.contains("kost")){const k=kostenData(),w=+el.dataset.w,v=String(el.value).trim().replace("€","").replace(",",".");const n=v===""||isNaN(+v)?null:+v;
-    k[el.dataset.kf][w]=n;el.value=n==null?"":String(n).replace(".",",");const t=document.getElementById("kt-"+w);if(t){const s=kostWeek(w+1);t.innerHTML=s?"<b>"+String(Math.round(s*100)/100).replace(".",",")+"</b>":""}opslaanLater()}
+    kostenSchrijf(planJaar)[el.dataset.kf][w]=n;el.value=n==null?"":String(n).replace(".",",");const t=document.getElementById("kt-"+w);if(t){const s=kostWeek(w+1);t.innerHTML=s?"<b>"+String(Math.round(s*100)/100).replace(".",",")+"</b>":""}opslaanLater()}
   if(el.classList.contains("kostnaam")){kostenData()["l"+el.dataset.kf]=el.value.trim();opslaanLater()}});
 let oppotToon=new Set(); /* soorten die u in de Inkoop net hebt gekozen */
 function oppotRegels(t){const soorten=data.rassen.filter(r=>r.teeltId===t.id);
@@ -2408,7 +2418,7 @@ function toonOppot(){
   h+=`<div class="rij" style="margin-bottom:10px"><span class="status">Kopie van jaar</span>
     <select id="kjVan">${[-2,-1,0,1].map(d=>planJaar+d).map(j=>`<option ${j===planJaar-1?"selected":""}>${j}</option>`).join("")}</select>
     <span class="status">naar jaar</span><select id="kjNaar">${[-1,0,1,2].map(d=>planJaar+d).map(j=>`<option ${j===planJaar?"selected":""}>${j}</option>`).join("")}</select>
-    <select id="kjWat"><option value="t">alleen ${esc(teeltNaam(t))}</option><option value="alle">alle teelten</option><option value="vast">vaste bezetting</option><option value="allesv">alle teelten + vaste bezetting</option></select>
+    <select id="kjWat"><option value="t">alleen ${esc(teeltNaam(t))}</option><option value="alle">alle teelten</option><option value="vast">vaste bezetting</option><option value="kost">kosten per week·m²</option><option value="allesv">alles (teelten + vaste bezetting + kosten)</option></select>
     <button class="btn licht klein" onclick="kopieJaar()">📋 Kopiëren</button></div>`;
   h+=`<div class="rij" style="margin-bottom:10px"><button class="btn" onclick="openPlak()" title="Plak een bestellijst (Gewas, Soort, Fust, €/st, weken) uit Excel of een website">📋 Plakken uit bestellijst</button></div>`;
   h+=`<div id="inkGraf" class="inkgraf"></div>`;
@@ -2417,7 +2427,7 @@ function toonOppot(){
     </div>
     <div id="maxUit"></div>`;
   const K=kostenData(),eur2=v=>v?String(Math.round(v*100)/100).replace(".",","):"";
-  const kRij=(f,ph)=>`<tr class="kostrij"><td class="vast"><input class="kostnaam" data-kf="${f}" value="${esc(K["l"+f])}" title="Naam van deze kostenregel (u kunt hem aanpassen)"></td>${Array.from({length:NW},(_,w)=>`<td><input class="kost" inputmode="decimal" data-kf="${f}" data-w="${w}" value="${eur2(K[f][w])}" placeholder="${ph}"></td>`).join("")}<td class="tot status" style="font-size:11px">€/week·m²</td></tr>`;
+  const kRij=(f,ph)=>`<tr class="kostrij"><td class="vast"><input class="kostnaam" data-kf="${f}" value="${esc(K["l"+f])}" title="Naam van deze kostenregel (u kunt hem aanpassen)"></td>${Array.from({length:NW},(_,w)=>`<td><input class="kost" inputmode="decimal" data-kf="${f}" data-w="${w}" value="${eur2(kostenRij(planJaar)[f][w])}" placeholder="${ph}"></td>`).join("")}<td class="tot status" style="font-size:11px">€/week·m²</td></tr>`;
   const VA=vastData(planJaar),VB=vastData(planJaar,"b"),VL=vastLabels(),vTot=w=>(+VA[w]||0)+(+VB[w]||0);
   const vRij=(f,arr)=>`<tr class="kostrij vastrij"><td class="vast"><input class="kostnaam vastnaam" data-kf="${f}" value="${esc(VL[f])}" title="Naam van deze regel (u kunt hem aanpassen)"></td>${Array.from({length:NW},(_,w)=>`<td><input class="kost vastin" inputmode="numeric" data-kf="vast${f}" data-w="${w}" value="${arr[w]?getal(arr[w]):""}"></td>`).join("")}<td class="tot status" style="font-size:11px">m² · ${planJaar}</td></tr>`;
   const kop2=(id,titel,cel,eenh)=>`<tr class="kostrij groepkop" onclick="inkGroep('${id}')"><td class="vast"><b>${inkOpen[id]?"▾":"▸"} ${titel}</b></td>${Array.from({length:NW},(_,w)=>`<td id="${id}t-${w}"><b>${cel(w)}</b></td>`).join("")}<td class="tot status" style="font-size:11px">${eenh}</td></tr>`;
@@ -2437,7 +2447,7 @@ function toonOppot(){
 }
 /* Inkoop: ruimte die de kas nodig heeft per week (alle teelten), meteen bijgewerkt bij elk getal */
 const RKL=v=>v>95?"#E8007D":v>=85?"#F6B26B":"#86C49E";
-function inkRuimte(){const g=document.getElementById("inkGraf");if(!g)return;const{kaart}=ruimteBerekening(),NW=wekenIn(planJaar),bruto=+data.instellingen.brutoM2||0,tid=oppotKeuze,nu=dezeWeek();
+function inkRuimte(){const g=document.getElementById("inkGraf");if(!g)return;g.classList.toggle("groot",inkGroot);const{kaart}=ruimteBerekening(),NW=wekenIn(planJaar),bruto=+data.instellingen.brutoM2||0,tid=oppotKeuze,nu=dezeWeek();
   const rij=Array.from({length:NW},(_,w)=>{const t=+maandagIso(planJaar,w+1),e=kaart.get(t)||{f1:0,f2:0,per:{}};return{t,m:e.f1+e.f2+(e.vast||0),vast:e.vast||0,eigen:(e.per||{})[tid]||0}});
   /* nulpunt: de ruimte zoals die was toen u de Inkoop opende (of op ↺ klikte) */
   if(!inkNul||inkNul.jaar!==planJaar)inkNul={jaar:planJaar,m:rij.map(r=>r.m)};
@@ -2450,7 +2460,7 @@ function inkRuimte(){const g=document.getElementById("inkGraf");if(!g)return;con
   /* grafiek: alle teelten op elkaar, elk een eigen kleur; over de hele breedte */
   const tl=data.teeltduren.filter(t=>rij.some(r=>{const e=kaart.get(r.t);return e&&e.per&&e.per[t.id]}));inkTip=[];
   const kl=t=>RG_KLEUR[data.teeltduren.indexOf(t)%RG_KLEUR.length];
-  const max=Math.max(bruto,...rij.map(r=>r.m))*1.08||1,H=150,L=44,W=Math.max(600,(g.clientWidth||1000)-4),bw=(W-L-8)/NW,y=v=>H-18-(H-26)*v/max;
+  const max=Math.max(bruto,...rij.map(r=>r.m))*1.08||1,H=inkGroot?Math.max(300,innerHeight-170):150,L=44,W=Math.max(600,(g.clientWidth||1000)-(inkGroot?32:4)),bw=(W-L-8)/NW,y=v=>H-18-(H-26)*v/max;
   let s=`<svg width="${W}" height="${H}" style="display:block;background:#f3efe6;border:1px solid #c9c2b6;border-radius:6px">`;
   for(let i=1;i<=3;i++){const v=max/1.08*i/3;s+=`<line x1="${L}" x2="${W-8}" y1="${y(v)}" y2="${y(v)}" stroke="#ddd5c4"/><text x="${L-4}" y="${y(v)+3}" font-size="9" text-anchor="end" fill="#6b6558">${kort1k(Math.round(v))}</text>`}
   rij.forEach((r,w)=>{const x=L+w*bw+1,bb=Math.max(1,bw-2),e=kaart.get(r.t)||{per:{}};let acc=0;
@@ -2476,8 +2486,10 @@ function inkRuimte(){const g=document.getElementById("inkGraf");if(!g)return;con
     lg=`<details class="leegloop" ${inkLgOpen?"open":""} ontoggle="inkLgOpen=this.open"><summary><b>Leegloop per maand ${planJaar}</b> · ${getal(Math.round(T.leeg))} week·m² leeg (${T.w?Math.round(T.leeg/(bruto*T.w)*100):0}%)${T.kost?" · € "+getal(Math.round(T.kost)):""}</summary>
       <table><tr><th>Maand</th><th>Nodig week·m²</th><th>Leeg week·m²</th><th>Leeg %</th><th>Kosten leeg</th></tr>${pm.map((o,i)=>o.w?rg(MND[i],o):"").join("")}${rg("Totaal",T,1)}</table>
       ${T.kost?"":`<div class="status" style="font-size:11px">Vul de kosten per week·m² in (onderaan de tabel) om de kosten te zien.</div>`}</details>`}
-  g.innerHTML=`<div class="rij" style="gap:10px;margin-bottom:4px;flex-wrap:wrap"><b>Ruimte in de kas ${planJaar}</b><span class="legenda" style="margin:0">${tl.map(t=>`<span${t.id===tid?' style="font-weight:700"':""}><i style="background:${kl(t)}"></i>${esc(teeltNaam(t))}</span>`).join("")}${rij.some(r=>r.vast)?`<span><i style="background:#8a8478"></i>Vaste bezetting</span>`:""}${bruto?`<span><i style="background:#b3261e;height:3px"></i>bruto kasruimte</span>`:""}</span>${vol?`<span class="let">${vol} weken te vol</span>`:""}${bruto?"":`<span class="status">Vul de bruto kasruimte in bij Bestand ▾ voor de %.</span>`}</div>${s}`}
-let inkLgOpen=false;
+  g.innerHTML=`<div class="rij" style="gap:10px;margin-bottom:4px;flex-wrap:wrap"><button class="ovk ovlink" onclick="inkGrootZet(${!inkGroot})" title="${inkGroot?"Kleiner (Esc)":"Grafiek groot op het scherm"}">${inkGroot?"✕ Kleiner":"⛶ Vergroot"}</button><b>Ruimte in de kas ${planJaar}</b><span class="legenda" style="margin:0">${tl.map(t=>`<span${t.id===tid?' style="font-weight:700"':""}><i style="background:${kl(t)}"></i>${esc(teeltNaam(t))}</span>`).join("")}${rij.some(r=>r.vast)?`<span><i style="background:#8a8478"></i>Vaste bezetting</span>`:""}${bruto?`<span><i style="background:#b3261e;height:3px"></i>bruto kasruimte</span>`:""}</span>${vol?`<span class="let">${vol} weken te vol</span>`:""}${bruto?"":`<span class="status">Vul de bruto kasruimte in bij Bestand ▾ voor de %.</span>`}</div>${s}`}
+let inkLgOpen=false,inkGroot=false;
+function inkGrootZet(v){inkGroot=v;inkRuimte()}
+document.addEventListener("keydown",e=>{if(e.key==="Escape"&&inkGroot)inkGrootZet(false)});
 let inkT=null,inkNul=null,inkTip=[],inkFocus=null,inkVol=null;
 $("#inhoud").addEventListener("focusin",e=>{if(e.target.classList&&e.target.classList.contains("ac"))inkFocus=e.target});
 /* m² per plant per week voor een vak (bron + week): profiel over de teeltweken */
@@ -3343,7 +3355,7 @@ function toonOppotOv(){
   /* kosten: per teeltweek (m² per plant in die fase) × (kosten per week·m² van die kalenderweek) */
   const kostPartij=r=>{const t=teeltVanRas(r.rasId)||data.teeltduren.find(x=>x.id===r.teeltId);if(!t||!t.dicht1||!t.dicht2)return 0;
     const ras=r.rasId&&data.rassen.find(x=>x.id===r.rasId),src=ras&&eigenDuur(ras)?ras:t,f1=Math.ceil((src.fase1||[])[r.w-1]||0),f2=Math.ceil((src.fase2||[])[r.w-1]||0),st=maandagIso(jaar,r.w);let e=0;
-    for(let k=0;k<f1+f2;k++)e+=kostWeek(isoWeek(plusWeken(st,k)).w)/(k<f1?t.dicht1:t.dicht2);return e*r.aantal};
+    for(let k=0;k<f1+f2;k++){const iw=isoWeek(plusWeken(st,k));e+=kostWeek(iw.w,iw.y)/(k<f1?t.dicht1:t.dicht2)}return e*r.aantal};
   const waarde=r=>{if(ovEenheid==="kost"||ovEenheid==="kosttot")return kostPartij(r);if(ovEenheid==="wm2"||ovEenheid==="wm2k")return weekM2(r);if(ovEenheid==="m2op"||ovEenheid==="m2uit"){const t=teeltVanRas(r.rasId),d=t?(ovEenheid==="m2op"?t.dicht1:t.dicht2):0;return d?r.aantal/d:0}
     if(!trays)return r.aantal;const n=fustAantal(r.fust);if(!n){zonderFust=true;return r.aantal}return Math.ceil(r.aantal/n)};
   const vlTekst=r=>{if(!r.rasId)return"";const v=vloerEff(r.rasId,jaar,r.w);return{afdop:v.opAfd,vlop:v.op,afduit:v.uitAfd,vluit:v.uit}[ovEenheid]||""};
@@ -3357,7 +3369,7 @@ function toonOppotOv(){
     <select class="ovjaar" onchange="ovEenheid=this.value;render()" title="Wat ziet u in de cellen">${Object.entries(EH).filter(([v])=>!ZV()||!["afdop","vlop","afduit","vluit"].includes(v)).map(([v,n])=>`<option value="${v}" ${ovEenheid===v?"selected":""}>${n.startsWith("m²")?n:n[0].toUpperCase()+n.slice(1)}</option>`).join("")}</select>
     ${extra||""}
     <span style="flex:1"></span>
-    <button class="ovk ovlink" onclick="naar('ruimtegraf')" title="Hoeveel m² is er per week nodig, per teelt">Ruimte ›</button><button class="ovk ovlink" onclick="naar('aflever')" title="Afleverplanning (overzicht)">Afleverplanning ›</button>`;return""};
+    <button class="ovk ovlink" onclick="naar('aflever')" title="Afleverplanning (overzicht)">Afleverplanning ›</button>`;return""};
   if(!regels.length){$("#inhoud").innerHTML=kop()+h+`<div class="leeg" style="padding:30px">Nog niets in de <a href="#" onclick="naar('oppot');return false">Inkoop</a> voor ${jaar}.</div>`;return}
   const alleW=[...new Set(regels.map(r=>r.w))].sort((a,b)=>a-b),cel={},rijen=new Set(),tot={};
   /* komen er weken bij of gaan er weken af? dan de schuif opnieuw zetten, zodat niets buiten beeld valt */
@@ -3932,7 +3944,6 @@ function bestelCsv(){const jaar=planJaar,lev=data.leveranciers.find(l=>l.id===be
 
 /* ---------- Zoeken (blauwe knop / Ctrl+K): snel naar een pagina, product, partij, soort of leverancier ---------- */
 const PAGINAS=[
-  ["📊","Ruimte (m² per week)","Pagina","ruimte m2 grafiek bezetting kas beschikbaarheid",()=>naar("ruimtegraf")],
   ["📦","Overzicht verkooporders","Pagina","verkooporders overzicht pakbon pakbonnen orders verkocht klant",()=>naar("verkoop")],
   ["🧾","Verkooporder (toets V)","Actie","verkoop verkooporder order verkopen klant bestelling",()=>verkoopOrder()],
   ["🏠","Vloeren","Stamdata","vloeren kappen kas vakken oppotvloer m2 rijen",()=>naar("kappen")],
@@ -3965,7 +3976,6 @@ const PAGINAS_E=[
   ["🪴","Opzetplanning (overzicht)","Pagina","oppotten oppotoverzicht trays m2 afdeling vloer",()=>naar("oppotov")],
   ["✏️","Inkoop / opzetten","Pagina","oppotplan aantallen invullen per week",()=>naar("oppot")],
   ["🌱","Parameters (instellen)","Pagina","teelt soorten raaptijd uitval fust prijs teeltduur invoer soortnummer",()=>naar("soorten")],
-  ["📊","Ruimte (m² per week)","Pagina","ruimte m2 grafiek bezetting kas beschikbaarheid",()=>naar("ruimtegraf")],
   ["📦","Overzicht verkooporders","Pagina","verkooporders overzicht pakbon pakbonnen orders verkocht klant",()=>naar("verkoop")],
   ["🧾","Verkooporder (toets V)","Actie","verkoop verkooporder order verkopen klant bestelling",()=>verkoopOrder()],
   ["👥","Klanten","Pagina","klanten klant lijst verkoop",()=>naar("klanten")],
