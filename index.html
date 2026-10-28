@@ -174,7 +174,7 @@ body.toonKlik :is(button,a,summary,select,.ovtabel td[data-k],.ovtabel th[data-c
 @media (max-width:700px){#grijs{margin:6px;border-radius:10px}}
 @media print{#grijs{background:none;margin:0;min-height:0}}
 .ovtabel{margin:0;width:auto!important;border-collapse:collapse;font-size:18px;background:#f4efe6}
-#ovBalk{display:flex;align-items:center;gap:10px;padding:10px 14px;background:#f3eee5;white-space:nowrap;overflow-x:auto}#ovBalk[hidden]{display:none}
+#ovBalk{display:flex;align-items:center;gap:10px;padding:10px 14px;min-height:58px;box-sizing:border-box;background:#f3eee5;white-space:nowrap;overflow-x:auto}#ovBalk[hidden]{display:none}
 .ovtitel{font-weight:800;letter-spacing:2px;color:#2d6a4f;font-size:14px;text-transform:uppercase;margin-right:6px}
 .ovjaar{background:#2d6a4f;color:#fff;font-weight:700;border-radius:4px;padding:3px 6px;font-size:12px;border:1px solid #1e4d38;cursor:pointer}
 .ovk{background:#e3ecf3;color:#2f4b5e;border:0;border-radius:4px;padding:4px 8px;font-size:12px;font-weight:600;cursor:pointer}.ovk.aan{background:#2d6a4f;color:#fff}
@@ -226,6 +226,7 @@ details.leegloop th{background:#eee}details.leegloop td:first-child,details.leeg
 .inkgraf.groot svg text{font-size:13px}
 tr.verschilrij td{font-size:14px;font-weight:800;height:30px;text-align:center;background:#f3efe6}tr.verschilrij td.vast{background:#e9e3d6;text-align:left!important}
 tr.ruimterij td{font-size:11px;font-weight:700;text-align:center;background:#f3efe6}tr.ruimterij td.vast{background:#e9e3d6;text-align:left!important}
+#ovBalk .ovk.ovlink{font-size:14px;padding:6px 12px;border-radius:6px;border:1px solid #7fa9d1;min-width:175px;flex:0 0 auto}#ovBalk .navplek{display:inline-block;width:0}
 .ovrijkeus{font:inherit;font-weight:700;background:#fff;border:1px solid #999;border-radius:6px;padding:2px 6px;cursor:pointer}.ovtabel .ovleeg{color:#aaa;font-weight:400}
 .ovtabel tr.ovtot td{background:#e3f3ea}
 .ovtabel td[data-k]{cursor:pointer}.ovtabel tr.hlr td,.ovtabel .hlc{background:#dbeafe!important}.ovtabel tr td.hlx{background:#a9cdfa!important}.ovtabel th.hlc{background:#dbeafe!important}
@@ -756,7 +757,7 @@ dialog::backdrop{background:rgba(0,0,0,.45)}
 
 <script>
 "use strict";
-const VERSIE="29.6";
+const VERSIE="29.7";
 const VERSIE_DATUM="25-10-2026";
 /* ---------- Basis ---------- */
 const PALET=["#2d6a4f","#1B5EBE","#E8007D","#c77d1a","#7a4fa0","#0f8b8d","#5b6b2f","#3d5a80","#a0522d","#7AB648"];
@@ -1311,7 +1312,7 @@ function render(){if(tab==="bestel")tab="oppotov";if(tab==="ruimtegraf")tab="opp
   document.querySelectorAll("#balk .menu").forEach(m=>m.querySelector(".mknop").classList.toggle("actief",!!m.querySelector(".mlijst .actief")));
   zetVinkjes(); zetNavKnoppen(); toonKwekerij(); $("#btnStart").textContent=(zelfPlannen()?"Partijen klaarzetten ":"Vloeren vullen ")+planJaar;
   $("#btnStart").title=zelfPlannen()?"Maak de partijen uit het oppotplan klaar. Jij sleept ze daarna zelf naar een vloer.":"Zet alle partijen van het oppotplan op de vloeren";
-  document.body.classList.toggle("ovmodus",tab==="oppotov"||tab==="aflever"||tab==="bestel"||tab==="ruimtegraf");{const ob=document.getElementById("ovBalk");if(ob&&tab!=="oppotov"&&tab!=="aflever"&&tab!=="bestel"&&tab!=="ruimtegraf")ob.hidden=true}
+  document.body.classList.toggle("ovmodus",tab==="oppotov"||tab==="aflever"||tab==="bestel"||tab==="ruimtegraf");{const ob=document.getElementById("ovBalk");if(ob&&!["oppotov","aflever","bestel","ruimtegraf","soorten","oppot"].includes(tab))ob.hidden=true}
   document.body.classList.toggle("afl",tab==="ruimtegraf"||tab==="verkoop"||tab==="aflever"||tab==="werk"||tab==="bestel"||tab==="oppotov");
   document.body.classList.toggle("smal",["kappen","soorten","rassen","duren","leveranciers","klanten","bestel","oppotov","aflever","werk","weeklijst","verkoop","ruimtegraf"].includes(tab));
   document.body.classList.toggle("duren",tab==="duren");
@@ -2222,7 +2223,8 @@ function toonSoorten(){
   h+=`<div class="rij" style="margin-bottom:12px"><button class="btn" onclick="teeltErbij()">+ Teelt</button>
     ${data.teeltduren.length>1?`<button class="btn licht klein" onclick="data.teeltduren.forEach(t=>teeltOpen.add(t.id));render()">Alles open</button><button class="btn licht klein" onclick="teeltOpen.clear();render()">Alles dicht</button>`:""}
     ${data.leveranciers.some(l=>l.naam)?"":`<span class="status">Nog geen leveranciers – maak ze aan bij <a href="#" onclick="naar('leveranciers');return false">Stamdata → Leveranciers</a>.</span>`}
-    <span style="flex:1"></span><button class="ovk ovlink" style="font-size:14px;padding:5px 12px;border-radius:6px" onclick="naar('oppot')" title="Inkoop / opzetten">Inkoop / opzetten ›</button></div>`;
+    </div>`;
+  {const ob=document.getElementById("ovBalk");ob.hidden=false;ob.innerHTML=`<span class="navplek"></span><span class="ovtitel">Parameters</span><span style="flex:1"></span><button class="ovk ovlink" onclick="naar('oppot')" title="Inkoop / opzetten">Inkoop / opzetten ›</button>`}
   if(!data.teeltduren.length){$("#inhoud").innerHTML=h+`<div class="leeg">Nog geen teelten. Klik op <b>+ Teelt</b>.</div>`;return}
   const veld=(i,k,w,type,ph)=>{const t=data.teeltduren[i],v=t[k];const leeg=(k==="dicht1"||k==="dicht2"||k==="product")&&!v;
     return `<input ${type==="n"?'type="number" min="0" step="0.1"':""} class="${leeg?"mist":""}" style="width:${w}" value="${esc(v||(k==="potmaat"?v:""))}" placeholder="${ph}" data-sv="${i}" data-sk="${k}">`};
@@ -2392,9 +2394,10 @@ function bronArr(b,j){const[k,id]=[b.slice(0,1),b.slice(2)];
   const m=k==="r"?o.aantallen:o.losAantallen;if(!m[j])m[j]=Array(53).fill(null);return{m,arr:m[j],o,k}}
 function toonOppot(){
   const nuWk=new Date().getFullYear()===planJaar?isoWeek(new Date()).w:0;
-  let h=`<div class="oppnav"><button class="ovk ovlink" onclick="if(oppotKeuze&&oppotKeuze!=='alle')naarTeeltId(oppotKeuze);else naar('soorten')" title="Parameters (instellen)">‹ Parameters</button>
+  let h="";
+  {const ob=document.getElementById("ovBalk");ob.hidden=false;ob.innerHTML=`<button class="ovk ovlink" onclick="if(oppotKeuze&&oppotKeuze!=='alle')naarTeeltId(oppotKeuze);else naar('soorten')" title="Parameters (instellen)">‹ Parameters</button><span class="ovtitel">Inkoop / opzetten</span>
     <span class="oppjaar"><button class="btn licht klein" onclick="planJaar--;render()" title="Jaar terug">◀</button><b>${planJaar}</b><button class="btn licht klein" onclick="planJaar++;render()" title="Jaar verder">▶</button></span>
-    <button class="ovk ovlink" onclick="naar('oppotov')" title="Opzetplanning (overzicht)">Opzetplanning ›</button></div>`;
+    <span style="flex:1"></span><button class="ovk ovlink" onclick="naar('oppotov')" title="Opzetplanning (overzicht)">Opzetplanning ›</button>`}
   if(!data.teeltduren.length){$("#inhoud").innerHTML=h+`<div class="leeg">Nog geen teelten. Maak ze eerst aan bij <b>Stamdata → Teelt</b>, of <button class="btn" onclick="openPlak()">📋 Plak een bestellijst</button></div>`;return}
   if(!data.teeltduren.some(t=>t.id===oppotKeuze))oppotKeuze=data.teeltduren[0].id; /* "Alle teelten" is weg */
   h+=`<div class="tchips">${data.teeltduren.map(t=>{const n=som(aantalRij(t,planJaar));return`<button type="button" class="tchip ${t.id===oppotKeuze?"aan":""}" onclick="oppotKeuze='${t.id}';render()" oncontextmenu="naarTeeltId('${t.id}');return false" title="Klik: inkoop van deze teelt · Rechtermuisknop: teelt bewerken"><b>${esc(teeltNaamKort(t))}</b><small>${getal(n)}</small></button>`}).join("")}
