@@ -220,6 +220,7 @@ tr.nieuwsoort select{width:100%;font-style:italic;border:1px dashed #2d6a4f;back
 .welstap:hover{background:#d3e5f5;border-color:#7fa9d1}.welnr{flex:none;width:30px;height:30px;border-radius:50%;background:#2d6a4f;color:#fff;font-weight:800;display:flex;align-items:center;justify-content:center}
 .zrknop{display:flex;align-items:center;gap:8px}.zr.sel .status{color:#dbe7fb!important}.zrknop .zrnaam{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .zrknop .zk{display:grid;grid-template-columns:110px 90px 140px;gap:6px;flex:none}.zrknop .zk .ovk{font-size:13px;padding:4px 8px;border-radius:6px;border:1px solid #7fa9d1;text-align:center}
+.mob .wkkeuze b{white-space:nowrap}.mobteelt{font-size:16px;font-weight:700;padding:6px 8px;border-radius:8px;border:2px solid #fff;background:#fff;color:#1f4d39;max-width:58vw}
 .inkgroot{font-size:15px;font-weight:700;padding:7px 14px;border-radius:8px;border:2px solid #1B5EBE;background:#d3e5f5;color:#16304d;cursor:pointer}.inkgroot:hover{background:#bcd7f0}.inkgroot.paars{border-color:#6a3d9a;background:#efe6f7;color:#3d1f5c}
 .proeflabel{background:#6a3d9a;color:#fff;border-radius:6px;padding:3px 9px;font-size:12px;font-weight:700}
 details.leegloop{margin-top:8px;background:#fff;border:1px solid #c9c2b6;border-radius:6px;padding:6px 10px}details.leegloop summary{cursor:pointer}
@@ -752,7 +753,7 @@ dialog::backdrop{background:rgba(0,0,0,.45)}
 
 <script>
 "use strict";
-const VERSIE="31.3";
+const VERSIE="31.4";
 const VERSIE_DATUM="25-10-2026";
 /* ---------- Basis ---------- */
 const PALET=["#2d6a4f","#1B5EBE","#E8007D","#c77d1a","#7a4fa0","#0f8b8d","#5b6b2f","#3d5a80","#a0522d","#7AB648"];
@@ -3084,7 +3085,8 @@ function toonMobiel(){syncSoorten();
   mobWeekStart();const t=mobWeekStart().getTime();
   let tabs=[["week","📋 Deze week"],["vloer","🏠 Vloeren"],["aflever","🚛 Afleveren"],["zoek","🔍 Partij"]];
   if(data.instellingen.eenvoudig){tabs=[["aflever","🚛 Afleveren"],["oppot","🪴 Oppotten"]];if(mobTab!=="oppot")mobTab="aflever"}
-  let h=`<div class="mob"><div class="mkop"><b>📱 Overzicht</b>
+  if(teeltFilter&&!data.teeltduren.some(x=>x.id===teeltFilter))teeltFilter="";
+  let h=`<div class="mob"><div class="mkop"><select class="mobteelt" onchange="teeltFilter=this.value;render()" title="Filter op teelt"><option value="">Alle teelten</option>${data.teeltduren.map(x=>`<option value="${x.id}" ${x.id===teeltFilter?"selected":""}>${esc(teeltNaam(x))}</option>`).join("")}</select>
     <div class="wkkeuze"><button onclick="mobWeek(-1)">◀</button><b>wk ${mob.week}</b><button onclick="mobWeek(1)">▶</button></div></div>
     <div class="mtabs">${tabs.map(([k,n])=>`<button class="${mobTab===k?"aan":""}" onclick="mobTab='${k}';render()">${n}</button>`).join("")}</div>`;
   const naam=p=>`<b>${partijNr(p)}</b> ${esc(p.product)}${p.potmaat?" "+esc(p.potmaat)+" cm":""}`;
@@ -3099,7 +3101,7 @@ function toonMobiel(){syncSoorten();
   }else if(mobTab==="oppot"){
     /* wat komt er de komende weken aan om opzetplanning: per soort aantal, fust en trays (niveau 3: afd/vloer) */
     /* scrollen: alle komende weken met opzetten onder elkaar (lege weken overslaan), tot een jaar vooruit */
-    let getoond=0;for(let i=0;i<53&&getoond<26;i++){const d=plusWeken(new Date(t),i),{w,y}=isoWeek(d),l=bestelRegels(y).filter(r=>r.w===w);
+    let getoond=0;for(let i=0;i<53&&getoond<26;i++){const d=plusWeken(new Date(t),i),{w,y}=isoWeek(d),l=bestelRegels(y).filter(r=>r.w===w&&(!teeltFilter||r.teeltId===teeltFilter));
       const per=new Map();l.forEach(r=>{const k=r.product+"|"+r.soort,o=per.get(k)||{n:0,fust:r.fust,rasId:r.rasId};o.n+=r.aantal;per.set(k,o)});
       if(!per.size)continue;getoond++;
       const tot=[...per.values()].reduce((a,o)=>a+o.n,0),trT=[...per.values()].reduce((a,o)=>{const fn=fustAantal(o.fust);return a+(fn?Math.ceil(o.n/fn):0)},0);
@@ -3108,7 +3110,7 @@ function toonMobiel(){syncSoorten();
     if(!getoond)h+=`<div class="mstap"><div class="status">De komende 12 maanden staat er niets om op te zetten.</div></div>`;
   }else if(mobTab==="vloer"){h+=mobBekijk().replace('<h3><span class="n">2</span> Welke vloer?</h3>','<h3>Kies een vloer</h3>')}
   else if(mobTab==="aflever"){
-    const regels=afleverRegels();
+    const regels=afleverRegels().filter(r=>!teeltFilter||r.p.soortId===teeltFilter);
     for(let i=0;i<8;i++){const d=plusWeken(new Date(t),i),tt=d.getTime(),l=regels.filter(r=>r.t===tt&&r.aantal>0),{w}=isoWeek(d);
       const per={},raw={};l.forEach(r=>{const k=r.product+" · "+r.soort;per[k]=(per[k]||0)+r.aantal;raw[k]=r.product+"|"+r.soort});
       const bes=k=>per[k]-verkSom(raw[k],tt),totB=Object.keys(per).reduce((a,k)=>a+bes(k),0);
