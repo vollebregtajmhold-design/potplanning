@@ -10,20 +10,29 @@
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
 <meta name="theme-color" content="#4b2a6e"><meta name="apple-mobile-web-app-title" content="Cyclamen">
+<!-- De instellingen per klant staan in het aparte bestand klant.js (naast dit bestand). index.html is voor iedereen hetzelfde. -->
 <script>
-/* ================== INSTELLINGEN PER KLANT ==================
-   Alleen dit blok aanpassen als u de app voor een andere kwekerij gebruikt.
+/* ============ INSTELLINGEN VOOR DEZE KLANT ============
+   Dit bestand hoort naast index.html in de GitHub van deze klant.
+   Bij een nieuwe versie van de app vervangt u ALLEEN index.html. Dit bestand blijft staan.
    - appNaam:     naam bovenin de app en op het startscherm van de telefoon
    - code:        kort woord zonder spaties (houdt de gegevens per app apart in de browser)
-   - leverancier: naam van de vaste leverancier (eenvoudige versie)
-   - firebase:    de code uit Firebase (stap 6). Laat VUL_IN staan = alleen werken met een json-bestand.
-   ============================================================ */
-const KLANT={
+   - leverancier: naam van de vaste leverancier
+   - firebase:    de code uit Firebase (stap 6). VUL_IN = nog geen online database.
+   ===================================================== */
+window.KLANT={
   appNaam:"Cyclamen Planning",
   code:"",
   leverancier:"Vollebregt",
   firebase:{apiKey:"AIzaSyDRjDFxlCpwQYARpB0BZ3fLZK_KIgbSBbA",authDomain:"potplanning-82fec.firebaseapp.com",projectId:"potplanning-82fec",storageBucket:"potplanning-82fec.firebasestorage.app",messagingSenderId:"639039504779",appId:"1:639039504779:web:1b47f3d4c27b8c2a9c2f8e"}
 };
+</script>
+<script>
+/* Geen klant.js gevonden? Dan alleen werken met een json-bestand op de computer. */
+const KLANT=Object.assign({appNaam:"Potplanten Planning",code:"klant",leverancier:"Vollebregt",firebase:{apiKey:"VUL_IN"}},window.KLANT||{});
+if(!window.KLANT)console.warn("klant.js niet gevonden: de app werkt zonder online database.");
+document.title=KLANT.appNaam;
+try{document.querySelector('meta[name=apple-mobile-web-app-title]').content=KLANT.appNaam.slice(0,12)}catch(e){}
 </script>
 <script>try{const m={name:KLANT.appNaam,short_name:KLANT.appNaam.slice(0,12),display:"standalone",background_color:"#4b2a6e",theme_color:"#4b2a6e",start_url:location.href,icons:[{src:document.querySelector('link[rel=apple-touch-icon]').href,sizes:"512x512",type:"image/png"}]};const l=document.createElement("link");l.rel="manifest";l.href=URL.createObjectURL(new Blob([JSON.stringify(m)],{type:"application/manifest+json"}));document.head.appendChild(l)}catch(e){}</script>
 <style>
@@ -195,7 +204,7 @@ body.ovmodus section.vlak>.rij:first-child{display:none!important}
 .ovtabel th{background:#b9b9b9;color:#222}.ovtabel th.nu{background:#fff7b3}
 .ovtabel .ovnaam{text-align:left;min-width:220px}
 .ovtabel tr.ovklrij td{background:#e9e3d6;font-weight:700;border-top:2px solid #999}.ovtabel tr.ovklsub td{font-weight:400}.ovtabel tr.ovklsub td.ovnaam{padding-left:26px}
-tr.soortflits td{background:#fff3a6!important;transition:background .3s}
+tr.soortflits td{background:#fff3a6!important;transition:background .3s}tr.soortflits input.ac{background:#fff8c4!important}
 table.oppot.invoer td:not(.vast){position:relative}
 table.oppot.invoer input.ac.gewijzigd{background:#f8c9c9!important;border-color:#b3261e!important;color:#7a0f0f;font-weight:700}
 tr.kostrij td{background:#eef4fb}tr.vastrij td{background:#ece9e2}tr.groepkop{cursor:pointer}tr.groepkop td{background:#d9d3c6;font-size:11px;text-align:right}tr.groepkop td.vast{text-align:left!important;font-size:13px}tr.groepkop:hover td{background:#cfc8b8}tr.kostrij input.kost{width:100%;font-size:11px;padding:2px 3px;text-align:right;background:#fff;border:1px solid #c9d8e8}
@@ -756,7 +765,7 @@ dialog::backdrop{background:rgba(0,0,0,.45)}
 
 <script>
 "use strict";
-const VERSIE="30.9";
+const VERSIE="31.1";
 const VERSIE_DATUM="25-10-2026";
 /* ---------- Basis ---------- */
 const PALET=["#2d6a4f","#1B5EBE","#E8007D","#c77d1a","#7a4fa0","#0f8b8d","#5b6b2f","#3d5a80","#a0522d","#7AB648"];
@@ -2215,6 +2224,11 @@ function naarSoort(id){const r=data.rassen.find(x=>x.id===id);if(!r)return;teelt
   setTimeout(()=>{const el=[...document.querySelectorAll(`input[data-ras="${id}"][data-rk="naam"]`)].find(x=>x.offsetParent);if(!el)return;
     const tr=el.closest("tr");el.scrollIntoView({block:"center",behavior:"smooth"});if(tr){tr.classList.add("soortflits");setTimeout(()=>tr.classList.remove("soortflits"),30000)}
     el.focus({preventScroll:true});el.select()},60)}
+/* Inkoop / opzetten openen op de regel van één soort, 30 seconden geel */
+function naarInkoopSoort(id){const r=data.rassen.find(x=>x.id===id);if(!r)return;oppotKeuze=r.teeltId;oppotToon.add("r:"+id);naar("oppot");
+  setTimeout(()=>{const ins=[...document.querySelectorAll(`input.ac[data-b="r:${id}"]`)];if(!ins.length)return;const tr=ins[0].closest("tr");
+    tr.classList.add("soortflits");setTimeout(()=>tr.classList.remove("soortflits"),30000);
+    const nw=isoWeek(new Date()),el=ins[nw.y===planJaar?Math.max(0,nw.w-1):0]||ins[0];el.scrollIntoView({block:"center",inline:"center",behavior:"smooth"});el.focus({preventScroll:true})},80)}
 function naarOppot(id){oppotKeuze=id;naar("oppot")}
 function naarTeelt(label){const t=data.teeltduren.find(x=>(x.product||"")+(x.potmaat?" "+x.potmaat+" cm":"")===label);if(!t)return;
   teeltOpen.clear();teeltOpen.add(t.id);houdOpen=true;naar("soorten");
@@ -4064,8 +4078,11 @@ function zoekItemsE(q){q=q.trim().toLowerCase();const r=[],woorden=q.split(/\s+/
     for(const t of data.teeltduren)if(past(t.product,t.potmaat,"cm")){
       r.push({ic:"🌱",naam:"Teelt · "+teeltNaam(t),grp:"Teelt",f:()=>naarTeeltId(t.id),s:score(t.product)+.5});
       r.push({ic:"✏️",naam:"Inkoop / opzetten · "+teeltNaam(t),grp:"Teelt",f:()=>naarOppot(t.id),s:score(t.product)+.6})}
-    for(const x of data.rassen)if(x.naam&&past(x.naam)){const t=data.teeltduren.find(y=>y.id===x.teeltId),pr=t?(t.product||"")+(t.potmaat?" "+t.potmaat+" cm":""):"";
-      r.push({ic:"🏷️",naam:"Soort · "+x.naam+(t?" ("+teeltNaam(t)+")":""),grp:"Komende weken",f:()=>{naar("aflever");mobSoort(pr+" · "+x.naam,nu)},s:score(x.naam)+.7})}
+    let si=0;for(const x of data.rassen)if(x.naam&&past(x.naam)){const sb=score(x.naam)+.65+(si++)*.01,t=data.teeltduren.find(y=>y.id===x.teeltId),pr=t?(t.product||"")+(t.potmaat?" "+t.potmaat+" cm":""):"";
+      const sn="Soort · "+x.naam+(t?" ("+teeltNaam(t)+")":"");
+      r.push({ic:"🌱",naam:sn+" → Parameters",grp:"Soort",f:()=>naarSoort(x.id),s:sb});
+      r.push({ic:"✏️",naam:sn+" → Inkoop / opzetten",grp:"Soort",f:()=>naarInkoopSoort(x.id),s:sb+.001});
+      r.push({ic:"🏷️",naam:sn+" → komende weken",grp:"Komende weken",f:()=>{naar("aflever");mobSoort(pr+" · "+x.naam,nu)},s:sb+.002})}
     for(const k of data.klanten)if(k.naam&&past(k.naam,k.plaats,k.contact))r.push({ic:"👤",naam:k.naam+(k.plaats?" · "+k.plaats:""),grp:"Klant",f:()=>{naar("klanten");const el=document.querySelector(`[data-kl="${k.id}"][data-kk="naam"]`);if(el){el.scrollIntoView({block:"center"});el.focus()}},s:score(k.naam)+.8})}
   return r.sort((a,b)=>a.s-b.s).slice(0,40)}
 function zoekItems(q){if(data.instellingen.eenvoudig)return zoekItemsE(q);q=q.trim().toLowerCase();const r=[];
