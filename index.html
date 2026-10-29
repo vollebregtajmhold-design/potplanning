@@ -101,7 +101,7 @@ body.mobiel section.vlak>.rij:first-child{display:none}
 .mob .mtabs button{border:2px solid #fff;background:#dff0e6;color:#1f4d39;border-radius:9px;padding:8px 2px;font-size:12px;font-weight:700;cursor:pointer}
 .mob .mtabs button.aan{background:#fff;box-shadow:0 0 0 2px #7AB648}
 .mob .msec{color:var(--tekst)!important;font-size:15px!important;padding:6px 10px;border-radius:8px;background:#eee}
-.mob .msec.f1{background:#FDE6C8}.mob .msec.f2{background:#D6EFDF}.mob .msec.fa{background:#FDE6C8}
+.mob .msec.f1{background:#dbe9f6}.mob .msec.f2{background:#D6EFDF}.mob .msec.fa{background:#dbe9f6}
 .mob .mkaart{display:flex;gap:10px;background:#fff;border:1px solid #ddd5c4;border-radius:12px;padding:10px 12px;margin-top:8px;font-size:14px}
 .mob .mkaart .mic{font-size:22px;line-height:1}.mob .mkaart .wlv{white-space:normal}
 .mob .mrij{display:flex;justify-content:space-between;padding:6px 2px;border-bottom:1px solid #eee6d6;font-size:14px}
@@ -753,7 +753,7 @@ dialog::backdrop{background:rgba(0,0,0,.45)}
 
 <script>
 "use strict";
-const VERSIE="31.5";
+const VERSIE="31.6";
 const VERSIE_DATUM="25-10-2026";
 /* ---------- Basis ---------- */
 const PALET=["#2d6a4f","#1B5EBE","#E8007D","#c77d1a","#7a4fa0","#0f8b8d","#5b6b2f","#3d5a80","#a0522d","#7AB648"];
@@ -3087,7 +3087,7 @@ let mobTab="week",mobZoek="";
 function toonMobiel(){syncSoorten();
   mobWeekStart();const t=mobWeekStart().getTime();
   let tabs=[["week","📋 Deze week"],["vloer","🏠 Vloeren"],["aflever","🚛 Afleveren"],["zoek","🔍 Partij"]];
-  if(data.instellingen.eenvoudig){tabs=[["aflever","🚛 Afleveren"],["oppot","🪴 Oppotten"]];if(mobTab!=="oppot")mobTab="aflever"}
+  if(data.instellingen.eenvoudig){tabs=[["aflever","Afleveren"],["oppot","Oppotten"]];if(mobTab!=="oppot")mobTab="aflever"}
   if(teeltFilter&&!data.teeltduren.some(x=>x.id===teeltFilter))teeltFilter="";
   let h=`<div class="mob"><div class="mkop"><select class="mobteelt" onchange="teeltFilter=this.value;render()" title="Filter op teelt"><option value="">Alle teelten</option>${data.teeltduren.map(x=>`<option value="${x.id}" ${x.id===teeltFilter?"selected":""}>${esc(teeltNaam(x))}</option>`).join("")}</select>
     <div class="wkkeuze"><button onclick="mobWeek(-1)">◀</button><b>wk ${mob.week}</b><button onclick="mobWeek(1)">▶</button></div></div>
