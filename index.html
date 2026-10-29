@@ -233,6 +233,8 @@ tr.nieuwsoort select{width:100%;font-style:italic;border:1px dashed #2d6a4f;back
 .histrij{border-bottom:1px solid #ddd5c4;padding:8px 0}.histrij ul{margin:4px 0 0 18px;padding:0;font-size:13px}.histrij li{margin:1px 0}
 .welstap{display:flex;gap:12px;align-items:center;width:100%;text-align:left;background:#f3efe6;border:1px solid #ddd5c4;border-radius:8px;padding:8px 10px;margin:6px 0;cursor:pointer;font-size:15px}
 .welstap:hover{background:#d3e5f5;border-color:#7fa9d1}.welnr{flex:none;width:30px;height:30px;border-radius:50%;background:#2d6a4f;color:#fff;font-weight:800;display:flex;align-items:center;justify-content:center}
+.zrknop{display:flex;align-items:center;gap:8px}.zr.sel .status{color:#dbe7fb!important}.zrknop .zrnaam{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.zrknop .zk{display:grid;grid-template-columns:110px 90px 140px;gap:6px;flex:none}.zrknop .zk .ovk{font-size:13px;padding:4px 8px;border-radius:6px;border:1px solid #7fa9d1;text-align:center}
 .inkgroot{font-size:15px;font-weight:700;padding:7px 14px;border-radius:8px;border:2px solid #1B5EBE;background:#d3e5f5;color:#16304d;cursor:pointer}.inkgroot:hover{background:#bcd7f0}.inkgroot.paars{border-color:#6a3d9a;background:#efe6f7;color:#3d1f5c}
 .proeflabel{background:#6a3d9a;color:#fff;border-radius:6px;padding:3px 9px;font-size:12px;font-weight:700}
 details.leegloop{margin-top:8px;background:#fff;border:1px solid #c9c2b6;border-radius:6px;padding:6px 10px}details.leegloop summary{cursor:pointer}
@@ -294,7 +296,7 @@ body.smal.afl .wrap{max-width:var(--aflW,1000px)}
 #duurVenster::backdrop{background:rgba(0,0,0,.45)}
 #duurVenster .vlak{max-height:90vh;overflow:auto}
 .keuze2{display:flex;gap:8px;margin:4px 0 12px}
-#zoekVenster{border:0;padding:0;background:transparent;width:560px;max-width:94vw;margin-top:70px}
+#zoekVenster{border:0;padding:0;background:transparent;width:860px;max-width:94vw;margin-top:70px}
 #zoekVenster::backdrop{background:rgba(0,0,0,.45)}
 #zoekVenster .vlak{padding:12px}
 #zoekInvoer{width:100%;font-size:17px;padding:10px 12px;border:2px solid #1B5EBE;border-radius:6px}
@@ -765,7 +767,7 @@ dialog::backdrop{background:rgba(0,0,0,.45)}
 
 <script>
 "use strict";
-const VERSIE="31.1";
+const VERSIE="31.2";
 const VERSIE_DATUM="25-10-2026";
 /* ---------- Basis ---------- */
 const PALET=["#2d6a4f","#1B5EBE","#E8007D","#c77d1a","#7a4fa0","#0f8b8d","#5b6b2f","#3d5a80","#a0522d","#7AB648"];
@@ -4079,10 +4081,8 @@ function zoekItemsE(q){q=q.trim().toLowerCase();const r=[],woorden=q.split(/\s+/
       r.push({ic:"🌱",naam:"Teelt · "+teeltNaam(t),grp:"Teelt",f:()=>naarTeeltId(t.id),s:score(t.product)+.5});
       r.push({ic:"✏️",naam:"Inkoop / opzetten · "+teeltNaam(t),grp:"Teelt",f:()=>naarOppot(t.id),s:score(t.product)+.6})}
     let si=0;for(const x of data.rassen)if(x.naam&&past(x.naam)){const sb=score(x.naam)+.65+(si++)*.01,t=data.teeltduren.find(y=>y.id===x.teeltId),pr=t?(t.product||"")+(t.potmaat?" "+t.potmaat+" cm":""):"";
-      const sn="Soort · "+x.naam+(t?" ("+teeltNaam(t)+")":"");
-      r.push({ic:"🌱",naam:sn+" → Parameters",grp:"Soort",f:()=>naarSoort(x.id),s:sb});
-      r.push({ic:"✏️",naam:sn+" → Inkoop / opzetten",grp:"Soort",f:()=>naarInkoopSoort(x.id),s:sb+.001});
-      r.push({ic:"🏷️",naam:sn+" → komende weken",grp:"Komende weken",f:()=>{naar("aflever");mobSoort(pr+" · "+x.naam,nu)},s:sb+.002})}
+      r.push({ic:"🏷️",naam:x.naam,sub:t?teeltNaam(t):"",grp:"Soort",f:()=>naarSoort(x.id),s:sb,
+        knop:[["Parameters",()=>naarSoort(x.id)],["Inkoop",()=>naarInkoopSoort(x.id)],["Komende weken",()=>{naar("aflever");mobSoort(pr+" · "+x.naam,nu)}]]})}
     for(const k of data.klanten)if(k.naam&&past(k.naam,k.plaats,k.contact))r.push({ic:"👤",naam:k.naam+(k.plaats?" · "+k.plaats:""),grp:"Klant",f:()=>{naar("klanten");const el=document.querySelector(`[data-kl="${k.id}"][data-kk="naam"]`);if(el){el.scrollIntoView({block:"center"});el.focus()}},s:score(k.naam)+.8})}
   return r.sort((a,b)=>a.s-b.s).slice(0,40)}
 function zoekItems(q){if(data.instellingen.eenvoudig)return zoekItemsE(q);q=q.trim().toLowerCase();const r=[];
@@ -4104,7 +4104,8 @@ function zoekItems(q){if(data.instellingen.eenvoudig)return zoekItemsE(q);q=q.tr
   return r.sort((a,b)=>a.s-b.s).slice(0,40)}
 let zoekSel=0,zoekLijst=[];
 function zoekToon(){zoekLijst=zoekItems($("#zoekInvoer").value);zoekSel=Math.min(zoekSel,Math.max(0,zoekLijst.length-1));
-  $("#zoekLijst").innerHTML=zoekLijst.length?zoekLijst.map((x,i)=>`<div class="zr ${i===zoekSel?"sel":""}" data-i="${i}"><span class="ic">${x.ic}</span>${esc(x.naam)}<span class="grp">${x.grp}</span></div>`).join(""):`<p class="status" style="padding:8px">Niets gevonden.</p>`;
+  $("#zoekLijst").innerHTML=zoekLijst.length?zoekLijst.map((x,i)=>x.knop?`<div class="zr zrknop ${i===zoekSel?"sel":""}" data-i="${i}"><span class="ic">${x.ic}</span><span class="zrnaam">${esc(x.naam)}${x.sub?` <span class="status">· ${esc(x.sub)}</span>`:""}</span><span class="zk">${x.knop.map((k,j)=>`<button type="button" class="ovk ovlink" data-k="${j}">${k[0]} ›</button>`).join("")}</span></div>`
+    :`<div class="zr ${i===zoekSel?"sel":""}" data-i="${i}"><span class="ic">${x.ic}</span>${esc(x.naam)}<span class="grp">${x.grp}</span></div>`).join(""):`<p class="status" style="padding:8px">Niets gevonden.</p>`;
   const el=$("#zoekLijst .sel");if(el)el.scrollIntoView({block:"nearest"})}
 function zoekOpen(){const d=$("#zoekVenster");$("#zoekInvoer").value="";zoekSel=0;zoekToon();d.showModal();$("#zoekInvoer").focus()}
 function zoekKies(i){const x=zoekLijst[i];if(!x)return;$("#zoekVenster").close();x.f()}
@@ -4113,7 +4114,8 @@ $("#zoekInvoer").oninput=()=>{zoekSel=0;zoekToon()};
 $("#zoekInvoer").onkeydown=e=>{if(e.key==="ArrowDown"){e.preventDefault();zoekSel=Math.min(zoekSel+1,zoekLijst.length-1);zoekToon()}
   else if(e.key==="ArrowUp"){e.preventDefault();zoekSel=Math.max(zoekSel-1,0);zoekToon()}
   else if(e.key==="Enter"){e.preventDefault();zoekKies(zoekSel)}};
-$("#zoekLijst").onclick=e=>{const r=e.target.closest(".zr");if(r)zoekKies(+r.dataset.i)};
+$("#zoekLijst").onclick=e=>{const r=e.target.closest(".zr");if(!r)return;const k=e.target.closest("button[data-k]"),x=zoekLijst[+r.dataset.i];
+  if(k&&x&&x.knop){$("#zoekVenster").close();x.knop[+k.dataset.k][1]();return}zoekKies(+r.dataset.i)};
 $("#zoekVenster").addEventListener("click",e=>{if(e.target.id==="zoekVenster")$("#zoekVenster").close()});
 document.addEventListener("keydown",e=>{if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==="k"){e.preventDefault();if(!$("#zoekVenster").open)zoekOpen()}});
 
