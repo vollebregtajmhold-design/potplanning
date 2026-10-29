@@ -603,19 +603,6 @@ dialog::backdrop{background:rgba(0,0,0,.45)}
 <div id="balk">
   <span class="titel" title="Pijltje links = terug · pijltje rechts = vooruit (max. 10 stappen)">🌱 <span class="naamtekst">Cyclamen Planning</span> <span class="versie" id="versie"></span></span>
   <span id="kwekerijNaam" hidden></span>
-  <div class="menu eenvoudigAlleen menuLinks"><button class="mknop" type="button" title="Parameters, inkoop, klanten, planning en mobiel"><span class="lang">Menu </span><span class="kort">☰ </span>▾</button>
-    <div class="mlijst">
-      <button data-tab="soorten">🌱 Parameters</button>
-      <button data-tab="oppot">🪴 Inkoop / opzetten</button>
-      <button data-tab="klanten">👥 Klanten</button>
-      <button type="button" onclick="verkoopOrder()">🧾 Reservering <span class="status">toets V</span></button>
-      <button data-tab="verkoop">📦 Overzicht reserveringen</button>
-      <hr>
-      <button data-tab="werk">👷 Werkplanning</button>
-      <hr>
-      <button data-tab="mobiel">📱 Mobiel</button>
-    </div></div>
-  <button id="btnZoekE" type="button" class="eenvoudigAlleen mknop zoekknop" title="Zoeken (Ctrl + K)" onclick="zoekOpen()">🔍<span class="lang"> Zoeken</span></button>
   <button type="button" id="btnStip" title="Toon alles waar u op kunt klikken (nog een keer klikken = weg)" onclick="document.body.classList.toggle('toonKlik');this.classList.toggle('aan')"></button>
   <button type="button" id="btnPostit" title="Post-it: opmerkingen en vragen voor iedereen" onclick="toonPostit()">📝<span id="postitN" hidden></span></button>
   <div class="navMidden">
@@ -626,6 +613,7 @@ dialog::backdrop{background:rgba(0,0,0,.45)}
       <button data-tab="leveranciers">Leveranciers</button>
     </div></div>
   
+  <button id="btnZoekE" type="button" class="eenvoudigAlleen mknop zoekknop" title="Zoeken (toets Z of Ctrl + K)" onclick="zoekOpen()">🔍<span class="lang"> Zoeken</span></button>
   <button class="mknop groot" data-tab="soorten" type="button"><span class="lang">Parameters</span><span class="kort">Param.</span></button>
   <button class="mknop groot" data-tab="oppot" type="button"><span class="lang">Inkoop / opzetten</span><span class="kort">Inkoop</span></button>
   <button class="mknop groot" data-tab="oppotov" type="button"><span class="lang">Opzetplanning</span><span class="kort">Opzetten</span></button>
@@ -640,7 +628,7 @@ dialog::backdrop{background:rgba(0,0,0,.45)}
       <button data-tab="registraties" class="uitgebreid">Registraties</button>
       <button data-tab="klanten">Klanten</button>
       <button data-tab="werk">Werkplanning</button>
-      <button type="button" onclick="verkoopOrder()">🧾 Reservering <span class="status">toets V</span></button>
+      <button type="button" onclick="verkoopOrder()">🧾 Reservering <span class="status">toets R</span></button>
       <button data-tab="verkoop">📦 Overzicht reserveringen</button>
       <button data-tab="weeklijst" class="uitgebreid">Weeklijst (printen)</button>
       <hr class="uitgebreid">
@@ -768,7 +756,7 @@ dialog::backdrop{background:rgba(0,0,0,.45)}
 
 <script>
 "use strict";
-const VERSIE="30.8";
+const VERSIE="30.9";
 const VERSIE_DATUM="25-10-2026";
 /* ---------- Basis ---------- */
 const PALET=["#2d6a4f","#1B5EBE","#E8007D","#c77d1a","#7a4fa0","#0f8b8d","#5b6b2f","#3d5a80","#a0522d","#7AB648"];
@@ -3759,10 +3747,14 @@ function voOpslaan(){const t=voWeekT(),k=voKey(),n=voGetal(vo.n);let klant=Strin
   opslaanLater();vo.n="";vo.opm="";vo.nieuw=false;vo.klant=klant;sluitMobSoort();if(tab!=="aflever"&&tab!=="mobiel"&&tab!=="oppotov")render();
   melding(`✓ Gereserveerd: ${getal(n)} × ${esc(k.replace("|"," · "))} aan ${esc(klant)} · week ${wkCode(t)}`,"#2d6a4f")}
 /* sneltoets: alleen V (niet tijdens typen), of Alt + V */
-document.addEventListener("keydown",e=>{if(e.code!=="KeyV"||e.ctrlKey||e.metaKey||e.repeat)return;
+document.addEventListener("keydown",e=>{if(e.code!=="KeyR"||e.ctrlKey||e.metaKey||e.repeat)return;
   if(!e.altKey){const el=document.activeElement;if(e.shiftKey||(el&&el.closest("input,textarea,select,[contenteditable]"))||document.querySelector("dialog[open]"))return;
     const m=document.getElementById("mobPop");if(m&&!m.hidden)return}
   e.preventDefault();verkoopOrder()});
+/* sneltoets Z: zoeken openen (niet tijdens typen; Ctrl + Z blijft ongedaan maken) */
+document.addEventListener("keydown",e=>{if(e.code!=="KeyZ"||e.ctrlKey||e.metaKey||e.altKey||e.shiftKey||e.repeat)return;
+  const el=document.activeElement;if(el&&el.closest("input,textarea,select,[contenteditable]"))return;const m=document.getElementById("mobPop");if(m&&!m.hidden)return;
+  e.preventDefault();zoekOpen()});
 
 /* ---------- Alleen beschikbaarheid: alles met afd/vloer uit beeld (per apparaat) ---------- */
 /* Niveau per apparaat: 1 = oppotplan + afleverplan · 2 = + verkoop (zonder vloeren) · 3 = alles (ook ruimte en vloeren) */
@@ -3799,7 +3791,7 @@ function toonVerkoop(){maakPlekMap();const nu=dezeWeek();let l=verkoopLijst();
     <select onchange="vkKlant=this.value;render()"><option value="">Alle klanten</option>${klanten.map(k=>`<option value="${esc(k)}" ${k===vkKlant?"selected":""}>${esc(k)}</option>`).join("")}</select>
     <span style="flex:1"></span><button class="btn" onclick="verkoopOrder()">+ Reservering</button><button class="btn licht klein" onclick="window.print()">Afdrukken</button></div>
     <div class="printkop"><h2>Reserveringen${vkKlant?" · "+esc(vkKlant):""}</h2></div>`;
-  if(!l.length){$("#inhoud").innerHTML=h+`<div class="leeg">Geen reserveringen${vkVanaf?" vanaf deze week":""}. Maak er een met <b>toets V</b>.</div>`;return}
+  if(!l.length){$("#inhoud").innerHTML=h+`<div class="leeg">Geen reserveringen${vkVanaf?" vanaf deze week":""}. Maak er een met <b>toets R</b>.</div>`;return}
   h+=`<p class="status noprint" style="margin:0 0 6px">Klik op een regel voor de pakbon van die klant in die week.</p>
     <table class="vktab"><tr><th>Week</th><th>Datum</th><th>Klant</th><th>Gewas</th><th>Soort</th><th style="text-align:right">Aantal</th><th class="zvweg">Afd</th><th class="zvweg">Vloer</th><th>Opmerking</th><th class="noprint"></th></tr>`;
   let vorige=null;
@@ -4024,7 +4016,7 @@ function bestelCsv(){const jaar=planJaar,lev=data.leveranciers.find(l=>l.id===be
 /* ---------- Zoeken (blauwe knop / Ctrl+K): snel naar een pagina, product, partij, soort of leverancier ---------- */
 const PAGINAS=[
   ["📦","Overzicht reserveringen","Pagina","reserveringen reservering verkooporders overzicht pakbon pakbonnen orders verkocht klant",()=>naar("verkoop")],
-  ["🧾","Reservering (toets V)","Actie","reservering reserveren verkoop verkooporder order verkopen klant bestelling",()=>verkoopOrder()],
+  ["🧾","Reservering (toets R)","Actie","reservering reserveren verkoop verkooporder order verkopen klant bestelling",()=>verkoopOrder()],
   ["🏠","Vloeren","Stamdata","vloeren kappen kas vakken oppotvloer m2 rijen",()=>naar("kappen")],
   ["🌱","Parameters","Stamdata","teelt producten potmaat planten per m2 wijderzetten soort soorten ras rassen kleur leverancier teeltduur duur weken oppotfase",()=>naar("soorten")],
   ["🚚","Leveranciers","Stamdata","leveranciers leverancier telefoon contact",()=>naar("leveranciers")],
@@ -4056,7 +4048,7 @@ const PAGINAS_E=[
   ["✏️","Inkoop / opzetten","Pagina","oppotplan aantallen invullen per week",()=>naar("oppot")],
   ["🌱","Parameters (instellen)","Pagina","teelt soorten raaptijd uitval fust prijs teeltduur invoer soortnummer",()=>naar("soorten")],
   ["📦","Overzicht reserveringen","Pagina","reserveringen reservering verkooporders overzicht pakbon pakbonnen orders verkocht klant",()=>naar("verkoop")],
-  ["🧾","Reservering (toets V)","Actie","reservering reserveren verkoop verkooporder order verkopen klant bestelling",()=>verkoopOrder()],
+  ["🧾","Reservering (toets R)","Actie","reservering reserveren verkoop verkooporder order verkopen klant bestelling",()=>verkoopOrder()],
   ["👥","Klanten","Pagina","klanten klant lijst verkoop",()=>naar("klanten")],
   ["👷","Werkplanning","Pagina","werkplanning uren werk",()=>naar("werk")],
   ["📱","Mobiel","Pagina","mobiel telefoon",()=>naar("mobiel")],
@@ -4142,7 +4134,7 @@ function toonWelkom(){const st=(t,n,tab,uitleg)=>`<button type="button" class="w
     ${st("Inkoop / opzetten",2,"oppot","per week invullen wat u opzet · ziet direct de ruimte in de kas")}
     ${st("Opzetplanning",3,"oppotov","overzicht per week: planten, trays, m², bestelweek")}
     ${st("Afleverplanning",4,"aflever","wanneer is het klaar · gereserveerd · nog beschikbaar")}
-    <p class="status" style="margin:10px 0 0;font-size:13px">Tip: 📝 post-it voor vragen · 🔍 zoeken (Ctrl + K) · rechtermuisknop op een vak bij Inkoop voor Max en Proberen.</p>
+    <p class="status" style="margin:10px 0 0;font-size:13px">Tip: 📝 post-it voor vragen · 🔍 zoeken (toets Z) · rechtermuisknop op een vak bij Inkoop voor Max en Proberen.</p>
     <div class="rij" style="margin-top:12px"><label class="status"><input type="checkbox" onchange="try{localStorage.setItem('potplanning-welkom-uit',this.checked?'1':'0')}catch(e){}"> niet meer tonen</label><span style="flex:1"></span><button class="btn" onclick="sluitMobSoort()">Aan de slag</button></div>`)}
 (function welkomBijStart(){let n=0;const kijk=()=>{n++;try{if(localStorage.getItem("potplanning-welkom-uit")==="1"||sessionStorage.getItem("potplanning-welkom"))return}catch(e){}
   const lg=document.getElementById("login"),m=document.getElementById("mobPop");
