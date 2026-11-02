@@ -221,6 +221,12 @@ tr.nieuwsoort select{width:100%;font-style:italic;border:1px dashed #2d6a4f;back
 .zrknop{display:flex;align-items:center;gap:8px}.zr.sel .status{color:#dbe7fb!important}.zrknop .zrnaam{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .zrknop .zk{display:grid;grid-template-columns:110px 90px 140px;gap:6px;flex:none}.zrknop .zk .ovk{font-size:13px;padding:4px 8px;border-radius:6px;border:1px solid #7fa9d1;text-align:center}
 .mob .wkkeuze b{white-space:nowrap}.mobteelt{font-size:16px;font-weight:700;padding:6px 8px;border-radius:8px;border:2px solid #fff;background:#fff;color:#1f4d39;max-width:58vw}
+.alleenBeheer{display:none!important}body.isBeheer .alleenBeheer{display:block!important}
+.bhkaart{background:#fff;border:1px solid #c9c2b6;border-radius:8px;padding:12px 14px;margin:0 0 12px}.bhkaart.eigen{border-left:5px solid #2d6a4f}
+.bhkop{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:8px}.bhkop h3{margin:0;font-size:18px}
+.bhgrid{display:grid;grid-template-columns:150px 1fr;gap:6px 10px;align-items:center;font-size:14px}.bhgrid input,.bhgrid textarea{width:100%;font-size:14px;padding:5px 7px;box-sizing:border-box}
+.bhgrid textarea{font-family:monospace;font-size:12px;height:62px}.bhknop{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}
+.bhstat{font-size:13px;font-weight:700;padding:3px 9px;border-radius:12px;background:#eee}.bhstat.ok{background:#e3f3ea;color:#1f4d39}.bhstat.oud{background:#fde7e7;color:#b3261e}
 .inkgroot{font-size:15px;font-weight:700;padding:7px 14px;border-radius:8px;border:2px solid #1B5EBE;background:#d3e5f5;color:#16304d;cursor:pointer}.inkgroot:hover{background:#bcd7f0}.inkgroot.paars{border-color:#6a3d9a;background:#efe6f7;color:#3d1f5c}
 .proeflabel{background:#6a3d9a;color:#fff;border-radius:6px;padding:3px 9px;font-size:12px;font-weight:700}
 details.leegloop{margin-top:8px;background:#fff;border:1px solid #c9c2b6;border-radius:6px;padding:6px 10px}details.leegloop summary{cursor:pointer}
@@ -649,6 +655,7 @@ dialog::backdrop{background:rgba(0,0,0,.45)}
       <div class="zvkeus" title="Het afleverseizoen loopt van deze week t/m de week ervoor in het volgende jaar"><span>Seizoen begint wk</span><input type="number" id="seizIn" min="1" max="52" style="width:56px;font-size:13px;padding:3px 5px" onclick="event.stopPropagation()" onchange="data.instellingen.seizoenStart=Math.max(1,Math.min(52,Math.round(+this.value||11)));aflS=null;wijzig();melding('✓ Seizoen begint nu in week '+data.instellingen.seizoenStart,'#2d6a4f')"></div>
       <button id="btnInlezen" class="wolkAlleen" type="button" title="Een json-bestand inlezen in de online planning">📥 Json-bestand inlezen</button>
       <button id="btnUitlog" class="wolkAlleen" type="button">🚪 Uitloggen</button>
+      <button type="button" class="alleenBeheer" onclick="document.querySelectorAll('#balk .menu.open').forEach(m=>m.classList.remove('open'));naar('beheer')">🛠 Beheer klanten</button>
       <button type="button" onclick="document.querySelectorAll('#balk .menu.open').forEach(m=>m.classList.remove('open'));toonWelkom()">ℹ️ Uitleg (welkom)</button>
       <button type="button" class="wolkAlleen" onclick="toonKopieen()" title="Automatische reservekopieën (elke week één)">🗂 Reservekopieën</button>
       <button id="btnKopie" type="button" title="Download een kopie van al je gegevens (.json), bijvoorbeeld om te versturen">⬇ Kopie downloaden</button>
@@ -753,7 +760,7 @@ dialog::backdrop{background:rgba(0,0,0,.45)}
 
 <script>
 "use strict";
-const VERSIE="31.7";
+const VERSIE="31.8";
 const VERSIE_DATUM="25-10-2026";
 /* ---------- Basis ---------- */
 const PALET=["#2d6a4f","#1B5EBE","#E8007D","#c77d1a","#7a4fa0","#0f8b8d","#5b6b2f","#3d5a80","#a0522d","#7AB648"];
@@ -1290,14 +1297,14 @@ document.addEventListener("keydown",e=>{
   if(document.querySelector("dialog[open]"))return;
   e.preventDefault();bladeren(e.key==="ArrowLeft"?-1:1)});
 let vorigeTab="",houdOpen=false;
-function render(){if(typeof postitTel==="function")postitTel();if(tab==="bestel")tab="oppotov";if(tab==="ruimtegraf")tab="oppot"; /* ruimte zit nu bij Inkoop / opzetten */ /* bestelplanning zit nu in Opzetplanning */
+function render(){document.body.classList.toggle("isBeheer",isBeheerder());if(tab==="beheer"&&!isBeheerder())tab="oppot";if(typeof postitTel==="function")postitTel();if(tab==="bestel")tab="oppotov";if(tab==="ruimtegraf")tab="oppot"; /* ruimte zit nu bij Inkoop / opzetten */ /* bestelplanning zit nu in Opzetplanning */
   zvKlaar();
   if(tab==="rassen"||tab==="duren")tab="soorten";
   if(tab==="proef")tab="oppot"; /* proberen is teruggedraaid */
   /* eenvoudige versie: alleen teelt & soorten, leveranciers, oppotplan, bestel-, aflever- en werkplanning en mobiel */
   const eenv=!!data.instellingen.eenvoudig;document.body.classList.toggle("eenvoudig",eenv);
   {const b=document.getElementById("btnModus");if(b)b.textContent=eenv?"⚙️ Alle functies tonen":"⚙️ Eenvoudige versie"}
-  if(eenv&&!["soorten","leveranciers","klanten","oppot","oppotov","bestel","aflever","werk","mobiel","verkoop","ruimtegraf"].includes(tab))tab="oppot"; // Soort en Teeltduur zitten nu bij Parameters
+  if(eenv&&!["soorten","leveranciers","klanten","oppot","oppotov","bestel","aflever","werk","mobiel","verkoop","ruimtegraf","beheer"].includes(tab))tab="oppot"; // Soort en Teeltduur zitten nu bij Parameters
   onthoudPagina();
   /* Parameters opent altijd met alles ingeklapt */
   if(tab==="soorten"&&vorigeTab!=="soorten"&&!houdOpen&&typeof teeltOpen!=="undefined")teeltOpen.clear();
@@ -1315,12 +1322,12 @@ function render(){if(typeof postitTel==="function")postitTel();if(tab==="bestel"
   document.body.classList.toggle("duren",tab==="duren");
   document.body.classList.toggle("pgSoorten",tab==="soorten");
   $("#vensterKnoppen").style.display=(tab==="plan"||tab==="teelt")?"":"none";
-  $("#zoek").style.display=["kappen","soorten","rassen","duren","oppot","leveranciers","mobiel","klanten","bestel","oppotov","aflever","werk","weeklijst","proef","verkoop","ruimtegraf"].includes(tab)?"none":"";
+  $("#zoek").style.display=["kappen","soorten","rassen","duren","oppot","leveranciers","mobiel","klanten","bestel","oppotov","aflever","werk","weeklijst","proef","verkoop","ruimtegraf","beheer"].includes(tab)?"none":"";
   document.body.classList.toggle("mobiel",tab==="mobiel");
   document.body.classList.toggle("klassiek",data.instellingen.kleuren==="klassiek");
   $("#jaarLabel").textContent=planJaar;
   if($("#duurVenster")&&$("#duurVenster").open)vulDuur();
-  ({ruimtegraf:toonRuimteGraf,verkoop:toonVerkoop,soorten:toonSoorten,rassen:toonRassen,leveranciers:toonLeveranciers,mobiel:toonMobiel,registraties:toonRegistraties,bestel:toonBestel,oppotov:toonOppotOv,klanten:toonKlanten,aflever:toonAflever,werk:toonWerk,weeklijst:toonWeeklijst,proef:toonProef,plan:toonPlan,teelt:toonTeelt,partijen:toonPartijen,duren:toonDuren,oppot:toonOppot,ruimte:toonRuimte,gereed:toonGereed,kappen:toonKappen})[tab]();
+  ({beheer:toonBeheer,ruimtegraf:toonRuimteGraf,verkoop:toonVerkoop,soorten:toonSoorten,rassen:toonRassen,leveranciers:toonLeveranciers,mobiel:toonMobiel,registraties:toonRegistraties,bestel:toonBestel,oppotov:toonOppotOv,klanten:toonKlanten,aflever:toonAflever,werk:toonWerk,weeklijst:toonWeeklijst,proef:toonProef,plan:toonPlan,teelt:toonTeelt,partijen:toonPartijen,duren:toonDuren,oppot:toonOppot,ruimte:toonRuimte,gereed:toonGereed,kappen:toonKappen})[tab]();
 }
 const wkKop=l=>l.map((d,i)=>{const{w,y}=isoWeek(d),jw=i>0&&w===1;return`<th class="wk ${d.getTime()===dezeWeek()?"nu":""} ${jw?"jw":""}" title="wk ${w} (${y})">${jw?`<span class="jaartje">${y}</span>`:""}${w}</th>`}).join("");
 /* Kleuren in het vloerenplan: "zacht" (oppotten oranje, uitgezet groen, zwarte cijfers), "product" (pastel per product), "klassiek" */
@@ -3910,6 +3917,66 @@ document.addEventListener("mouseup",()=>{if(!vul)return;const v=vul;vul=null;doc
   melding(`✓ ${esc(n)} planten gekopieerd naar ${v.doel.length} ${v.doel.length===1?"vak":"vakken"} (Ctrl + Z = terug)`,"#2d6a4f")});
 document.addEventListener("click",e=>{if(vulKlikWeg){e.stopPropagation();e.preventDefault();vulKlikWeg=false}},true);
 
+/* ---------- Beheer klanten: alleen voor de beheerder (eigen app) ---------- */
+const isBeheerder=()=>!!(KLANT.beheer===true||(KLANT.code===""&&FB_CONFIG&&FB_CONFIG.projectId==="potplanning-82fec"));
+function beheerData(){const b=data.beheer=data.beheer||{};if(!Array.isArray(b.klanten)){b.klanten=[
+    {id:uid(),naam:"Vollebregt (eigen)",appNaam:KLANT.appNaam||"Cyclamen Planning",code:KLANT.code||"",appUrl:location.origin+location.pathname.replace(/index\.html$/,""),repo:"https://github.com/vollebregtajmhold-design/potplanning",firebase:JSON.stringify(FB_CONFIG),emails:"vollebregt.a@gmail.com",notitie:""},
+    {id:uid(),naam:"Bolk",appNaam:"Bolkplan",code:"bolk",appUrl:"https://vollebregtajmhold-design.github.io/bolkplan/",repo:"https://github.com/vollebregtajmhold-design/bolkplan",firebase:"",emails:"martinbolk@gmail.com\nvollebregt.a@gmail.com",notitie:"Firebase-project 'Bolk planning' gemaakt; regels, Google-inlog en web-app nog doen."}]}
+  return b}
+/* firebaseConfig uit geplakte tekst halen (ook "const firebaseConfig = {...}") */
+function fbLees(t){t=String(t||"");const o={};for(const k of["apiKey","authDomain","projectId","storageBucket","messagingSenderId","appId","measurementId"]){const m=t.match(new RegExp(k+'["\']?\\s*:\\s*["\']([^"\']+)["\']'));if(m)o[k]=m[1]}return o}
+const bhVersies={};
+function toonBeheer(){const B=beheerData(),ob=document.getElementById("ovBalk");ob.hidden=false;
+  ob.innerHTML=`<span class="ovtitel">Beheer klanten</span><span class="ovinfo">${B.klanten.length} klanten · deze app: versie ${VERSIE}</span><span style="flex:1"></span><button class="ovk ovlink" onclick="bhAlleVersies()">↻ Versies controleren</button><button class="ovk ovlink" onclick="bhNieuw()">+ Nieuwe klant</button>`;
+  const veld=(k,i,lab,type,ph)=>`<label>${lab}</label>${type==="ta"?`<textarea data-bk="${k}" data-bi="${i}" placeholder="${ph||""}">${esc(B.klanten[i][k]||"")}</textarea>`:`<input data-bk="${k}" data-bi="${i}" value="${esc(B.klanten[i][k]||"")}" placeholder="${ph||""}">`}`;
+  $("#inhoud").innerHTML=`<p class="status" style="margin:0 0 12px">Hier beheert u al uw klanten. Elke klant heeft een eigen GitHub (index.html + klant.js) en een eigen Firebase. Deze lijst staat alleen in uw eigen planning.</p>`+B.klanten.map((k,i)=>{const fb=fbLees(k.firebase),v=bhVersies[k.id];
+    const st=v===undefined?`<span class="bhstat">versie ?</span>`:v===null?`<span class="bhstat oud">niet bereikbaar</span>`:v===VERSIE?`<span class="bhstat ok">versie ${esc(v)} ✓</span>`:`<span class="bhstat oud">versie ${esc(v)} → update naar ${VERSIE}</span>`;
+    return`<div class="bhkaart ${i===0?"eigen":""}"><div class="bhkop"><h3>${esc(k.naam||"(nieuwe klant)")}</h3>${st}${fb.projectId?`<span class="status">Firebase: ${esc(fb.projectId)}</span>`:`<span class="let">Firebase nog niet ingevuld</span>`}<span style="flex:1"></span>${i?`<button class="btn rood klein" onclick="bhWeg(${i})" title="Uit de lijst halen">✕</button>`:""}</div>
+      <div class="bhgrid">${veld("naam",i,"Klant","t","bijv. Kwekerij Jansen")}${veld("appNaam",i,"Naam van de app","t","bijv. Jansenplan")}${veld("code",i,"Code (kort woord)","t","bijv. jansen")}
+        ${veld("appUrl",i,"Webadres app","t","https://….github.io/naam/")}${veld("repo",i,"GitHub","t","https://github.com/…/naam")}
+        ${veld("firebase",i,"firebaseConfig","ta","plak hier het stukje firebaseConfig = { … } uit Firebase")}${veld("emails",i,"E-mailadressen (1 per regel)","ta","naam@gmail.com")}${veld("notitie",i,"Notitie","t","")}</div>
+      <div class="bhknop"><button class="ovk ovlink" onclick="bhOpen(${i},'app')">Open app (meekijken) ›</button><button class="ovk ovlink" onclick="bhOpen(${i},'repo')">GitHub ›</button><button class="ovk ovlink" onclick="bhOpen(${i},'fb')">Firebase ›</button>
+        <button class="ovk ovlink" onclick="bhVersie(${i})">↻ Versie</button><button class="ovk ovlink" onclick="bhKlantJs(${i})">⬇ klant.js</button><button class="ovk ovlink" onclick="bhRegels(${i})">Regels Firebase</button></div></div>`}).join("")}
+$("#inhoud").addEventListener("change",e=>{const el=e.target;if(!el.dataset||el.dataset.bk==null||tab!=="beheer")return;const B=beheerData(),k=B.klanten[+el.dataset.bi];if(!k)return;
+  k[el.dataset.bk]=el.value.trim();opslaanLater();if(["naam","firebase"].includes(el.dataset.bk))render()});
+function bhNieuw(){beheerData().klanten.push({id:uid(),naam:"",appNaam:"",code:"",appUrl:"",repo:"",firebase:"",emails:"vollebregt.a@gmail.com",notitie:""});wijzig();setTimeout(()=>{const l=[...document.querySelectorAll('input[data-bk="naam"]')].pop();if(l){l.scrollIntoView({block:"center"});l.focus()}},80)}
+function bhWeg(i){const k=beheerData().klanten[i];if(!k||!confirm(`'${k.naam||"deze klant"}' uit de lijst halen?\n(De app en Firebase van de klant blijven gewoon bestaan.)`))return;beheerData().klanten.splice(i,1);wijzig()}
+function bhOpen(i,w){const k=beheerData().klanten[i],fb=fbLees(k.firebase);const u=w==="app"?k.appUrl:w==="repo"?k.repo:fb.projectId?`https://console.firebase.google.com/project/${fb.projectId}/firestore`:"https://console.firebase.google.com/";
+  if(!u){alert("Vul eerst het adres in.");return}window.open(u,"_blank","noopener")}
+async function bhVersie(i,stil){const k=beheerData().klanten[i];if(!k||!k.appUrl){if(!stil)alert("Vul eerst het webadres van de app in.");return}
+  try{const u=k.appUrl.replace(/\/?$/,"/")+"index.html?v="+Date.now(),r=await fetch(u,{cache:"no-store"}),t=await r.text(),m=t.match(/const VERSIE="([^"]+)"/);bhVersies[k.id]=m?m[1]:null}catch(e){bhVersies[k.id]=null}
+  if(!stil&&tab==="beheer")render()}
+async function bhAlleVersies(){const l=beheerData().klanten;await Promise.all(l.map((k,i)=>bhVersie(i,true)));if(tab==="beheer")render();
+  const oud=l.filter(k=>bhVersies[k.id]&&bhVersies[k.id]!==VERSIE).length;melding(oud?`${oud} klant(en) hebben een oudere versie`:"Alle bereikbare klanten zijn bijgewerkt","#2d6a4f")}
+function bhKlantJs(i){const k=beheerData().klanten[i],fb=fbLees(k.firebase);if(!k.appNaam&&!confirm("Er is nog geen naam van de app ingevuld. Toch maken?"))return;
+  const f=fb.apiKey?fb:{apiKey:"VUL_IN",authDomain:"VUL_IN",projectId:"VUL_IN",storageBucket:"VUL_IN",messagingSenderId:"VUL_IN",appId:"VUL_IN"};delete f.measurementId;
+  const t=`/* ============ INSTELLINGEN VOOR DEZE KLANT: ${k.naam||""} ============
+   Dit bestand hoort naast index.html in de GitHub van deze klant.
+   Bij een nieuwe versie van de app vervangt u ALLEEN index.html. Dit bestand blijft staan.
+   ===================================================== */
+window.KLANT={
+  appNaam:${JSON.stringify(k.appNaam||"Planning")},
+  code:${JSON.stringify(k.code||"")},
+  leverancier:"Vollebregt",
+  firebase:${JSON.stringify(f)}
+};
+`;const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([t],{type:"text/javascript"}));a.download="klant.js";a.click();
+  melding(`⬇ klant.js voor ${esc(k.naam||"klant")} gedownload. Zet hem naast index.html in de GitHub van deze klant.`,"#2d6a4f")}
+function bhRegels(i){const k=beheerData().klanten[i],m=String(k.emails||"").split(/[\s,;]+/).map(x=>x.trim().toLowerCase()).filter(Boolean);
+  if(!m.length){alert("Vul eerst de e-mailadressen in.");return}
+  const t=`rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /{document=**} {
+      allow read, write: if request.auth != null
+        && request.auth.token.email in [
+${m.map(x=>`          "${x}"`).join(",\n")}
+        ];
+    }
+  }
+}`;toonPop("Regels Firebase · "+(k.naam||""),`<p class="status" style="margin:0 0 6px">Firebase → Firestore → tabblad <b>Rules</b> → alles vervangen door deze tekst → <b>Publish</b>.</p><textarea id="bhRegelTxt" readonly style="width:100%;height:240px;font-family:monospace;font-size:13px;box-sizing:border-box">${esc(t)}</textarea>
+    <div class="rij" style="margin-top:8px"><span style="flex:1"></span><button class="btn" onclick="const x=document.getElementById('bhRegelTxt');x.select();try{navigator.clipboard.writeText(x.value)}catch(e){document.execCommand('copy')}melding('✓ Regels gekopieerd','#2d6a4f')">📋 Kopiëren</button></div>`)}
+
 /* ---------- Weeklijst om te printen: wat moet er deze week gebeuren, en waar ---------- */
 let wlWeek=null;
 function vloerGroep(l,dicht){const m=new Map();
@@ -4059,6 +4126,7 @@ const PAGINAS_E=[
   ["📦","Overzicht reserveringen","Pagina","reserveringen reservering verkooporders overzicht pakbon pakbonnen orders verkocht klant",()=>naar("verkoop")],
   ["🧾","Reservering (toets R)","Actie","reservering reserveren verkoop verkooporder order verkopen klant bestelling",()=>verkoopOrder()],
   ["👥","Klanten","Pagina","klanten klant lijst verkoop",()=>naar("klanten")],
+  ["🛠","Beheer klanten","Pagina","beheer beheerder klanten apps versies firebase github klant.js regels",()=>naar("beheer")],
   ["👷","Werkplanning","Pagina","werkplanning uren werk",()=>naar("werk")],
   ["📱","Mobiel","Pagina","mobiel telefoon",()=>naar("mobiel")],
   ["➕","Nieuwe teelt","Actie","nieuw nieuwe teelt toevoegen",()=>{naar("soorten");teeltErbij()}],
@@ -4067,7 +4135,7 @@ const PAGINAS_E=[
 ];
 function zoekItemsE(q){q=q.trim().toLowerCase();const r=[],woorden=q.split(/\s+/).filter(Boolean);
   const past=(...v)=>{const t=v.join(" ").toLowerCase();return woorden.every(w=>t.includes(w))},score=t=>String(t).toLowerCase().startsWith(q)?0:1;
-  const nivWeg=n=>(niveau()===1&&/verkoop|klant|bestel|werk|pakbon/i.test(n))||(niveau()<3&&/ruimte/i.test(n));
+  const nivWeg=n=>(/^Beheer/.test(n)&&!isBeheerder())||(niveau()===1&&/verkoop|klant|bestel|werk|pakbon/i.test(n))||(niveau()<3&&/ruimte/i.test(n));
   for(const[ic,naam,grp,w,f]of PAGINAS_E)if(!nivWeg(naam)&&past(naam,w))r.push({ic,naam,grp,f,s:score(naam)});
   if(q){const nu=+maandagIso(isoWeek(new Date()).y,isoWeek(new Date()).w);
     for(const t of data.teeltduren)if(past(t.product,t.potmaat,"cm")){
