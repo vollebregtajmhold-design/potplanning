@@ -614,6 +614,21 @@ body.ovmodus section.vlak{max-height:calc(100vh - 170px);overflow:auto}
 /* 32.4 kolom teelt · soort blijft staan bij naar rechts scrollen */
 .ovtabel .ovnaam{position:sticky;left:0;z-index:2;background:#f4efe6;box-shadow:inset -1px 0 0 #c9c2b6,2px 0 4px rgba(0,0,0,.08)}
 .ovtabel th.ovnaam{background:#b9b9b9;z-index:5}
+
+/* 32.5 notitie per week + alleen kijken */
+.ovtabel tr.wknot td{font-size:13px;padding:2px 4px;background:#faf7f0;cursor:pointer;color:#bbb;font-weight:400}
+.ovtabel tr.wknot td.wknotcel:hover{background:#fff7b3;color:#555}.ovtabel tr.wknot td.heeft{color:#222;background:#fff3a8}
+.ovtabel tr.wknot td.wknotnaam{color:#6a5d3f;font-size:13px;cursor:default;background:#faf7f0}
+.mnot{font-size:13px;color:#aaa;padding:4px 2px 6px;cursor:pointer}.mnot.heeft{color:#5a4a00;background:#fff3a8;border-radius:8px;padding:6px 10px;margin:4px 0 6px;white-space:pre-wrap}
+#kijkLabel{background:#fff3a8;color:#5a4a00;font-weight:700;font-size:13px;border-radius:12px;padding:3px 10px;white-space:nowrap}#kijkLabel[hidden]{display:none}
+body.kijker #inhoud input:not([type=range]),body.kijker #inhoud textarea{pointer-events:none;background:#f1f1f1!important}
+body.kijker #btnInlezen,body.kijker .vulGreep{display:none!important}
+
+/* 32.7 meekijken / delen */
+.deelKeus{display:flex;gap:10px;align-items:flex-start;padding:8px 10px;border:1px solid #ddd5c4;border-radius:8px;margin:6px 0;cursor:pointer;background:#fff}.deelKeus input{margin-top:4px;transform:scale(1.3)}
+.alleenKlantApp{display:none!important}body.klantApp.wolk:not(.meekijk) .alleenKlantApp{display:flex!important}
+#mkBeschKnop[hidden]{display:none}
+body.meekijk .ovlink,body.meekijk tr.wknot{display:none!important}
 </style>
 </head>
 <body>
@@ -668,6 +683,7 @@ body.ovmodus section.vlak{max-height:calc(100vh - 170px);overflow:auto}
       <div class="zvkeus" title="Totale oppervlakte van de kas (bruto). Komt als lijn in de Ruimte-grafiek."><span>Bruto kasruimte</span><input type="number" id="brutoIn" min="0" step="1" style="width:80px;font-size:13px;padding:3px 5px" onclick="event.stopPropagation()" onchange="data.instellingen.brutoM2=Math.max(0,Math.round(+this.value||0));wijzig();melding('✓ Bruto kasruimte: '+getal(data.instellingen.brutoM2)+' m²','#2d6a4f')"><span>m²</span></div>
       <div class="zvkeus" title="Het afleverseizoen loopt van deze week t/m de week ervoor in het volgende jaar"><span>Seizoen begint wk</span><input type="number" id="seizIn" min="1" max="52" style="width:56px;font-size:13px;padding:3px 5px" onclick="event.stopPropagation()" onchange="data.instellingen.seizoenStart=Math.max(1,Math.min(52,Math.round(+this.value||11)));aflS=null;wijzig();melding('✓ Seizoen begint nu in week '+data.instellingen.seizoenStart,'#2d6a4f')"></div>
       <button id="btnInlezen" class="wolkAlleen" type="button" title="Een json-bestand inlezen in de online planning">📥 Json-bestand inlezen</button>
+      <button type="button" class="wolkAlleen alleenKlantApp" onclick="document.querySelectorAll('#balk .menu.open').forEach(m=>m.classList.remove('open'));toonDelen()">🤝 Delen met <span class="levNaam">leverancier</span></button>
       <button id="btnUitlog" class="wolkAlleen" type="button">🚪 Uitloggen</button>
       <button type="button" class="alleenBeheer" onclick="document.querySelectorAll('#balk .menu.open').forEach(m=>m.classList.remove('open'));naar('beheer')">🛠 Beheer klanten</button>
       <button type="button" onclick="document.querySelectorAll('#balk .menu.open').forEach(m=>m.classList.remove('open'));toonWelkom()">ℹ️ Uitleg (welkom)</button>
@@ -774,7 +790,7 @@ body.ovmodus section.vlak{max-height:calc(100vh - 170px);overflow:auto}
 
 <script>
 "use strict";
-const VERSIE="32.4";
+const VERSIE="32.7";
 const VERSIE_DATUM="03-11-2026";
 /* ---------- Basis ---------- */
 const PALET=["#2d6a4f","#1B5EBE","#E8007D","#c77d1a","#7a4fa0","#0f8b8d","#5b6b2f","#3d5a80","#a0522d","#7AB648"];
@@ -1069,10 +1085,84 @@ function soortRegels(p,html){if(!p.soorten||!p.soorten.length)return"";
 const kapTekst=l=>l.length?l.map(x=>x.kap.replace(/^(Kap|Vloer)\s*/i,"")+" ("+getal(x.m2)+" m²)").join(", "):"–";
 
 /* ---------- Opslaan in bestand ---------- */
-function wijzig(){
+function wijzig(){if(kijker){kijkTerug();return}
   data=normaliseer(data); render();
   clearTimeout(opslaanTimer); opslaanTimer=setTimeout(opslaan,400);
 }
+/* Alleen kijken: account mag lezen maar niet schrijven (zo staat het in de regels van Firebase) */
+let kijker=false;
+function zetKijker(v){kijker=!!v;document.body.classList.toggle("kijker",kijker);let b=document.getElementById("kijkLabel");
+  if(!b){b=document.createElement("span");b.id="kijkLabel";b.textContent="👁 Alleen kijken";b.title="Met dit account kunt u alles bekijken, maar niets veranderen.";const t=document.querySelector("#balk .titel");if(t)t.after(b)}
+  b.hidden=!kijker}
+/* Notitie per week: data.weekNotitie["JJWW"] = tekst */
+setTimeout(()=>{const r0=render;render=function(){const x=r0.apply(this,arguments);try{weekNotRijen()}catch(e){console.log(e)}return x};try{weekNotRijen()}catch(e){}},0);
+const wkNot=c=>((data.weekNotitie||{})[c]||"");
+function weekNotPop(c){const y=2000+ +c.slice(0,2),w=+c.slice(2);
+  toonPop("📝 Notitie week "+w+(y!==isoWeek(new Date()).y?" ("+y+")":""),`<textarea id="wkNotTxt" ${kijker?"readonly":""} style="width:100%;height:120px;font-size:15px;box-sizing:border-box;padding:8px" placeholder="bijv. kas 3 eerder leeg">${esc(wkNot(c))}</textarea>
+    ${kijker?"":`<div class="rij" style="margin-top:8px">${wkNot(c)?`<button class="btn rood" onclick="weekNotZet('${c}','')">Verwijderen</button>`:""}<span style="flex:1"></span><button class="btn" onclick="weekNotZet('${c}',document.getElementById('wkNotTxt').value)">Opslaan</button></div>`}`);
+  setTimeout(()=>{const x=document.getElementById("wkNotTxt");if(x&&!kijker)x.focus()},50)}
+function mobNot(c){const n=wkNot(c);return`<div class="mnot ${n?"heeft":""}" onclick="weekNotPop('${c}')">${n?"📝 "+esc(n):"+ notitie"}</div>`}
+function weekNotZet(c,t){t=String(t||"").trim();const o=data.weekNotitie=data.weekNotitie||{};if(t)o[c]=t;else delete o[c];sluitMobSoort();wijzig();melding(t?"📝 Notitie opgeslagen":"Notitie verwijderd","#2d6a4f")}
+/* rij met notities onder de weekkop van Opzetplanning en Afleverplanning */
+function weekNotRijen(){for(const tb of document.querySelectorAll("#inhoud table.ovtabel[data-codes]")){if(tb.querySelector("tr.wknot"))continue;
+    let codes;try{codes=JSON.parse(tb.dataset.codes)}catch(e){continue}const kop=tb.querySelector("tr");if(!kop)continue;
+    const tr=document.createElement("tr");tr.className="wknot";
+    tr.innerHTML=[...kop.children].map((th,i)=>{if(th.dataset.c==null)return i===0?`<td class="ovnaam wknotnaam" title="Klik op een vakje om een notitie bij die week te zetten">📝 Notitie</td>`:`<td></td>`;
+      const c=codes[+th.dataset.c],n=wkNot(c);return`<td data-c="${th.dataset.c}" style="${th.getAttribute("style")||""}" class="wknotcel ${n?"heeft":""}" title="${n?esc(n):"Notitie toevoegen"}" onclick="event.stopPropagation();weekNotPop('${c}')">${n?"📝":"+"}</td>`}).join("");
+    kop.after(tr)}}
+function kijkTerug(){if(laatsteKern){try{data=normaliseer(JSON.parse(laatsteKern))}catch(e){}}try{render()}catch(e){}
+  melding("👁 U kunt alleen kijken. Wijzigingen worden niet bewaard.","#6a3d9a")}
+
+/* ================= Meekijken: de klant deelt een deel van zijn planning met de beheerder =================
+   De klant kiest wat hij deelt (Bestand → Delen). De app zet dat in planning/delen.
+   De regels van Firebase geven de beheerder ALLEEN leesrecht op planning/delen, niet op de rest. */
+let meekijk=null,deelLaatst="";
+const DEEL_OPT=[["param","Parameters","teelten, soorten, teeltduur, fust, raaptijd"],["inkoop","Inkoop","aantallen per week (met parameters)"],["besch","Beschikbaar","nog beschikbaar per soort per week – zonder klanten en reserveringen"]];
+function deelData(){const D=(data.instellingen&&data.instellingen.delen)||{},o={delen:{param:!!D.param,inkoop:!!D.inkoop,besch:!!D.besch}};
+  if(D.param||D.inkoop){const ink=!!D.inkoop,I=data.instellingen;
+    o.teeltduren=data.teeltduren.map(t=>({...t,aantallen:ink?t.aantallen:{},losAantallen:ink?t.losAantallen:undefined}));
+    o.rassen=data.rassen.map(r=>{const x={...r,aantallen:ink?r.aantallen:{}};delete x.prijs;return x});
+    o.instellingen={seizoenStart:I.seizoenStart,levertijd:I.levertijd,eenvoudig:I.eenvoudig,...(ink?{brutoM2:I.brutoM2,vast:I.vast,vastB:I.vastB,vastL:I.vastL}:{})}}
+  if(D.besch){const nu=+dezeWeek(),tot=nu+371*864e5,per=new Map(),codes=new Set();
+    for(const r of afleverRegels()){if(!(r.aantal>0)||r.t<nu||r.t>=tot)continue;const k=r.product+"|"+r.soort,c=wkCode(r.t);codes.add(c);
+      const m=per.get(k)||{};m[c]=(m[c]||0)+r.aantal;per.set(k,m)}
+    const rijen=[];for(const[k,m]of per){const v={};for(const c in m){const t=+maandagIso(2000+ +c.slice(0,2),+c.slice(2));v[c]=m[c]-verkSom(k,t)}rijen.push({k,v})}
+    o.besch={codes:[...codes].sort(),rijen:rijen.sort((a,b)=>a.k.localeCompare(b.k,"nl"))}}
+  return o}
+async function deelOpslaan(){if(!wolkDoc||meekijk||!KLANT.code)return;
+  try{const o=deelData(),j=JSON.stringify(o);if(j===deelLaatst)return;
+    await wolkDoc.parent.doc("delen").set({json:j,gemaakt:new Date().toISOString(),door:wolkMail});deelLaatst=j}catch(e){console.log("delen",e)}}
+function toonDelen(){const D=(data.instellingen.delen=data.instellingen.delen||{});
+  toonPop("🤝 Delen met "+esc(KLANT.leverancier||"leverancier"),`<p class="status" style="margin:0 0 10px">Kies wat <b>${esc(KLANT.leverancier||"uw leverancier")}</b> mag zien als hij meekijkt. Hij kan het alleen <b>bekijken</b>, niet veranderen. Klanten, reserveringen, kosten en notities deelt u nooit.</p>
+    ${DEEL_OPT.map(([k,n,u])=>`<label class="deelKeus"><input type="checkbox" id="deel_${k}" ${D[k]?"checked":""}> <span><b>${n}</b><br><span class="status">${u}</span></span></label>`).join("")}
+    <div class="rij" style="margin-top:10px"><span style="flex:1"></span><button class="btn" onclick="deelZet()">Opslaan</button></div>`);
+  const ink=document.getElementById("deel_inkoop"),pa=document.getElementById("deel_param");ink.onchange=()=>{if(ink.checked)pa.checked=true};pa.onchange=()=>{if(!pa.checked)ink.checked=false}}
+function deelZet(){const D={};for(const[k]of DEEL_OPT)D[k]=document.getElementById("deel_"+k).checked;data.instellingen.delen=D;sluitMobSoort();wijzig();
+  const n=DEEL_OPT.filter(([k])=>D[k]).map(([,n])=>n);melding(n.length?"🤝 U deelt nu: "+n.join(", "):"🤝 U deelt nu niets","#2d6a4f")}
+/* beheerder: geen toegang tot de hele planning → kijken of er iets gedeeld is */
+function probeerDelen(db){db.collection("planning").doc("delen").onSnapshot(snap=>{
+    let o={};try{o=snap.exists&&snap.data().json?JSON.parse(snap.data().json):{}}catch(e){}
+    const g=snap.exists?snap.data().gemaakt:"";meekijk={delen:o.delen||{},besch:o.besch||null,gemaakt:g};zetKijker(true);
+    const b=document.getElementById("kijkLabel");if(b){b.textContent="👁 Meekijken";b.title="U kijkt mee met wat de klant deelt. U kunt niets veranderen."}
+    data=normaliseer({teeltduren:o.teeltduren||[],rassen:o.rassen||[],instellingen:o.instellingen||{}});laatsteKern=kernVan(data);terugStapel=[];
+    const ok=meekijkTabs();if(!ok.includes(tab))tab=ok[0]||"mkbesch";render();
+    wolkStatus(ok.length?"Meekijken · bijgewerkt "+(g?new Date(g).toLocaleString("nl-NL"):""):"De klant deelt (nog) niets met u",!!ok.length);
+    if(!ok.length)melding("De klant deelt (nog) niets met u.","#6a3d9a")},
+  e=>wolkStatus("⚠ "+(e.code==="permission-denied"?"Geen toegang met dit account ("+wolkMail+")":e.message),false))}
+const meekijkTabs=()=>{const d=(meekijk&&meekijk.delen)||{},l=[];if(d.param||d.inkoop)l.push("soorten");if(d.inkoop)l.push("oppot");if(d.besch)l.push("mkbesch");return l};
+function meekijkBalk(){let b=document.getElementById("mkBeschKnop");const ok=meekijk?meekijkTabs():null;
+  if(!b){const a=document.querySelector('#balk .mknop.groot[data-tab="aflever"]');if(!a)return;b=document.createElement("button");b.id="mkBeschKnop";b.type="button";b.className="mknop groot";b.textContent="Beschikbaar";b.onclick=()=>naar("mkbesch");a.after(b)}
+  b.hidden=!(ok&&ok.includes("mkbesch"));b.classList.toggle("actief",tab==="mkbesch");
+  document.querySelectorAll('#balk .mknop.groot[data-tab]').forEach(x=>x.hidden=!!ok&&!ok.includes(x.dataset.tab))}
+function toonMeekijkBesch(){const B=meekijk&&meekijk.besch,ob=document.getElementById("ovBalk");ob.hidden=false;
+  ob.innerHTML=`<span class="ovtitel">Beschikbaar</span><span class="ovinfo">nog beschikbaar per week (afleverplan min reserveringen) · gedeeld door de klant${meekijk&&meekijk.gemaakt?" · "+new Date(meekijk.gemaakt).toLocaleString("nl-NL"):""}</span>`;
+  if(!B||!B.rijen.length){$("#inhoud").innerHTML=`<p class="status" style="padding:16px">Er is niets beschikbaar gedeeld.</p>`;return}
+  const nu=wkCode(dezeWeek());
+  let h=`<table class="ovtabel"><tr><th class="ovnaam">Teelt · soort</th>${B.codes.map(c=>`<th class="${c===nu?"nu":""}">${c}</th>`).join("")}</tr>`;
+  for(const r of B.rijen){const[pr,so]=r.k.split("|");h+=`<tr><td class="ovnaam"><span class="status">${esc(pr)}</span> · <b>${esc(so)}</b></td>${B.codes.map(c=>{const v=r.v[c];return`<td class="${v<0?"ovmin":""}">${v?getal(v):'<span class="ovleeg">—</span>'}</td>`}).join("")}</tr>`}
+  const tot=B.codes.map(c=>B.rijen.reduce((a,r)=>a+(r.v[c]||0),0));
+  h+=`<tr class="ovtot"><td class="ovnaam">Totaal</td>${tot.map(v=>`<td>${v?getal(v):'<span class="ovleeg">—</span>'}</td>`).join("")}</tr></table>`;
+  $("#inhoud").innerHTML=h}
 /* Ongedaan maken: de laatste 30 versies onthouden (per bestand) */
 let terugStapel=[],laatsteKern=null;
 const kernVan=d=>JSON.stringify({...d,gewijzigd:0,programmaVersie:0});
@@ -1084,7 +1174,7 @@ document.addEventListener("keydown",e=>{if((e.ctrlKey||e.metaKey)&&!e.shiftKey&&
 /* Korte melding bovenin (verdwijnt vanzelf) */
 function melding(t,kleur){let m=document.getElementById("toast");if(!m){m=document.createElement("div");m.id="toast";document.body.appendChild(m)}
   m.innerHTML=t;m.style.background=kleur||"#2b2b2b";m.classList.add("aan");clearTimeout(m._t);m._t=setTimeout(()=>m.classList.remove("aan"),kleur?5000:2500)}
-async function opslaan(){
+async function opslaan(){if(kijker){kijkTerug();return}
   onthoudVersie();
   if(proef){zetStatus("🧪 Proefmodus – wordt niet in je bestand opgeslagen");return}
   try{historieBij()}catch(e){console.log("historie",e)}
@@ -1186,7 +1276,7 @@ async function wolkStart(){
       else melding("☁️ Planning bijgewerkt"+(v.door&&v.door!==wolkMail?" door "+esc(v.door):""));
       laatsteKern=kernVan(data);zetTerugKnop();render();
       wolkStatus("Bijgewerkt om "+new Date().toLocaleTimeString("nl-NL"));
-    },e=>wolkStatus("⚠ "+(e.code==="permission-denied"?"Geen toegang met dit account ("+wolkMail+")":e.message),false));
+    },e=>{if(e.code==="permission-denied"){probeerDelen(db);return}wolkStatus("⚠ "+e.message,false)});
   });
   $("#btnUitlog").onclick=()=>{if(confirm("Uitloggen?"))firebase.auth().signOut()};
   $("#btnInlezen").onclick=()=>{const i=document.createElement("input");i.type="file";i.accept=".json,application/json";
@@ -1214,7 +1304,7 @@ async function kopieTerug(i){const x=window.__kop[i];if(!x)return;if(!confirm(`R
 async function wolkOpslaan(){
   const json=JSON.stringify(data);
   if(json.length>950000){wolkStatus("⚠ Planning is te groot om online op te slaan",false);return}
-  try{await wolkDoc.set({json,gewijzigd:data.gewijzigd,door:wolkMail,sessie:SESSIE});wolkStatus("Opgeslagen om "+new Date().toLocaleTimeString("nl-NL"));autoKopie(json)}
+  try{await wolkDoc.set({json,gewijzigd:data.gewijzigd,door:wolkMail,sessie:SESSIE});wolkStatus("Opgeslagen om "+new Date().toLocaleTimeString("nl-NL"));autoKopie(json);deelOpslaan()}
   catch(e){wolkStatus("⚠ Opslaan lukt niet: "+(e.code==="permission-denied"?"geen toegang met dit account":e.message),false)}
 }
 
@@ -1315,10 +1405,12 @@ function render(){document.body.classList.toggle("isBeheer",isBeheerder());if(ta
   zvKlaar();
   if(tab==="rassen"||tab==="duren")tab="soorten";
   if(tab==="proef")tab="oppot"; /* proberen is teruggedraaid */
+  if(meekijk){const ok=meekijkTabs();if(!ok.includes(tab))tab=ok[0]||"mkbesch"}else if(tab==="mkbesch")tab="aflever";
+  document.body.classList.toggle("meekijk",!!meekijk);document.body.classList.toggle("klantApp",!!KLANT.code);document.querySelectorAll(".levNaam").forEach(x=>x.textContent=KLANT.leverancier||"leverancier");try{meekijkBalk()}catch(e){}
   /* eenvoudige versie: alleen teelt & soorten, leveranciers, oppotplan, bestel-, aflever- en werkplanning en mobiel */
   const eenv=!!data.instellingen.eenvoudig;document.body.classList.toggle("eenvoudig",eenv);
   {const b=document.getElementById("btnModus");if(b)b.textContent=eenv?"⚙️ Alle functies tonen":"⚙️ Eenvoudige versie"}
-  if(eenv&&!["soorten","leveranciers","klanten","oppot","oppotov","bestel","aflever","werk","mobiel","verkoop","ruimtegraf","beheer"].includes(tab))tab="oppot"; // Soort en Teeltduur zitten nu bij Parameters
+  if(eenv&&!["mkbesch","soorten","leveranciers","klanten","oppot","oppotov","bestel","aflever","werk","mobiel","verkoop","ruimtegraf","beheer"].includes(tab))tab="oppot"; // Soort en Teeltduur zitten nu bij Parameters
   onthoudPagina();
   /* Parameters opent altijd met alles ingeklapt */
   if(tab==="soorten"&&vorigeTab!=="soorten"&&!houdOpen&&typeof teeltOpen!=="undefined")teeltOpen.clear();
@@ -1330,7 +1422,7 @@ function render(){document.body.classList.toggle("isBeheer",isBeheerder());if(ta
   document.querySelectorAll("#balk .menu").forEach(m=>m.querySelector(".mknop").classList.toggle("actief",!!m.querySelector(".mlijst .actief")));
   zetVinkjes(); zetNavKnoppen(); toonKwekerij(); $("#btnStart").textContent=(zelfPlannen()?"Partijen klaarzetten ":"Vloeren vullen ")+planJaar;
   $("#btnStart").title=zelfPlannen()?"Maak de partijen uit het oppotplan klaar. Jij sleept ze daarna zelf naar een vloer.":"Zet alle partijen van het oppotplan op de vloeren";
-  document.body.classList.toggle("ovmodus",tab==="oppotov"||tab==="aflever"||tab==="bestel"||tab==="ruimtegraf");{const ob=document.getElementById("ovBalk");if(ob&&!["oppotov","aflever","bestel","ruimtegraf","soorten","oppot"].includes(tab))ob.hidden=true}
+  document.body.classList.toggle("ovmodus",tab==="mkbesch"||tab==="oppotov"||tab==="aflever"||tab==="bestel"||tab==="ruimtegraf");{const ob=document.getElementById("ovBalk");if(ob&&!["mkbesch","oppotov","aflever","bestel","ruimtegraf","soorten","oppot"].includes(tab))ob.hidden=true}
   document.body.classList.toggle("afl",tab==="ruimtegraf"||tab==="verkoop"||tab==="aflever"||tab==="werk"||tab==="bestel"||tab==="oppotov");
   document.body.classList.toggle("smal",["kappen","soorten","rassen","duren","leveranciers","klanten","bestel","oppotov","aflever","werk","weeklijst","verkoop","ruimtegraf"].includes(tab));
   document.body.classList.toggle("duren",tab==="duren");
@@ -1341,7 +1433,7 @@ function render(){document.body.classList.toggle("isBeheer",isBeheerder());if(ta
   document.body.classList.toggle("klassiek",data.instellingen.kleuren==="klassiek");
   $("#jaarLabel").textContent=planJaar;
   if($("#duurVenster")&&$("#duurVenster").open)vulDuur();
-  ({beheer:toonBeheer,ruimtegraf:toonRuimteGraf,verkoop:toonVerkoop,soorten:toonSoorten,rassen:toonRassen,leveranciers:toonLeveranciers,mobiel:toonMobiel,registraties:toonRegistraties,bestel:toonBestel,oppotov:toonOppotOv,klanten:toonKlanten,aflever:toonAflever,werk:toonWerk,weeklijst:toonWeeklijst,proef:toonProef,plan:toonPlan,teelt:toonTeelt,partijen:toonPartijen,duren:toonDuren,oppot:toonOppot,ruimte:toonRuimte,gereed:toonGereed,kappen:toonKappen})[tab]();
+  ({mkbesch:toonMeekijkBesch,beheer:toonBeheer,ruimtegraf:toonRuimteGraf,verkoop:toonVerkoop,soorten:toonSoorten,rassen:toonRassen,leveranciers:toonLeveranciers,mobiel:toonMobiel,registraties:toonRegistraties,bestel:toonBestel,oppotov:toonOppotOv,klanten:toonKlanten,aflever:toonAflever,werk:toonWerk,weeklijst:toonWeeklijst,proef:toonProef,plan:toonPlan,teelt:toonTeelt,partijen:toonPartijen,duren:toonDuren,oppot:toonOppot,ruimte:toonRuimte,gereed:toonGereed,kappen:toonKappen})[tab]();
 }
 const wkKop=l=>l.map((d,i)=>{const{w,y}=isoWeek(d),jw=i>0&&w===1;return`<th class="wk ${d.getTime()===dezeWeek()?"nu":""} ${jw?"jw":""}" title="wk ${w} (${y})">${jw?`<span class="jaartje">${y}</span>`:""}${w}</th>`}).join("");
 /* Kleuren in het vloerenplan: "zacht" (oppotten oranje, uitgezet groen, zwarte cijfers), "product" (pastel per product), "klassiek" */
@@ -3131,7 +3223,7 @@ function toonMobiel(){syncSoorten();
       const per=new Map();l.forEach(r=>{const k=r.product+"|"+r.soort,o=per.get(k)||{n:0,fust:r.fust,rasId:r.rasId};o.n+=r.aantal;per.set(k,o)});
       if(!per.size)continue;getoond++;
       const tot=[...per.values()].reduce((a,o)=>a+o.n,0),trT=[...per.values()].reduce((a,o)=>{const fn=fustAantal(o.fust);return a+(fn?Math.ceil(o.n/fn):0)},0);
-      h+=`<div class="mstap"><h3 class="msec f1">wk ${w}${y!==isoWeek(new Date()).y?` (${y})`:""} · ${getal(tot)} oppotten${trT?` · ${getal(trT)} trays`:""}</h3>${per.size?[...per].sort((a,b)=>a[0].localeCompare(b[0],"nl")).map(([k,o])=>{const[pr,so]=k.split("|"),fn=fustAantal(o.fust),tr=fn?Math.ceil(o.n/fn):0,v=!ZV()&&o.rasId?vloerEff(o.rasId,y,w):{};
+      h+=`<div class="mstap"><h3 class="msec f1">wk ${w}${y!==isoWeek(new Date()).y?` (${y})`:""} · ${getal(tot)} oppotten${trT?` · ${getal(trT)} trays`:""}</h3>${mobNot(wkCode(d))}${per.size?[...per].sort((a,b)=>a[0].localeCompare(b[0],"nl")).map(([k,o])=>{const[pr,so]=k.split("|"),fn=fustAantal(o.fust),tr=fn?Math.ceil(o.n/fn):0,v=!ZV()&&o.rasId?vloerEff(o.rasId,y,w):{};
         return`<div class="mrij"><span style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;flex:1" title="${esc(pr+" · "+so)}"><span class="status">${esc(pr.replace(" · "," "))}</span> · ${esc(so)}${v.opAfd||v.op?` <span class="status" style="font-size:12px">📍${v.opAfd?" afd "+esc(v.opAfd):""}${v.op?" vl "+esc(v.op):""}</span>`:""}</span><span style="white-space:nowrap">${tr?`<span class="status">(${getal(tr)})</span> `:""}<b class="mtal">${getal(o.n)}</b></span></div>`}).join(""):`<div class="status">Niets.</div>`}</div>`}
     if(!getoond)h+=`<div class="mstap"><div class="status">De komende 12 maanden staat er niets om op te zetten.</div></div>`;
   }else if(mobTab==="vloer"){h+=mobBekijk().replace('<h3><span class="n">2</span> Welke vloer?</h3>','<h3>Kies een vloer</h3>')}
@@ -3140,7 +3232,7 @@ function toonMobiel(){syncSoorten();
     for(let i=0;i<8;i++){const d=plusWeken(new Date(t),i),tt=d.getTime(),l=regels.filter(r=>r.t===tt&&r.aantal>0),{w}=isoWeek(d);
       const per={},raw={};l.forEach(r=>{const k=r.product+" · "+r.soort;per[k]=(per[k]||0)+r.aantal;raw[k]=r.product+"|"+r.soort});
       const bes=k=>per[k]-verkSom(raw[k],tt),totB=Object.keys(per).reduce((a,k)=>a+bes(k),0);
-      h+=`<div class="mstap"><h3 class="msec fa">wk ${w} · ${getal(totB)} nog beschikbaar</h3>${Object.keys(per).length?Object.keys(per).sort((a,b)=>raw[a].localeCompare(raw[b],"nl")).map(k=>{const n=bes(k);return`<div class="mrij mklik" onclick="mobSoort(this.dataset.k)" data-k="${esc(k)}"><span><span class="status">${esc(raw[k].split("|")[0].slice(0,10).trim())}</span> · ${esc(raw[k].split("|")[1])} ›</span><b class="mtal ${n<0?"min":""}" onclick="mobRaap(event,this.parentNode.dataset.k,${tt})" title="Nog beschikbaar (afleverplan ${getal(per[k])} min gereserveerd)">${getal(n)}${ZV()?"":" 📍"}</b></div>`}).join(""):`<div class="status">Niets.</div>`}</div>`}
+      h+=`<div class="mstap"><h3 class="msec fa">wk ${w} · ${getal(totB)} nog beschikbaar</h3>${mobNot(wkCode(d))}${Object.keys(per).length?Object.keys(per).sort((a,b)=>raw[a].localeCompare(raw[b],"nl")).map(k=>{const n=bes(k);return`<div class="mrij mklik" onclick="mobSoort(this.dataset.k)" data-k="${esc(k)}"><span><span class="status">${esc(raw[k].split("|")[0].slice(0,10).trim())}</span> · ${esc(raw[k].split("|")[1])} ›</span><b class="mtal ${n<0?"min":""}" onclick="mobRaap(event,this.parentNode.dataset.k,${tt})" title="Nog beschikbaar (afleverplan ${getal(per[k])} min gereserveerd)">${getal(n)}${ZV()?"":" 📍"}</b></div>`}).join(""):`<div class="status">Niets.</div>`}</div>`}
   }else{
     const z=mobZoek.toLowerCase().trim();
     h+=`<div class="mstap"><input id="mobZoekVeld" value="${esc(mobZoek)}" placeholder="Partij (bijv. P12), teelt of soort" style="width:100%;font-size:16px;padding:10px;border-radius:10px;border:2px solid #c9bfa8"></div>`;
@@ -3950,14 +4042,14 @@ const bhVersies={},bhOpen1=new Set();let bhAutoCheck=false;
 function bhKlap(id){bhOpen1.has(id)?bhOpen1.delete(id):bhOpen1.add(id);render()}
 function toonBeheer(){const B=beheerData(),ob=document.getElementById("ovBalk");ob.hidden=false;if(!bhAutoCheck){bhAutoCheck=true;setTimeout(()=>bhAlleVersies(true),50)}
   ob.innerHTML=`<span class="ovtitel">Beheer klanten</span><span class="ovinfo">${B.klanten.length} klanten · deze app: versie ${VERSIE}</span><span style="flex:1"></span><button class="ovk ovlink" onclick="bhAlleVersies()">↻ Versies controleren</button><button class="ovk ovlink" onclick="bhNieuw()">+ Nieuwe klant</button>`;
-  const veld=(k,i,lab,type,ph)=>`<label>${lab}</label>${type==="ta"?`<textarea data-bk="${k}" data-bi="${i}" placeholder="${ph||""}">${esc(B.klanten[i][k]||"")}</textarea>`:`<input data-bk="${k}" data-bi="${i}" value="${esc(B.klanten[i][k]||"")}" placeholder="${ph||""}">`}`;
+  const veld=(k,i,lab,type,ph)=>`<label>${lab}</label>${type==="ta"?`<textarea data-bk="${k}" data-bi="${i}" placeholder="${ph||""}">${esc(B.klanten[i][k]??(k==="beheerder"?"vollebregt.a@gmail.com":""))}</textarea>`:`<input data-bk="${k}" data-bi="${i}" value="${esc(B.klanten[i][k]||"")}" placeholder="${ph||""}">`}`;
   $("#inhoud").innerHTML=`<p class="status" style="margin:0 0 12px">Hier beheert u al uw klanten. Elke klant heeft een eigen GitHub (index.html + klant.js) en een eigen Firebase. Deze lijst staat alleen in uw eigen planning.</p>`+B.klanten.map((k,i)=>{const fb=fbLees(k.firebase),v=bhVersies[k.id];
     const st=v===undefined?`<span class="bhstat">versie ?</span>`:v===null?`<span class="bhstat oud">niet bereikbaar</span>`:v===VERSIE?`<span class="bhstat ok">versie ${esc(v)} ✓</span>`:`<span class="bhstat oud">versie ${esc(v)} → update naar ${VERSIE}</span>`;
     const open=bhOpen1.has(k.id);
     return`<div class="bhkaart ${i===0?"eigen":""} ${open?"":"dicht"}"><div class="bhkop" onclick="if(!event.target.closest('button'))bhKlap('${k.id}')" title="Klik om ${open?"in":"uit"} te klappen"><span class="bhpijl">${open?"▾":"▸"}</span><h3>${esc(k.naam||"(nieuwe klant)")}</h3>${st}<button class="ovk ovlink" onclick="bhOpen(${i},'app')">Meekijken ›</button>${fb.projectId?`<span class="status">Firebase: ${esc(fb.projectId)}</span>`:`<span class="let">Firebase nog niet ingevuld</span>`}<span style="flex:1"></span>${i?`<button class="btn rood klein" onclick="bhWeg(${i})" title="Uit de lijst halen">✕</button>`:""}</div>
       <div class="bhgrid">${veld("naam",i,"Klant","t","bijv. Kwekerij Jansen")}${veld("appNaam",i,"Naam van de app","t","bijv. Jansenplan")}${veld("code",i,"Code (kort woord)","t","bijv. jansen")}
         ${veld("appUrl",i,"Webadres app","t","https://….github.io/naam/")}${veld("repo",i,"GitHub","t","https://github.com/…/naam")}
-        ${veld("firebase",i,"firebaseConfig","ta","plak hier het stukje firebaseConfig = { … } uit Firebase")}${veld("emails",i,"E-mailadressen (1 per regel)","ta","naam@gmail.com")}${veld("notitie",i,"Notitie","t","")}</div>
+        ${veld("firebase",i,"firebaseConfig","ta","plak hier het stukje firebaseConfig = { … } uit Firebase")}${veld("emails",i,"E-mailadressen klant (1 per regel)","ta","naam@gmail.com")}${i?veld("beheerder",i,"Meekijken (beheerder)","ta","uw e-mail: ziet alleen wat de klant deelt"):""}${veld("notitie",i,"Notitie","t","")}</div>
       <div class="bhknop"><button class="ovk ovlink" onclick="bhOpen(${i},'repo')">GitHub ›</button><button class="ovk ovlink" onclick="bhOpen(${i},'fb')">Firebase ›</button>
         <button class="ovk ovlink" onclick="bhVersie(${i})">↻ Versie</button><button class="ovk ovlink" onclick="bhKlantJs(${i})">⬇ klant.js</button><button class="ovk ovlink" onclick="bhRegels(${i})">Regels Firebase</button></div></div>`}).join("")}
 $("#inhoud").addEventListener("change",e=>{const el=e.target;if(!el.dataset||el.dataset.bk==null||tab!=="beheer")return;const B=beheerData(),k=B.klanten[+el.dataset.bi];if(!k)return;
@@ -3985,17 +4077,27 @@ window.KLANT={
 };
 `;const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([t],{type:"text/javascript"}));a.download="klant.js";a.click();
   melding(`⬇ klant.js voor ${esc(k.naam||"klant")} gedownload. Zet hem naast index.html in de GitHub van deze klant.`,"#2d6a4f")}
-function bhRegels(i){const k=beheerData().klanten[i],m=String(k.emails||"").split(/[\s,;]+/).map(x=>x.trim().toLowerCase()).filter(Boolean);
+function bhRegels(i){const k=beheerData().klanten[i],lees=x=>String(x||"").split(/[\s,;]+/).map(x=>x.trim().toLowerCase()).filter(Boolean),m=lees(k.emails),kk=i?lees(k.beheerder==null?"vollebregt.a@gmail.com":k.beheerder):[],m2=m.filter(x=>!kk.includes(x));
   if(!m.length){alert("Vul eerst de e-mailadressen in.");return}
+  const lijst=a=>a.map(x=>`          "${x}"`).join(",\n");
+  if(!m2.length){alert("Er staat geen e-mailadres van de klant zelf in.");return}
   const t=`rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
+    // klant: alles lezen en veranderen
     match /{document=**} {
       allow read, write: if request.auth != null
         && request.auth.token.email in [
-${m.map(x=>`          "${x}"`).join(",\n")}
+${lijst(m2)}
         ];
-    }
+    }${kk.length?`
+    // beheerder: alleen lezen wat de klant deelt
+    match /planning/delen {
+      allow read: if request.auth != null
+        && request.auth.token.email in [
+${lijst(kk)}
+        ];
+    }`:""}
   }
 }`;toonPop("Regels Firebase · "+(k.naam||""),`<p class="status" style="margin:0 0 6px">Firebase → Firestore → tabblad <b>Rules</b> → alles vervangen door deze tekst → <b>Publish</b>.</p><textarea id="bhRegelTxt" readonly style="width:100%;height:240px;font-family:monospace;font-size:13px;box-sizing:border-box">${esc(t)}</textarea>
     <div class="rij" style="margin-top:8px"><span style="flex:1"></span><button class="btn" onclick="const x=document.getElementById('bhRegelTxt');x.select();try{navigator.clipboard.writeText(x.value)}catch(e){document.execCommand('copy')}melding('✓ Regels gekopieerd','#2d6a4f')">📋 Kopiëren</button></div>`)}
