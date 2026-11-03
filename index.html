@@ -223,7 +223,7 @@ tr.nieuwsoort select{width:100%;font-style:italic;border:1px dashed #2d6a4f;back
 .mob .wkkeuze b{white-space:nowrap}.mobteelt{font-size:16px;font-weight:700;padding:6px 8px;border-radius:8px;border:2px solid #fff;background:#fff;color:#1f4d39;max-width:58vw}
 .alleenBeheer{display:none!important}body.isBeheer .alleenBeheer{display:block!important}
 .bhkaart{background:#fff;border:1px solid #c9c2b6;border-radius:8px;padding:12px 14px;margin:0 0 12px}.bhkaart.eigen{border-left:5px solid #2d6a4f}
-.bhkop{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:8px}.bhkop h3{margin:0;font-size:18px}
+.bhkop{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:8px;cursor:pointer;user-select:none}.bhkaart.dicht .bhkop{margin-bottom:0}.bhkaart.dicht .bhgrid,.bhkaart.dicht .bhknop{display:none}.bhpijl{font-size:16px;color:#2d6a4f;width:14px}.bhkop .ovk{font-size:13px;padding:4px 10px}.bhkop h3{margin:0;font-size:18px}
 .bhgrid{display:grid;grid-template-columns:150px 1fr;gap:6px 10px;align-items:center;font-size:14px}.bhgrid input,.bhgrid textarea{width:100%;font-size:14px;padding:5px 7px;box-sizing:border-box}
 .bhgrid textarea{font-family:monospace;font-size:12px;height:62px}.bhknop{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}
 .bhstat{font-size:13px;font-weight:700;padding:3px 9px;border-radius:12px;background:#eee}.bhstat.ok{background:#e3f3ea;color:#1f4d39}.bhstat.oud{background:#fde7e7;color:#b3261e}
@@ -765,7 +765,7 @@ dialog::backdrop{background:rgba(0,0,0,.45)}
 
 <script>
 "use strict";
-const VERSIE="32.0";
+const VERSIE="32.1";
 const VERSIE_DATUM="03-11-2026";
 /* ---------- Basis ---------- */
 const PALET=["#2d6a4f","#1B5EBE","#E8007D","#c77d1a","#7a4fa0","#0f8b8d","#5b6b2f","#3d5a80","#a0522d","#7AB648"];
@@ -3383,7 +3383,7 @@ function ovKlik(e){const td=e.target.closest("td[data-k]");if(!td)return;if(e.cu
       <span class="status" id="ovInM2"></span>
       <button class="btn" onclick="ovZet('${rid}',${w})">Opslaan</button></div>`}
   const lw=leegWeek(l,j,w);
-  h+=`<div class="status" style="margin-top:8px">Oppotweek ${w} van ${j}${lw?` · <b>leeg week ${lw}</b>`:""}.</div>`;
+  h+=`<div class="status" style="margin-top:8px">Oppotten week ${w} van ${j}${lw?` · <b>${lw}</b>`:""}.</div>`;
   toonPop(titel,h);const ip=document.getElementById("ovInP");
   if(ip){const t=teeltVanRas(rid),upd=()=>{const p=+ip.value||0,e=document.getElementById("ovInM2");if(e&&t)e.innerHTML=p?`= <b>${m2Tekst(t.dicht1?p/t.dicht1:0)}</b> m² oppot · <b>${m2Tekst(t.dicht2?p/t.dicht2:0)}</b> m² uitzet`:""};
     upd();ip.addEventListener("input",upd);const it=document.getElementById("ovInT");if(it)it.addEventListener("input",upd);ip.focus();ip.select()}}
@@ -3414,9 +3414,11 @@ function raapSplits(rid,p,n,pre){const P=pre?`<b>${esc(pre)}</b> · `:"";const{w
   return vl.map((x,i)=>`<div class="raapplek"><span>${P}${afd?"afd "+esc(afd)+" · ":""}vloer ${esc(x)}</span><b>± ${getal(basis+(i<rest?1:0))}</b></div>`).join("")}
 /* Leeg-week: wanneer is de partij van deze oppotweek klaar (vloer weer leeg) */
 function leegWeek(l,j,w){const ids=new Set(l.map(r=>r.rasId).filter(Boolean)),tids=new Set([...ids].map(id=>(data.rassen.find(r=>r.id===id)||{}).teeltId));
-  const ws=new Set();for(const p of planPartijen()){const f=fasen(p),o=isoWeek(f.s);if(o.y!==j||o.w!==w||!tids.has(p.soortId))continue;
-    const lw=isoWeek(f.leeg);ws.add(lw.w+(lw.y!==j?" ("+lw.y+")":""))}
-  return[...ws].sort().join(" / ")}
+  const wk=(d)=>{const x=isoWeek(d);return x.w+(x.y!==j?" ("+x.y+")":"")};
+  const pp=planPartijen().filter(p=>{const o=isoWeek(fasen(p).s);return o.y===j&&o.w===w&&tids.has(p.soortId)});
+  let eig=pp.filter(p=>(p.soorten||[]).some(s=>ids.has(s.rasId)));if(!eig.length)eig=pp;
+  const ws=new Set();for(const p of eig){const f=fasen(p);ws.add(`uitzetten week ${wk(f.f2)} (na ${p.weken1} wkn) · vloer leeg week ${wk(f.leeg)} (na nog ${p.weken2} wkn)`)}
+  return[...ws].join(" / ")}
 const teeltVanRas=id=>{const r=data.rassen.find(x=>x.id===id);return r?data.teeltduren.find(t=>t.id===r.teeltId):null};
 const m2Tekst=v=>(Math.round(v*10)/10).toLocaleString("nl-NL");
 /* Aantal uit de popup opslaan in het oppotplan */
@@ -3933,28 +3935,30 @@ function beheerData(){const b=data.beheer=data.beheer||{};if(!Array.isArray(b.kl
   return b}
 /* firebaseConfig uit geplakte tekst halen (ook "const firebaseConfig = {...}") */
 function fbLees(t){t=String(t||"");const o={};for(const k of["apiKey","authDomain","projectId","storageBucket","messagingSenderId","appId","measurementId"]){const m=t.match(new RegExp(k+'["\']?\\s*:\\s*["\']([^"\']+)["\']'));if(m)o[k]=m[1]}return o}
-const bhVersies={};
-function toonBeheer(){const B=beheerData(),ob=document.getElementById("ovBalk");ob.hidden=false;
+const bhVersies={},bhOpen1=new Set();let bhAutoCheck=false;
+function bhKlap(id){bhOpen1.has(id)?bhOpen1.delete(id):bhOpen1.add(id);render()}
+function toonBeheer(){const B=beheerData(),ob=document.getElementById("ovBalk");ob.hidden=false;if(!bhAutoCheck){bhAutoCheck=true;setTimeout(()=>bhAlleVersies(true),50)}
   ob.innerHTML=`<span class="ovtitel">Beheer klanten</span><span class="ovinfo">${B.klanten.length} klanten · deze app: versie ${VERSIE}</span><span style="flex:1"></span><button class="ovk ovlink" onclick="bhAlleVersies()">↻ Versies controleren</button><button class="ovk ovlink" onclick="bhNieuw()">+ Nieuwe klant</button>`;
   const veld=(k,i,lab,type,ph)=>`<label>${lab}</label>${type==="ta"?`<textarea data-bk="${k}" data-bi="${i}" placeholder="${ph||""}">${esc(B.klanten[i][k]||"")}</textarea>`:`<input data-bk="${k}" data-bi="${i}" value="${esc(B.klanten[i][k]||"")}" placeholder="${ph||""}">`}`;
   $("#inhoud").innerHTML=`<p class="status" style="margin:0 0 12px">Hier beheert u al uw klanten. Elke klant heeft een eigen GitHub (index.html + klant.js) en een eigen Firebase. Deze lijst staat alleen in uw eigen planning.</p>`+B.klanten.map((k,i)=>{const fb=fbLees(k.firebase),v=bhVersies[k.id];
     const st=v===undefined?`<span class="bhstat">versie ?</span>`:v===null?`<span class="bhstat oud">niet bereikbaar</span>`:v===VERSIE?`<span class="bhstat ok">versie ${esc(v)} ✓</span>`:`<span class="bhstat oud">versie ${esc(v)} → update naar ${VERSIE}</span>`;
-    return`<div class="bhkaart ${i===0?"eigen":""}"><div class="bhkop"><h3>${esc(k.naam||"(nieuwe klant)")}</h3>${st}${fb.projectId?`<span class="status">Firebase: ${esc(fb.projectId)}</span>`:`<span class="let">Firebase nog niet ingevuld</span>`}<span style="flex:1"></span>${i?`<button class="btn rood klein" onclick="bhWeg(${i})" title="Uit de lijst halen">✕</button>`:""}</div>
+    const open=bhOpen1.has(k.id);
+    return`<div class="bhkaart ${i===0?"eigen":""} ${open?"":"dicht"}"><div class="bhkop" onclick="if(!event.target.closest('button'))bhKlap('${k.id}')" title="Klik om ${open?"in":"uit"} te klappen"><span class="bhpijl">${open?"▾":"▸"}</span><h3>${esc(k.naam||"(nieuwe klant)")}</h3>${st}<button class="ovk ovlink" onclick="bhOpen(${i},'app')">Meekijken ›</button>${fb.projectId?`<span class="status">Firebase: ${esc(fb.projectId)}</span>`:`<span class="let">Firebase nog niet ingevuld</span>`}<span style="flex:1"></span>${i?`<button class="btn rood klein" onclick="bhWeg(${i})" title="Uit de lijst halen">✕</button>`:""}</div>
       <div class="bhgrid">${veld("naam",i,"Klant","t","bijv. Kwekerij Jansen")}${veld("appNaam",i,"Naam van de app","t","bijv. Jansenplan")}${veld("code",i,"Code (kort woord)","t","bijv. jansen")}
         ${veld("appUrl",i,"Webadres app","t","https://….github.io/naam/")}${veld("repo",i,"GitHub","t","https://github.com/…/naam")}
         ${veld("firebase",i,"firebaseConfig","ta","plak hier het stukje firebaseConfig = { … } uit Firebase")}${veld("emails",i,"E-mailadressen (1 per regel)","ta","naam@gmail.com")}${veld("notitie",i,"Notitie","t","")}</div>
-      <div class="bhknop"><button class="ovk ovlink" onclick="bhOpen(${i},'app')">Open app (meekijken) ›</button><button class="ovk ovlink" onclick="bhOpen(${i},'repo')">GitHub ›</button><button class="ovk ovlink" onclick="bhOpen(${i},'fb')">Firebase ›</button>
+      <div class="bhknop"><button class="ovk ovlink" onclick="bhOpen(${i},'repo')">GitHub ›</button><button class="ovk ovlink" onclick="bhOpen(${i},'fb')">Firebase ›</button>
         <button class="ovk ovlink" onclick="bhVersie(${i})">↻ Versie</button><button class="ovk ovlink" onclick="bhKlantJs(${i})">⬇ klant.js</button><button class="ovk ovlink" onclick="bhRegels(${i})">Regels Firebase</button></div></div>`}).join("")}
 $("#inhoud").addEventListener("change",e=>{const el=e.target;if(!el.dataset||el.dataset.bk==null||tab!=="beheer")return;const B=beheerData(),k=B.klanten[+el.dataset.bi];if(!k)return;
   k[el.dataset.bk]=el.value.trim();opslaanLater();if(["naam","firebase"].includes(el.dataset.bk))render()});
-function bhNieuw(){beheerData().klanten.push({id:uid(),naam:"",appNaam:"",code:"",appUrl:"",repo:"",firebase:"",emails:"vollebregt.a@gmail.com",notitie:""});wijzig();setTimeout(()=>{const l=[...document.querySelectorAll('input[data-bk="naam"]')].pop();if(l){l.scrollIntoView({block:"center"});l.focus()}},80)}
+function bhNieuw(){const nid=uid();bhOpen1.add(nid);beheerData().klanten.push({id:nid,naam:"",appNaam:"",code:"",appUrl:"",repo:"",firebase:"",emails:"vollebregt.a@gmail.com",notitie:""});wijzig();setTimeout(()=>{const l=[...document.querySelectorAll('input[data-bk="naam"]')].pop();if(l){l.scrollIntoView({block:"center"});l.focus()}},80)}
 function bhWeg(i){const k=beheerData().klanten[i];if(!k||!confirm(`'${k.naam||"deze klant"}' uit de lijst halen?\n(De app en Firebase van de klant blijven gewoon bestaan.)`))return;beheerData().klanten.splice(i,1);wijzig()}
 function bhOpen(i,w){const k=beheerData().klanten[i],fb=fbLees(k.firebase);const u=w==="app"?k.appUrl:w==="repo"?k.repo:fb.projectId?`https://console.firebase.google.com/project/${fb.projectId}/firestore`:"https://console.firebase.google.com/";
   if(!u){alert("Vul eerst het adres in.");return}window.open(u,"_blank","noopener")}
 async function bhVersie(i,stil){const k=beheerData().klanten[i];if(!k||!k.appUrl){if(!stil)alert("Vul eerst het webadres van de app in.");return}
   try{const u=k.appUrl.replace(/\/?$/,"/")+"index.html?v="+Date.now(),r=await fetch(u,{cache:"no-store"}),t=await r.text(),m=t.match(/const VERSIE="([^"]+)"/);bhVersies[k.id]=m?m[1]:null}catch(e){bhVersies[k.id]=null}
   if(!stil&&tab==="beheer")render()}
-async function bhAlleVersies(){const l=beheerData().klanten;await Promise.all(l.map((k,i)=>bhVersie(i,true)));if(tab==="beheer")render();
+async function bhAlleVersies(stil){const l=beheerData().klanten;await Promise.all(l.map((k,i)=>bhVersie(i,true)));if(tab==="beheer")render();if(stil===true)return;
   const oud=l.filter(k=>bhVersies[k.id]&&bhVersies[k.id]!==VERSIE).length;melding(oud?`${oud} klant(en) hebben een oudere versie`:"Alle bereikbare klanten zijn bijgewerkt","#2d6a4f")}
 function bhKlantJs(i){const k=beheerData().klanten[i],fb=fbLees(k.firebase);if(!k.appNaam&&!confirm("Er is nog geen naam van de app ingevuld. Toch maken?"))return;
   const f=fb.apiKey?fb:{apiKey:"VUL_IN",authDomain:"VUL_IN",projectId:"VUL_IN",storageBucket:"VUL_IN",messagingSenderId:"VUL_IN",appId:"VUL_IN"};delete f.measurementId;
