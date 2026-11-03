@@ -605,6 +605,12 @@ dialog::backdrop{background:rgba(0,0,0,.45)}
 .ovjaar,#ovBalk .ovjaar{background:#dff0e6!important;color:#1f4d39!important;border:1px solid #000!important;border-radius:9px!important;font-weight:700}
 .ovjaar:hover{background:#fff!important}
 .ovjaar option{background:#fff;color:#222}
+
+.kloptVink{display:inline-flex;align-items:center;gap:3px;cursor:pointer;padding:2px 6px;border-radius:6px;border:1px solid #c9c2b6;background:#fff;font-weight:700;color:#777}.kloptVink.aan{background:#e3f3ea;border-color:#2d6a4f;color:#1f4d39}.kloptVink input{margin:0;cursor:pointer}
+
+/* 32.3 weekkop blijft staan bij omlaag scrollen */
+body.ovmodus section.vlak{max-height:calc(100vh - 170px);overflow:auto}
+.ovtabel tr:first-child th{position:sticky;top:0;z-index:3;box-shadow:0 1px 0 #c9c2b6}
 </style>
 </head>
 <body>
@@ -765,7 +771,7 @@ dialog::backdrop{background:rgba(0,0,0,.45)}
 
 <script>
 "use strict";
-const VERSIE="32.1";
+const VERSIE="32.3";
 const VERSIE_DATUM="03-11-2026";
 /* ---------- Basis ---------- */
 const PALET=["#2d6a4f","#1B5EBE","#E8007D","#c77d1a","#7a4fa0","#0f8b8d","#5b6b2f","#3d5a80","#a0522d","#7AB648"];
@@ -856,7 +862,7 @@ function normaliseer(d){
   /* Soorten (rassen) per teelt: later te kiezen in een keuzelijst */
   d.registraties=(Array.isArray(d.registraties)?d.registraties:[]).filter(r=>r&&r.id);
   d.leveranciers=(Array.isArray(d.leveranciers)?d.leveranciers:[]).map(l=>({id:l.id||uid(),naam:String(l.naam||""),contact:String(l.contact||""),telefoon:String(l.telefoon||""),email:String(l.email||""),opmerking:String(l.opmerking||""),levertijd:Math.max(0,Math.round(+l.levertijd||0))}));
-  d.rassen=(Array.isArray(d.rassen)?d.rassen:[]).map(r=>({id:r.id||uid(),teeltId:String(r.teeltId||""),naam:String(r.naam||""),nr:String(r.nr||""),levertijd:r.levertijd==null||r.levertijd===""||isNaN(+r.levertijd)?null:Math.max(0,Math.round(+r.levertijd)),leverancierId:String(r.leverancierId||""),aantallen:r.aantallen||{},raaptijd:Math.max(1,Math.min(26,Math.round(+r.raaptijd||1))),gewas:String(r.gewas||""),fust:String(r.fust||""),prijs:r.prijs===""||r.prijs==null||isNaN(+r.prijs)?null:+r.prijs,uitval:r.uitval===undefined?undefined:Math.max(0,Math.min(100,+r.uitval||0)),
+  d.rassen=(Array.isArray(d.rassen)?d.rassen:[]).map(r=>({id:r.id||uid(),teeltId:String(r.teeltId||""),naam:String(r.naam||""),nr:String(r.nr||""),klopt:String(r.klopt||""),levertijd:r.levertijd==null||r.levertijd===""||isNaN(+r.levertijd)?null:Math.max(0,Math.round(+r.levertijd)),leverancierId:String(r.leverancierId||""),aantallen:r.aantallen||{},raaptijd:Math.max(1,Math.min(26,Math.round(+r.raaptijd||1))),gewas:String(r.gewas||""),fust:String(r.fust||""),prijs:r.prijs===""||r.prijs==null||isNaN(+r.prijs)?null:+r.prijs,uitval:r.uitval===undefined?undefined:Math.max(0,Math.min(100,+r.uitval||0)),
     ...(Array.isArray(r.perioden)&&r.perioden.length?{perioden:r.perioden}:{}),
     ...(r.vloeren&&typeof r.vloeren==="object"?{vloeren:r.vloeren}:{}),
     ...(Array.isArray(r.raapPct)&&r.raapPct.length===Math.max(1,Math.min(26,Math.round(+r.raaptijd||1)))-1?{raapPct:r.raapPct.map(x=>Math.max(0,Math.min(100,+x||0)))}:{})}));
@@ -2180,6 +2186,7 @@ function rasWeg(id){const r=data.rassen.find(x=>x.id===id);const n=r?Object.valu
 $("#inhoud").addEventListener("change",e=>{const el=e.target;if(!el.dataset.ras)return;
   const r=data.rassen.find(x=>x.id===el.dataset.ras);if(!r)return;
   if(el.dataset.rk==="prijs"){const v=String(el.value).trim().replace("€","").replace(",",".");r.prijs=v===""||isNaN(+v)?null:+v;el.value=r.prijs!=null?String(r.prijs).replace(".",","):"";opslaanLater();return}
+  if(el.dataset.rk==="klopt"){r.klopt=el.checked?new Date().toLocaleDateString("nl-NL",{day:"2-digit",month:"2-digit",year:"numeric"}):"";houdOpen=true;wijzig();return}
   if(el.dataset.rk==="levertijd"){const v=String(el.value).trim();r.levertijd=v===""?null:Math.max(0,Math.min(52,Math.round(+v||0)));el.value=r.levertijd??"";opslaanLater();return}
   if(el.dataset.rk==="uitval"){r.uitval=Math.max(0,Math.min(100,+String(el.value).replace(",",".")||0));el.value=r.uitval||"";opslaanLater();return}
   if(el.dataset.rk==="raaptijd"){const n=Math.max(1,Math.min(26,Math.round(+el.value||1)));if(n!==r.raaptijd){r.raaptijd=n;delete r.raapPct}houdOpen=true;wijzig();return}
@@ -2272,7 +2279,7 @@ function toonSoorten(){
           <td style="width:110px;white-space:nowrap;font-size:12px"><span class="status">uitval</span> <input type="number" min="0" max="100" step="0.5" style="width:48px" data-alle="uitval" data-teelt="${t.id}" placeholder="–"> <span class="status">%</span></td>
           <td style="width:118px;white-space:nowrap;font-size:12px"><span class="status">levertijd</span> <input type="number" min="0" max="52" style="width:46px" data-alle="levertijd" data-teelt="${t.id}" placeholder="–"> <span class="status">wk</span></td>
           <td style="font-size:12px"><select data-alle="duur" data-teelt="${t.id}" style="max-width:150px"><option value="">— kies teeltduur —</option><option value="__std">Standaard duur</option>${srt.filter(eigenDuur).map(r=>`<option value="${r.id}">Zoals ${esc(r.naam)}</option>`).join("")}</select></td>
-          <td></td></tr>`:""}${srt.map(r=>`<tr><td style="width:32%"><input data-ras="${r.id}" data-rk="naam" value="${esc(r.naam)}" placeholder="bijv. Wit" class="${r.naam?"":"mist"}"></td>
+          <td></td><td></td></tr>`:""}${srt.map(r=>`<tr><td style="width:32%"><input data-ras="${r.id}" data-rk="naam" value="${esc(r.naam)}" placeholder="bijv. Wit" class="${r.naam?"":"mist"}"></td>
           <td class="uitgebreid"><select data-ras="${r.id}" data-rk="leverancierId" style="width:100%">${levOpties(r.leverancierId)}</select></td>
           <td style="width:70px"><input data-ras="${r.id}" data-rk="nr" value="${esc(r.nr||"")}" placeholder="nr." title="Soortnummer (bijv. artikelnummer van de leverancier)" style="width:100%;font-size:12px"></td>
           <td style="width:84px"><input data-ras="${r.id}" data-rk="fust" value="${esc(r.fust)}" placeholder="fust" title="Fust, bijv. Tray 260" style="width:100%;font-size:12px"></td>
@@ -2281,6 +2288,7 @@ function toonSoorten(){
           <td style="width:110px;white-space:nowrap;font-size:12px" title="Uitval in procent. Telt alleen mee voor de afleverplanning."><span class="status">uitval</span> <input type="number" min="0" max="100" step="0.5" style="width:48px" data-ras="${r.id}" data-rk="uitval" value="${r.uitval||""}" placeholder="0"> <span class="status">%</span></td>
           <td style="width:118px;white-space:nowrap;font-size:12px" title="Levertijd: aantal weken tussen bestellen en opzetten. Leeg = standaard (${levTijd(data.leveranciers.find(l=>l.id===r.leverancierId))||0} wk)."><span class="status">levertijd</span> <input type="number" min="0" max="52" style="width:46px" data-ras="${r.id}" data-rk="levertijd" value="${r.levertijd??""}" placeholder="${levTijd(data.leveranciers.find(l=>l.id===r.leverancierId))||0}"> <span class="status">wk</span></td>
           <td style="width:170px;font-size:12px;white-space:nowrap;padding-left:12px"><a href="#" onclick="openDuur('${t.id}','${r.id}');return false" title="Teeltduur van deze soort aanpassen">${eigenDuur(r)?`<b style="color:#a35a00">eigen: ${duurKort(r)} ›</b>`:"standaard duur ›"}</a></td>
+          <td style="width:78px;white-space:nowrap;font-size:12px;text-align:center" title="${r.klopt?"Planning klopt volgens de registratie (afgevinkt op "+esc(r.klopt)+")":"Vink aan als uit de registratie blijkt dat de planning van deze soort klopt"}"><label class="kloptVink ${r.klopt?"aan":""}"><input type="checkbox" data-ras="${r.id}" data-rk="klopt" ${r.klopt?"checked":""}> klopt</label>${r.klopt?`<div class="status" style="font-size:10px">${esc(r.klopt)}</div>`:""}</td>
           <td style="width:44px;text-align:right"><button class="btn rood klein" onclick="rasWeg('${r.id}')" title="Soort verwijderen">✕</button></td></tr>`).join("")}</table>`
         :`<span class="status">Nog geen soorten. Klik op <b>+ Soort</b>.</span>`}
         <div style="margin-top:6px"><button class="btn licht klein" onclick="rasErbij('${t.id}')">+ Soort</button></div></div>`;
@@ -3061,7 +3069,7 @@ function mobSoort(k,start){const t=start||+mobWeekStart(),l=afleverRegels().filt
   const per=new Map();l.forEach(r=>per.set(r.t,(per.get(r.t)||0)+r.aantal));
   /* per week: nog beschikbaar (afleverplan min gereserveerd), klein eronder het plan en de reserveringen */
   const vk=l.length?l[0].product+"|"+l[0].soort:"";
-  const j0=isoWeek(new Date(t)).y,rij=[...per].sort((a,b)=>a[0]-b[0]).slice(0,12).map(([tt,n])=>{const{w,y}=isoWeek(new Date(tt)),r=vk?verkSom(vk,tt):0,b=n-r;
+  const j0=isoWeek(new Date(t)).y,rij=[...per].filter(([tt])=>tt<t+364*864e5).sort((a,b)=>a[0]-b[0]).slice(0,12).map(([tt,n])=>{const{w,y}=isoWeek(new Date(tt)),r=vk?verkSom(vk,tt):0,b=n-r;
     return`<div class="mrij"><span>wk ${w}${y!==j0?" ("+y+")":""}${r?`<br><span class="status" style="font-size:12px">plan ${getal(n)} · gereserveerd ${getal(r)}</span>`:""}</span><b class="${b<0?"let":""}">${getal(b)}</b></div>`}).join("");
   const h=`<div class="mpopKop"><b>${esc(k)}</b><button onclick="sluitMobSoort()">✕</button></div><div class="mpopIn">${rij?`<div class="status" style="font-size:12px;text-align:right;margin-bottom:2px">nog beschikbaar</div>`+rij:""}${rij?"":'<div class="status" style="padding:8px 0">Niets gepland.</div>'}`;
   let m=document.getElementById("mobPop");if(!m){m=document.createElement("div");m.id="mobPop";m.onclick=e=>{if(e.target===m)sluitMobSoort()};document.body.appendChild(m)}
