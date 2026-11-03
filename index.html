@@ -765,7 +765,7 @@ dialog::backdrop{background:rgba(0,0,0,.45)}
 
 <script>
 "use strict";
-const VERSIE="31.9";
+const VERSIE="32.0";
 const VERSIE_DATUM="03-11-2026";
 /* ---------- Basis ---------- */
 const PALET=["#2d6a4f","#1B5EBE","#E8007D","#c77d1a","#7a4fa0","#0f8b8d","#5b6b2f","#3d5a80","#a0522d","#7AB648"];
@@ -3927,6 +3927,9 @@ const isBeheerder=()=>!!(KLANT.beheer===true||(KLANT.code===""&&FB_CONFIG&&FB_CO
 function beheerData(){const b=data.beheer=data.beheer||{};if(!Array.isArray(b.klanten)){b.klanten=[
     {id:uid(),naam:"Vollebregt (eigen)",appNaam:KLANT.appNaam||"Cyclamen Planning",code:KLANT.code||"",appUrl:location.origin+location.pathname.replace(/index\.html$/,""),repo:"https://github.com/vollebregtajmhold-design/potplanning",firebase:JSON.stringify(FB_CONFIG),emails:"vollebregt.a@gmail.com",notitie:""},
     {id:uid(),naam:"Bolk",appNaam:"Bolkplan",code:"bolk",appUrl:"https://vollebregtajmhold-design.github.io/bolkplan/",repo:"https://github.com/vollebregtajmhold-design/bolkplan",firebase:"",emails:"martinbolk@gmail.com\nvollebregt.a@gmail.com",notitie:"Firebase-project 'Bolk planning' gemaakt; regels, Google-inlog en web-app nog doen."}]}
+  if(!b.bergcampErbij){b.bergcampErbij=true;if(!b.klanten.some(k=>k.code==="bergcamp"))b.klanten.push(
+    {id:uid(),naam:"Bergcamp",appNaam:"Bergcamp-plan",code:"bergcamp",appUrl:"https://vollebregtajmhold-design.github.io/Bergcamp-plan/",repo:"https://github.com/vollebregtajmhold-design/Bergcamp-plan",firebase:"",emails:"vollebregt.a@gmail.com",notitie:"Nog doen: 1) Firebase-project 'bergcamp-plan' maken + web-app, firebaseConfig hier plakken. 2) Google-inlog aan + domein vollebregtajmhold-design.github.io toevoegen. 3) Firestore maken (europe-west). 4) E-mailadressen Bergcamp hierboven invullen, regels plakken. 5) GitHub-repo Bergcamp-plan + index.html en klant.js, Pages aan."});
+    try{opslaanLater()}catch(e){}}
   return b}
 /* firebaseConfig uit geplakte tekst halen (ook "const firebaseConfig = {...}") */
 function fbLees(t){t=String(t||"");const o={};for(const k of["apiKey","authDomain","projectId","storageBucket","messagingSenderId","appId","measurementId"]){const m=t.match(new RegExp(k+'["\']?\\s*:\\s*["\']([^"\']+)["\']'));if(m)o[k]=m[1]}return o}
