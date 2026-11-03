@@ -611,6 +611,9 @@ dialog::backdrop{background:rgba(0,0,0,.45)}
 /* 32.3 weekkop blijft staan bij omlaag scrollen */
 body.ovmodus section.vlak{max-height:calc(100vh - 170px);overflow:auto}
 .ovtabel tr:first-child th{position:sticky;top:0;z-index:3;box-shadow:0 1px 0 #c9c2b6}
+/* 32.4 kolom teelt · soort blijft staan bij naar rechts scrollen */
+.ovtabel .ovnaam{position:sticky;left:0;z-index:2;background:#f4efe6;box-shadow:inset -1px 0 0 #c9c2b6,2px 0 4px rgba(0,0,0,.08)}
+.ovtabel th.ovnaam{background:#b9b9b9;z-index:5}
 </style>
 </head>
 <body>
@@ -771,7 +774,7 @@ body.ovmodus section.vlak{max-height:calc(100vh - 170px);overflow:auto}
 
 <script>
 "use strict";
-const VERSIE="32.3";
+const VERSIE="32.4";
 const VERSIE_DATUM="03-11-2026";
 /* ---------- Basis ---------- */
 const PALET=["#2d6a4f","#1B5EBE","#E8007D","#c77d1a","#7a4fa0","#0f8b8d","#5b6b2f","#3d5a80","#a0522d","#7AB648"];
