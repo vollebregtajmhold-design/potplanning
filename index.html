@@ -600,6 +600,11 @@ dialog::backdrop{background:rgba(0,0,0,.45)}
 .week{margin-bottom:14px}
 .week h3{margin:0;padding:6px 10px;background:var(--kop);font-size:14px;border-radius:4px 4px 0 0}
 @media (max-width:640px){.form{grid-template-columns:1fr 1fr}}
+
+/* 31.9 keuzeknoppen zelfde kleur als bovenbalk, dun zwart randje */
+.ovjaar,#ovBalk .ovjaar{background:#dff0e6!important;color:#1f4d39!important;border:1px solid #000!important;border-radius:9px!important;font-weight:700}
+.ovjaar:hover{background:#fff!important}
+.ovjaar option{background:#fff;color:#222}
 </style>
 </head>
 <body>
@@ -760,8 +765,8 @@ dialog::backdrop{background:rgba(0,0,0,.45)}
 
 <script>
 "use strict";
-const VERSIE="31.8";
-const VERSIE_DATUM="25-10-2026";
+const VERSIE="31.9";
+const VERSIE_DATUM="03-11-2026";
 /* ---------- Basis ---------- */
 const PALET=["#2d6a4f","#1B5EBE","#E8007D","#c77d1a","#7a4fa0","#0f8b8d","#5b6b2f","#3d5a80","#a0522d","#7AB648"];
 const FASE={"1":["Oppotten","var(--f1)"],"2":["Uitgezet","var(--f2)"]};
