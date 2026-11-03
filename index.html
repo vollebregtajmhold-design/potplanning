@@ -629,6 +629,21 @@ body.kijker #btnInlezen,body.kijker .vulGreep{display:none!important}
 .alleenKlantApp{display:none!important}body.klantApp.wolk:not(.meekijk) .alleenKlantApp{display:flex!important}
 #mkBeschKnop[hidden]{display:none}
 body.meekijk .ovlink,body.meekijk tr.wknot{display:none!important}
+
+.deelPers{border:1px solid #ddd5c4;border-radius:10px;padding:8px 10px;margin:8px 0;background:#faf7f0}
+.deelGrid{display:grid;grid-template-columns:repeat(3,1fr);gap:4px}.deelGrid .deelKeus{margin:0;padding:5px 7px;font-size:13px;align-items:flex-start}.deelGrid .deelKeus input{transform:none;margin-top:2px}
+.deelKeus.vast{background:#e3f3ea;color:#1f4d39;cursor:default}
+#mkResKnop[hidden]{display:none}
+
+.deelTab{border-collapse:collapse;font-size:13px}.deelTab th,.deelTab td{border:1px solid #ddd5c4;padding:5px 7px}
+.deelTab .dnaam{text-align:left;min-width:170px;background:#faf7f0}.deelTab th.dnaam{vertical-align:bottom}
+.deelTab .dkol{min-width:150px;background:#eef4fb;vertical-align:bottom}.deelTab .dkol input{width:100%;box-sizing:border-box;font-size:12px;padding:4px 5px}
+.deelTab .dbeh{font-size:12px;font-weight:700;color:#1f4d39;display:flex;justify-content:space-between;align-items:center;min-height:20px}
+.deelTab .dweg{border:0;background:#b3261e;color:#fff;border-radius:5px;cursor:pointer;font-size:11px;padding:1px 6px}
+.deelTab .dvak{text-align:center}.deelTab .dvak input{transform:scale(1.3);cursor:pointer}.deelTab .dvak.vast{background:#e3f3ea}
+.deelTab .dplus{background:#fff;min-width:0}.dbaas{background:#fff3a8;border-radius:8px;padding:6px 10px;font-size:14px}
+
+#ovBalk .ovk.bhgroot{background:#2d6a4f;color:#fff;border-color:#1f4d39;font-weight:700}#ovBalk .ovk.bhgroot:hover{background:#1f4d39}
 </style>
 </head>
 <body>
@@ -683,7 +698,7 @@ body.meekijk .ovlink,body.meekijk tr.wknot{display:none!important}
       <div class="zvkeus" title="Totale oppervlakte van de kas (bruto). Komt als lijn in de Ruimte-grafiek."><span>Bruto kasruimte</span><input type="number" id="brutoIn" min="0" step="1" style="width:80px;font-size:13px;padding:3px 5px" onclick="event.stopPropagation()" onchange="data.instellingen.brutoM2=Math.max(0,Math.round(+this.value||0));wijzig();melding('✓ Bruto kasruimte: '+getal(data.instellingen.brutoM2)+' m²','#2d6a4f')"><span>m²</span></div>
       <div class="zvkeus" title="Het afleverseizoen loopt van deze week t/m de week ervoor in het volgende jaar"><span>Seizoen begint wk</span><input type="number" id="seizIn" min="1" max="52" style="width:56px;font-size:13px;padding:3px 5px" onclick="event.stopPropagation()" onchange="data.instellingen.seizoenStart=Math.max(1,Math.min(52,Math.round(+this.value||11)));aflS=null;wijzig();melding('✓ Seizoen begint nu in week '+data.instellingen.seizoenStart,'#2d6a4f')"></div>
       <button id="btnInlezen" class="wolkAlleen" type="button" title="Een json-bestand inlezen in de online planning">📥 Json-bestand inlezen</button>
-      <button type="button" class="wolkAlleen alleenKlantApp" onclick="document.querySelectorAll('#balk .menu.open').forEach(m=>m.classList.remove('open'));toonDelen()">🤝 Delen met <span class="levNaam">leverancier</span></button>
+      <button type="button" class="wolkAlleen alleenKlantApp" onclick="document.querySelectorAll('#balk .menu.open').forEach(m=>m.classList.remove('open'));toonDelen()">👥 Wie mag wat zien</button>
       <button id="btnUitlog" class="wolkAlleen" type="button">🚪 Uitloggen</button>
       <button type="button" class="alleenBeheer" onclick="document.querySelectorAll('#balk .menu.open').forEach(m=>m.classList.remove('open'));naar('beheer')">🛠 Beheer klanten</button>
       <button type="button" onclick="document.querySelectorAll('#balk .menu.open').forEach(m=>m.classList.remove('open'));toonWelkom()">ℹ️ Uitleg (welkom)</button>
@@ -790,7 +805,7 @@ body.meekijk .ovlink,body.meekijk tr.wknot{display:none!important}
 
 <script>
 "use strict";
-const VERSIE="32.7";
+const VERSIE="33.0";
 const VERSIE_DATUM="03-11-2026";
 /* ---------- Basis ---------- */
 const PALET=["#2d6a4f","#1B5EBE","#E8007D","#c77d1a","#7a4fa0","#0f8b8d","#5b6b2f","#3d5a80","#a0522d","#7AB648"];
@@ -1116,43 +1131,74 @@ function kijkTerug(){if(laatsteKern){try{data=normaliseer(JSON.parse(laatsteKern
 /* ================= Meekijken: de klant deelt een deel van zijn planning met de beheerder =================
    De klant kiest wat hij deelt (Bestand → Delen). De app zet dat in planning/delen.
    De regels van Firebase geven de beheerder ALLEEN leesrecht op planning/delen, niet op de rest. */
-let meekijk=null,deelLaatst="";
-const DEEL_OPT=[["param","Parameters","teelten, soorten, teeltduur, fust, raaptijd"],["inkoop","Inkoop","aantallen per week (met parameters)"],["besch","Beschikbaar","nog beschikbaar per soort per week – zonder klanten en reserveringen"]];
-function deelData(){const D=(data.instellingen&&data.instellingen.delen)||{},o={delen:{param:!!D.param,inkoop:!!D.inkoop,besch:!!D.besch}};
-  if(D.param||D.inkoop){const ink=!!D.inkoop,I=data.instellingen;
-    o.teeltduren=data.teeltduren.map(t=>({...t,aantallen:ink?t.aantallen:{},losAantallen:ink?t.losAantallen:undefined}));
-    o.rassen=data.rassen.map(r=>{const x={...r,aantallen:ink?r.aantallen:{}};delete x.prijs;return x});
-    o.instellingen={seizoenStart:I.seizoenStart,levertijd:I.levertijd,eenvoudig:I.eenvoudig,...(ink?{brutoM2:I.brutoM2,vast:I.vast,vastB:I.vastB,vastL:I.vastL}:{})}}
+let meekijk=null,deelLaatst={};
+const BEHEER_MAIL=(KLANT.beheerMail||"vollebregt.a@gmail.com").toLowerCase();
+const DEEL_VAST=["param","inkoop","besch"]; /* ziet de beheerder altijd */
+const DEEL_OPT=[["param","Parameters","teelten, soorten, teeltduur"],["inkoop","Inkoop","aantallen per week"],["besch","Beschikbaar","nog beschikbaar per week"],
+  ["opzet","Opzetplanning","wat wanneer opgezet wordt"],["afl","Afleverplanning","afleverplan per week"],["gereserveerd","Gereserveerd","totaal per week, zonder klantnamen"],
+  ["reserveringen","Reserveringen","met klantnamen"],["kosten","Kosten","kosten per week·m²"],["notities","Notities","post-its en weeknotities"]];
+/* lijst: [{mail, opt:{param:true,…}}] – de eerste is altijd de beheerder */
+function deelLijst(){const I=data.instellingen;let l=I.delen;
+  if(!Array.isArray(l)){const o=l&&typeof l==="object"?l:{};l=[{mail:BEHEER_MAIL,opt:{...o}}]}
+  l=l.filter(x=>x&&x.mail).map(x=>({mail:String(x.mail).trim().toLowerCase(),opt:{...(x.opt||{})}}));
+  if(!l.length||!l[0].beheer)l=[{mail:(l.find(x=>x.mail===BEHEER_MAIL)||{}).mail||BEHEER_MAIL,beheer:true,opt:(l.find(x=>x.mail===BEHEER_MAIL)||{}).opt||{}},...l.filter(x=>x.mail!==BEHEER_MAIL)];
+  DEEL_VAST.forEach(k=>l[0].opt[k]=true);I.delen=l;return l}
+function deelData(D){const o={delen:{...D}},I=data.instellingen,aant=!!(D.inkoop||D.opzet||D.afl);
+  if(D.param||aant){o.teeltduren=data.teeltduren.map(t=>({...t,aantallen:aant?t.aantallen:{},losAantallen:aant?t.losAantallen:undefined}));
+    o.rassen=data.rassen.map(r=>{const x={...r,aantallen:aant?r.aantallen:{}};delete x.prijs;return x});
+    o.instellingen={seizoenStart:I.seizoenStart,levertijd:I.levertijd,eenvoudig:I.eenvoudig,...(aant?{brutoM2:I.brutoM2,vast:I.vast,vastB:I.vastB,vastL:I.vastL}:{}),...(D.kosten?{kosten:I.kosten,kostenJ:I.kostenJ}:{})}}
+  if(D.reserveringen){o.verkoop=data.verkoop;o.klanten=data.klanten}
+  else if(D.gereserveerd){o.verkoop={};for(const k in data.verkoop||{}){const n=(data.verkoop[k]||[]).reduce((a,x)=>a+(+x.n||0),0);if(n)o.verkoop[k]=[{klant:"—",n}]}}
+  if(D.notities){o.notities=data.notities;o.weekNotitie=data.weekNotitie}
   if(D.besch){const nu=+dezeWeek(),tot=nu+371*864e5,per=new Map(),codes=new Set();
     for(const r of afleverRegels()){if(!(r.aantal>0)||r.t<nu||r.t>=tot)continue;const k=r.product+"|"+r.soort,c=wkCode(r.t);codes.add(c);
       const m=per.get(k)||{};m[c]=(m[c]||0)+r.aantal;per.set(k,m)}
     const rijen=[];for(const[k,m]of per){const v={};for(const c in m){const t=+maandagIso(2000+ +c.slice(0,2),+c.slice(2));v[c]=m[c]-verkSom(k,t)}rijen.push({k,v})}
     o.besch={codes:[...codes].sort(),rijen:rijen.sort((a,b)=>a.k.localeCompare(b.k,"nl"))}}
   return o}
-async function deelOpslaan(){if(!wolkDoc||meekijk||!KLANT.code)return;
-  try{const o=deelData(),j=JSON.stringify(o);if(j===deelLaatst)return;
-    await wolkDoc.parent.doc("delen").set({json:j,gemaakt:new Date().toISOString(),door:wolkMail});deelLaatst=j}catch(e){console.log("delen",e)}}
-function toonDelen(){const D=(data.instellingen.delen=data.instellingen.delen||{});
-  toonPop("🤝 Delen met "+esc(KLANT.leverancier||"leverancier"),`<p class="status" style="margin:0 0 10px">Kies wat <b>${esc(KLANT.leverancier||"uw leverancier")}</b> mag zien als hij meekijkt. Hij kan het alleen <b>bekijken</b>, niet veranderen. Klanten, reserveringen, kosten en notities deelt u nooit.</p>
-    ${DEEL_OPT.map(([k,n,u])=>`<label class="deelKeus"><input type="checkbox" id="deel_${k}" ${D[k]?"checked":""}> <span><b>${n}</b><br><span class="status">${u}</span></span></label>`).join("")}
-    <div class="rij" style="margin-top:10px"><span style="flex:1"></span><button class="btn" onclick="deelZet()">Opslaan</button></div>`);
-  const ink=document.getElementById("deel_inkoop"),pa=document.getElementById("deel_param");ink.onchange=()=>{if(ink.checked)pa.checked=true};pa.onchange=()=>{if(!pa.checked)ink.checked=false}}
-function deelZet(){const D={};for(const[k]of DEEL_OPT)D[k]=document.getElementById("deel_"+k).checked;data.instellingen.delen=D;sluitMobSoort();wijzig();
-  const n=DEEL_OPT.filter(([k])=>D[k]).map(([,n])=>n);melding(n.length?"🤝 U deelt nu: "+n.join(", "):"🤝 U deelt nu niets","#2d6a4f")}
-/* beheerder: geen toegang tot de hele planning → kijken of er iets gedeeld is */
-function probeerDelen(db){db.collection("planning").doc("delen").onSnapshot(snap=>{
-    let o={};try{o=snap.exists&&snap.data().json?JSON.parse(snap.data().json):{}}catch(e){}
-    const g=snap.exists?snap.data().gemaakt:"";meekijk={delen:o.delen||{},besch:o.besch||null,gemaakt:g};zetKijker(true);
+/* per e-mailadres een eigen document planning/delen_<email>; alleen die persoon mag het lezen (zie regels) */
+async function deelOpslaan(){if(!wolkDoc||meekijk||!KLANT.code)return;const col=wolkDoc.parent;
+  for(const x of deelLijst()){try{const j=JSON.stringify(deelData(x.opt));if(deelLaatst[x.mail]===j)continue;
+    await col.doc("delen_"+x.mail).set({json:j,gemaakt:new Date().toISOString(),door:wolkMail});deelLaatst[x.mail]=j}catch(e){console.log("delen",x.mail,e)}}}
+let deelTmp=null;
+/* wie mag de vinkjes zetten: aangewezen door de beheerder (klant.js → deelBaas). Leeg = iedereen van de klant */
+const DEEL_BAAS=String(KLANT.deelBaas||"").trim().toLowerCase();
+const magDelen=()=>!DEEL_BAAS||String(wolkMail||"").toLowerCase()===DEEL_BAAS;
+function toonDelen(){if(!deelTmp)deelTmp=JSON.parse(JSON.stringify(deelLijst()));const mag=magDelen(),L=deelTmp;
+  const kop=L.map((x,i)=>`<th class="dkol">${x.beheer?`<div class="dbeh">Beheerder</div>`:`<div class="dbeh">${mag?`<button class="dweg" onclick="deelLees();deelWeg(${i})" title="Weghalen">✕</button>`:""}&nbsp;</div>`}
+      <input id="deelMail_${i}" value="${esc(x.mail)}" placeholder="naam@gmail.com" ${mag?"":"readonly"} title="${esc(x.mail)}"></th>`).join("");
+  const rijen=DEEL_OPT.map(([k,n,u])=>`<tr><td class="dnaam"><b>${n}</b><br><span class="status">${u}</span></td>${L.map((x,i)=>{const vast=x.beheer&&DEEL_VAST.includes(k);
+      return`<td class="dvak ${vast?"vast":""}" title="${vast?"Ziet de beheerder altijd":""}"><input type="checkbox" data-i="${i}" data-k="${k}" ${x.opt[k]||vast?"checked":""} ${vast||!mag?"disabled":""}>${vast?" 🔒":""}</td>`}).join("")}</tr>`).join("");
+  toonPop("👥 Wie mag wat zien",`<div class="dbaas">Vinkjes zetten: <b>${esc(DEEL_BAAS||"iedereen van uw bedrijf")}</b>${mag?"":` <span class="let">(u kunt alleen kijken)</span>`}</div>
+    <p class="status" style="margin:6px 0 8px">Per Google-account (kolom) zet u een vinkje bij wat die persoon mag <b>bekijken</b>. Niemand kan iets veranderen. Klanten, kosten en notities ziet niemand, tenzij u ze aanvinkt.</p>
+    <div style="overflow-x:auto"><table class="deelTab"><tr><th class="dnaam">Onderdeel</th>${kop}${mag?`<th class="dkol dplus"><button class="btn licht klein" onclick="deelLees();deelTmp.push({mail:'',opt:{}});toonDelen();setTimeout(()=>{const x=document.getElementById('deelMail_'+(deelTmp.length-1));if(x)x.focus()},60)">+ Persoon</button></th>`:""}</tr>${rijen}</table></div>
+    ${mag?`<div class="rij" style="margin-top:10px"><button class="btn licht" onclick="deelTmp=null;sluitMobSoort()">Annuleren</button><span style="flex:1"></span><button class="btn" onclick="deelZet()">Opslaan</button></div>`:""}`);
+  const m=document.querySelector("#mobPop .mpop");if(m){m.style.maxWidth="900px";m.style.width="auto"}}
+function deelLees(){document.querySelectorAll("#mobPop .deelTab input[data-k]").forEach(c=>{const x=deelTmp[+c.dataset.i];if(x&&!c.disabled)x.opt[c.dataset.k]=c.checked});
+  deelTmp.forEach((x,i)=>{const m=document.getElementById("deelMail_"+i);if(m)x.mail=m.value.trim().toLowerCase()})}
+function deelWeg(i){const x=deelTmp[i];if(x&&x.mail&&!confirm(x.mail+" weghalen? Die persoon kan dan niets meer zien."))return;deelTmp.splice(i,1);toonDelen()}
+async function deelZet(){if(!magDelen()){alert("Alleen "+DEEL_BAAS+" mag dit veranderen.");return}deelLees();
+  const fout=deelTmp.find(x=>x.mail&&!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(x.mail));if(fout){alert("Dit e-mailadres klopt niet: "+fout.mail);return}
+  const oud=deelLijst().map(x=>x.mail),nieuw=deelTmp.filter(x=>x.mail);data.instellingen.delen=nieuw;deelLijst();deelTmp=null;sluitMobSoort();
+  if(wolkDoc)for(const m of oud)if(!nieuw.some(x=>x.mail===m)){try{await wolkDoc.parent.doc("delen_"+m).delete();delete deelLaatst[m]}catch(e){}}
+  wijzig();melding("👥 Opgeslagen: wie mag wat zien","#2d6a4f")}
+/* geen toegang tot de hele planning → kijken of er voor dit e-mailadres iets gedeeld is */
+function probeerDelen(db){db.collection("planning").doc("delen_"+String(wolkMail).toLowerCase()).onSnapshot(snap=>{
+    if(!snap.exists){wolkStatus("Geen toegang met dit account ("+wolkMail+")",false);melding("Met dit account ("+esc(wolkMail)+") is er niets gedeeld.","#6a3d9a");return}
+    let o={};try{o=JSON.parse(snap.data().json)||{}}catch(e){}
+    const g=snap.data().gemaakt||"";meekijk={delen:o.delen||{},besch:o.besch||null,gemaakt:g};zetKijker(true);
     const b=document.getElementById("kijkLabel");if(b){b.textContent="👁 Meekijken";b.title="U kijkt mee met wat de klant deelt. U kunt niets veranderen."}
-    data=normaliseer({teeltduren:o.teeltduren||[],rassen:o.rassen||[],instellingen:o.instellingen||{}});laatsteKern=kernVan(data);terugStapel=[];
+    data=normaliseer({teeltduren:o.teeltduren||[],rassen:o.rassen||[],instellingen:o.instellingen||{},verkoop:o.verkoop||{},klanten:o.klanten||[],notities:o.notities||[],weekNotitie:o.weekNotitie||{}});
+    laatsteKern=kernVan(data);terugStapel=[];
     const ok=meekijkTabs();if(!ok.includes(tab))tab=ok[0]||"mkbesch";render();
-    wolkStatus(ok.length?"Meekijken · bijgewerkt "+(g?new Date(g).toLocaleString("nl-NL"):""):"De klant deelt (nog) niets met u",!!ok.length);
-    if(!ok.length)melding("De klant deelt (nog) niets met u.","#6a3d9a")},
+    wolkStatus("Meekijken · bijgewerkt "+(g?new Date(g).toLocaleString("nl-NL"):""))},
   e=>wolkStatus("⚠ "+(e.code==="permission-denied"?"Geen toegang met dit account ("+wolkMail+")":e.message),false))}
-const meekijkTabs=()=>{const d=(meekijk&&meekijk.delen)||{},l=[];if(d.param||d.inkoop)l.push("soorten");if(d.inkoop)l.push("oppot");if(d.besch)l.push("mkbesch");return l};
+const meekijkTabs=()=>{const d=(meekijk&&meekijk.delen)||{},l=[];if(d.param||d.inkoop)l.push("soorten");if(d.inkoop)l.push("oppot");if(d.opzet)l.push("oppotov");if(d.afl)l.push("aflever");if(d.besch)l.push("mkbesch");if(d.reserveringen)l.push("verkoop");return l};
 function meekijkBalk(){let b=document.getElementById("mkBeschKnop");const ok=meekijk?meekijkTabs():null;
   if(!b){const a=document.querySelector('#balk .mknop.groot[data-tab="aflever"]');if(!a)return;b=document.createElement("button");b.id="mkBeschKnop";b.type="button";b.className="mknop groot";b.textContent="Beschikbaar";b.onclick=()=>naar("mkbesch");a.after(b)}
   b.hidden=!(ok&&ok.includes("mkbesch"));b.classList.toggle("actief",tab==="mkbesch");
+  let r=document.getElementById("mkResKnop");if(!r){r=document.createElement("button");r.id="mkResKnop";r.type="button";r.className="mknop groot";r.textContent="Reserveringen";r.onclick=()=>naar("verkoop");b.after(r)}
+  r.hidden=!(ok&&ok.includes("verkoop"));r.classList.toggle("actief",tab==="verkoop");
   document.querySelectorAll('#balk .mknop.groot[data-tab]').forEach(x=>x.hidden=!!ok&&!ok.includes(x.dataset.tab))}
 function toonMeekijkBesch(){const B=meekijk&&meekijk.besch,ob=document.getElementById("ovBalk");ob.hidden=false;
   ob.innerHTML=`<span class="ovtitel">Beschikbaar</span><span class="ovinfo">nog beschikbaar per week (afleverplan min reserveringen) · gedeeld door de klant${meekijk&&meekijk.gemaakt?" · "+new Date(meekijk.gemaakt).toLocaleString("nl-NL"):""}</span>`;
@@ -1272,7 +1318,7 @@ async function wolkStart(){
       if(proef){try{echt=normaliseer(JSON.parse(v.json))}catch(e){}melding("☁️ De echte planning is online bijgewerkt (u bent aan het proberen)");return}
       try{data=normaliseer(JSON.parse(v.json))}catch(e){wolkStatus("⚠ Online gegevens zijn beschadigd",false);return}
       try{localStorage.setItem(OPSLAG_SLEUTEL,JSON.stringify(data))}catch(e){}
-      if(wolkEerste){wolkEerste=false;terugStapel=[];tab=!data.teeltduren.length?"soorten":window.innerWidth<700?"mobiel":"aflever"}
+      if(wolkEerste){wolkEerste=false;terugStapel=[];setTimeout(deelOpslaan,3000);tab=!data.teeltduren.length?"soorten":window.innerWidth<700?"mobiel":"aflever"}
       else melding("☁️ Planning bijgewerkt"+(v.door&&v.door!==wolkMail?" door "+esc(v.door):""));
       laatsteKern=kernVan(data);zetTerugKnop();render();
       wolkStatus("Bijgewerkt om "+new Date().toLocaleTimeString("nl-NL"));
@@ -4035,13 +4081,52 @@ function beheerData(){const b=data.beheer=data.beheer||{};if(!Array.isArray(b.kl
   if(!b.bergcampErbij){b.bergcampErbij=true;if(!b.klanten.some(k=>k.code==="bergcamp"))b.klanten.push(
     {id:uid(),naam:"Bergcamp",appNaam:"Bergcamp-plan",code:"bergcamp",appUrl:"https://vollebregtajmhold-design.github.io/Bergcamp-plan/",repo:"https://github.com/vollebregtajmhold-design/Bergcamp-plan",firebase:"",emails:"vollebregt.a@gmail.com",notitie:"Nog doen: 1) Firebase-project 'bergcamp-plan' maken + web-app, firebaseConfig hier plakken. 2) Google-inlog aan + domein vollebregtajmhold-design.github.io toevoegen. 3) Firestore maken (europe-west). 4) E-mailadressen Bergcamp hierboven invullen, regels plakken. 5) GitHub-repo Bergcamp-plan + index.html en klant.js, Pages aan."});
     try{opslaanLater()}catch(e){}}
+  if(!b.mig330){b.mig330=true;const F={bolk:{apiKey:"AIzaSyBw6Yvnu2aTT8lr7fKTvNjwFqeFmT6jk9I",authDomain:"bolk-planning.firebaseapp.com",projectId:"bolk-planning",storageBucket:"bolk-planning.firebasestorage.app",messagingSenderId:"855797253030",appId:"1:855797253030:web:62e39af464a335c0304567"},
+      bergcamp:{apiKey:"AIzaSyD1H9_eGPm6XlLqCKn_Gq29ChUaVzX0zNY",authDomain:"bergcamp-plan.firebaseapp.com",projectId:"bergcamp-plan",storageBucket:"bergcamp-plan.firebasestorage.app",messagingSenderId:"490435166262",appId:"1:490435166262:web:714dbe88118e582e34d897"}},
+      baas={bolk:"martinbolk@gmail.com",bergcamp:"walter@bergcamp.nl"};
+    for(const k of b.klanten||[]){if(!F[k.code])continue;if(!fbLees(k.firebase).apiKey)k.firebase=JSON.stringify(F[k.code]);if(!k.deelBaas)k.deelBaas=baas[k.code];
+      if(k.code==="bolk"){k.appUrl="https://vollebregtajmhold-design.github.io/Bolkplan/";k.repo="https://github.com/vollebregtajmhold-design/Bolkplan"}
+      if(k.code==="bergcamp"&&!/walter@bergcamp\.nl/.test(k.emails||""))k.emails=(k.emails?k.emails+"\n":"")+"walter@bergcamp.nl"}
+    try{opslaanLater()}catch(e){}}
   return b}
+
+/* ---------- Alles bijwerken: nieuwe versie via GitHub bij alle klanten zetten ---------- */
+const GH_SL="potplanning-ghtoken";
+const ghToken=()=>{try{return localStorage.getItem(GH_SL)||""}catch(e){return""}};
+function ghSleutel(){const t=prompt("Plak hier uw GitHub-sleutel (token).\nDeze blijft alleen op deze computer.\n\nLeeg laten en OK = sleutel weghalen.",ghToken());if(t===null)return;
+  try{t.trim()?localStorage.setItem(GH_SL,t.trim()):localStorage.removeItem(GH_SL)}catch(e){}render();melding(t.trim()?"🔑 Sleutel bewaard op deze computer":"Sleutel weggehaald","#2d6a4f")}
+const ghRepo=u=>{const m=String(u||"").match(/github\.com\/([^\/\s]+)\/([^\/\s#?]+)/i);return m?{o:m[1],r:m[2].replace(/\.git$/,"")}:null};
+const b64=t=>{const b=new TextEncoder().encode(t);let s="";for(let i=0;i<b.length;i+=0x8000)s+=String.fromCharCode.apply(null,b.subarray(i,i+0x8000));return btoa(s)};
+const unb64=t=>new TextDecoder().decode(Uint8Array.from(atob(String(t).replace(/\s/g,"")),c=>c.charCodeAt(0)));
+async function ghZet(rp,pad,tekst,bericht){const tk=ghToken(),url=`https://api.github.com/repos/${rp.o}/${rp.r}/contents/${pad}`,h={Authorization:"Bearer "+tk,Accept:"application/vnd.github+json"};
+  let sha;const g=await fetch(url+"?t="+Date.now(),{headers:h,cache:"no-store"});
+  if(g.ok){const j=await g.json();sha=j.sha;if(j.content&&unb64(j.content)===tekst)return"gelijk"}
+  else if(g.status!==404)throw new Error(g.status===401?"sleutel klopt niet":g.status===403?"sleutel mag niet schrijven":"GitHub "+g.status);
+  const p=await fetch(url,{method:"PUT",headers:h,body:JSON.stringify({message:bericht,content:b64(tekst),...(sha?{sha}:{})})});
+  if(!p.ok){const j=await p.json().catch(()=>({}));throw new Error(p.status===404?"repository niet gevonden of geen toegang":(j.message||"GitHub "+p.status))}
+  return"ok"}
+function ghAlles(){if(!ghToken()){alert("Eerst de GitHub-sleutel invullen (knop 🔑 GitHub-sleutel).");return}
+  const i=document.createElement("input");i.type="file";i.accept=".html,text/html";
+  i.onchange=async()=>{const f=i.files[0];if(!f)return;const html=await f.text(),m=html.match(/const VERSIE="([^"]+)"/);
+    if(!m||!/window\.KLANT/.test(html)){alert("Dit is geen goed index.html-bestand van de planning.");return}
+    const L=beheerData().klanten.filter(k=>ghRepo(k.repo));
+    if(!confirm(`Versie ${m[1]} zetten bij ${L.length} app(s)?\n\n${L.map(k=>"• "+(k.naam||k.repo)).join("\n")}`))return;
+    const regel=(k,a,b)=>`<div class="mrij"><span><b>${esc(k.naam||"")}</b></span><span>index.html: ${a} · klant.js: ${b}</span></div>`,uit={};
+    const toon=()=>toonPop("⬆ Alles bijwerken · versie "+esc(m[1]),L.map(k=>regel(k,...(uit[k.id]||["…","…"]))).join("")+`<p class="status" style="margin:10px 0 0">Na afloop duurt het nog 1 à 2 minuten voordat de apps de nieuwe versie hebben.</p>`);
+    toon();const sym=r=>r==="ok"?"✅ bijgewerkt":r==="gelijk"?"✓ was al goed":r==="overslaan"?"– overgeslagen (geen Firebase ingevuld)":"❌ "+esc(r);
+    for(const k of L){const rp=ghRepo(k.repo);let a,b;
+      try{a=await ghZet(rp,"index.html",html,"Versie "+m[1])}catch(e){a=e.message}
+      if(fbLees(k.firebase).apiKey){try{b=await ghZet(rp,"klant.js",bhKlantJsTekst(k),"klant.js bijgewerkt")}catch(e){b=e.message}}else b="overslaan";
+      uit[k.id]=[sym(a),sym(b)];toon()}
+    const fout=Object.values(uit).some(x=>x.join().includes("❌"));melding(fout?"Klaar, maar niet alles is gelukt. Kijk in het venster.":"✅ Alle apps bijgewerkt naar versie "+esc(m[1]),fout?"#b3261e":"#2d6a4f");
+    setTimeout(()=>{if(tab==="beheer")bhAlleVersies(true)},90000)};
+  i.click()}
 /* firebaseConfig uit geplakte tekst halen (ook "const firebaseConfig = {...}") */
 function fbLees(t){t=String(t||"");const o={};for(const k of["apiKey","authDomain","projectId","storageBucket","messagingSenderId","appId","measurementId"]){const m=t.match(new RegExp(k+'["\']?\\s*:\\s*["\']([^"\']+)["\']'));if(m)o[k]=m[1]}return o}
 const bhVersies={},bhOpen1=new Set();let bhAutoCheck=false;
 function bhKlap(id){bhOpen1.has(id)?bhOpen1.delete(id):bhOpen1.add(id);render()}
 function toonBeheer(){const B=beheerData(),ob=document.getElementById("ovBalk");ob.hidden=false;if(!bhAutoCheck){bhAutoCheck=true;setTimeout(()=>bhAlleVersies(true),50)}
-  ob.innerHTML=`<span class="ovtitel">Beheer klanten</span><span class="ovinfo">${B.klanten.length} klanten · deze app: versie ${VERSIE}</span><span style="flex:1"></span><button class="ovk ovlink" onclick="bhAlleVersies()">↻ Versies controleren</button><button class="ovk ovlink" onclick="bhNieuw()">+ Nieuwe klant</button>`;
+  ob.innerHTML=`<span class="ovtitel">Beheer klanten</span><span class="ovinfo">${B.klanten.length} klanten · deze app: versie ${VERSIE}</span><span style="flex:1"></span><button class="ovk ovlink bhgroot" onclick="ghAlles()" title="Kies het nieuwe index.html-bestand. De app zet het bij alle klanten in GitHub, met hun eigen klant.js.">⬆ Alles bijwerken</button><button class="ovk ovlink" onclick="ghSleutel()" title="GitHub-sleutel (staat alleen op deze computer)">🔑 GitHub-sleutel ${ghToken()?"✓":"– nog niet"}</button><button class="ovk ovlink" onclick="bhAlleVersies()">↻ Versies controleren</button><button class="ovk ovlink" onclick="bhNieuw()">+ Nieuwe klant</button>`;
   const veld=(k,i,lab,type,ph)=>`<label>${lab}</label>${type==="ta"?`<textarea data-bk="${k}" data-bi="${i}" placeholder="${ph||""}">${esc(B.klanten[i][k]??(k==="beheerder"?"vollebregt.a@gmail.com":""))}</textarea>`:`<input data-bk="${k}" data-bi="${i}" value="${esc(B.klanten[i][k]||"")}" placeholder="${ph||""}">`}`;
   $("#inhoud").innerHTML=`<p class="status" style="margin:0 0 12px">Hier beheert u al uw klanten. Elke klant heeft een eigen GitHub (index.html + klant.js) en een eigen Firebase. Deze lijst staat alleen in uw eigen planning.</p>`+B.klanten.map((k,i)=>{const fb=fbLees(k.firebase),v=bhVersies[k.id];
     const st=v===undefined?`<span class="bhstat">versie ?</span>`:v===null?`<span class="bhstat oud">niet bereikbaar</span>`:v===VERSIE?`<span class="bhstat ok">versie ${esc(v)} ✓</span>`:`<span class="bhstat oud">versie ${esc(v)} → update naar ${VERSIE}</span>`;
@@ -4049,7 +4134,7 @@ function toonBeheer(){const B=beheerData(),ob=document.getElementById("ovBalk");
     return`<div class="bhkaart ${i===0?"eigen":""} ${open?"":"dicht"}"><div class="bhkop" onclick="if(!event.target.closest('button'))bhKlap('${k.id}')" title="Klik om ${open?"in":"uit"} te klappen"><span class="bhpijl">${open?"▾":"▸"}</span><h3>${esc(k.naam||"(nieuwe klant)")}</h3>${st}<button class="ovk ovlink" onclick="bhOpen(${i},'app')">Meekijken ›</button>${fb.projectId?`<span class="status">Firebase: ${esc(fb.projectId)}</span>`:`<span class="let">Firebase nog niet ingevuld</span>`}<span style="flex:1"></span>${i?`<button class="btn rood klein" onclick="bhWeg(${i})" title="Uit de lijst halen">✕</button>`:""}</div>
       <div class="bhgrid">${veld("naam",i,"Klant","t","bijv. Kwekerij Jansen")}${veld("appNaam",i,"Naam van de app","t","bijv. Jansenplan")}${veld("code",i,"Code (kort woord)","t","bijv. jansen")}
         ${veld("appUrl",i,"Webadres app","t","https://….github.io/naam/")}${veld("repo",i,"GitHub","t","https://github.com/…/naam")}
-        ${veld("firebase",i,"firebaseConfig","ta","plak hier het stukje firebaseConfig = { … } uit Firebase")}${veld("emails",i,"E-mailadressen klant (1 per regel)","ta","naam@gmail.com")}${i?veld("beheerder",i,"Meekijken (beheerder)","ta","uw e-mail: ziet alleen wat de klant deelt"):""}${veld("notitie",i,"Notitie","t","")}</div>
+        ${veld("firebase",i,"firebaseConfig","ta","plak hier het stukje firebaseConfig = { … } uit Firebase")}${veld("emails",i,"E-mailadressen klant (1 per regel)","ta","naam@gmail.com")}${i?veld("deelBaas",i,"Mag vinkjes zetten (wie mag wat zien)","t","gmail van de klant, bijv. baas@gmail.com"):""}${veld("notitie",i,"Notitie","t","")}</div>
       <div class="bhknop"><button class="ovk ovlink" onclick="bhOpen(${i},'repo')">GitHub ›</button><button class="ovk ovlink" onclick="bhOpen(${i},'fb')">Firebase ›</button>
         <button class="ovk ovlink" onclick="bhVersie(${i})">↻ Versie</button><button class="ovk ovlink" onclick="bhKlantJs(${i})">⬇ klant.js</button><button class="ovk ovlink" onclick="bhRegels(${i})">Regels Firebase</button></div></div>`}).join("")}
 $("#inhoud").addEventListener("change",e=>{const el=e.target;if(!el.dataset||el.dataset.bk==null||tab!=="beheer")return;const B=beheerData(),k=B.klanten[+el.dataset.bi];if(!k)return;
@@ -4063,7 +4148,10 @@ async function bhVersie(i,stil){const k=beheerData().klanten[i];if(!k||!k.appUrl
   if(!stil&&tab==="beheer")render()}
 async function bhAlleVersies(stil){const l=beheerData().klanten;await Promise.all(l.map((k,i)=>bhVersie(i,true)));if(tab==="beheer")render();if(stil===true)return;
   const oud=l.filter(k=>bhVersies[k.id]&&bhVersies[k.id]!==VERSIE).length;melding(oud?`${oud} klant(en) hebben een oudere versie`:"Alle bereikbare klanten zijn bijgewerkt","#2d6a4f")}
-function bhKlantJs(i){const k=beheerData().klanten[i],fb=fbLees(k.firebase);if(!k.appNaam&&!confirm("Er is nog geen naam van de app ingevuld. Toch maken?"))return;
+function bhKlantJs(i){const k=beheerData().klanten[i];if(!k.appNaam&&!confirm("Er is nog geen naam van de app ingevuld. Toch maken?"))return;
+  const t=bhKlantJsTekst(k);const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([t],{type:"text/javascript"}));a.download="klant.js";a.click();
+  melding(`⬇ klant.js voor ${esc(k.naam||"klant")} gedownload. Zet hem naast index.html in de GitHub van deze klant.`,"#2d6a4f")}
+function bhKlantJsTekst(k){const fb=fbLees(k.firebase);
   const f=fb.apiKey?fb:{apiKey:"VUL_IN",authDomain:"VUL_IN",projectId:"VUL_IN",storageBucket:"VUL_IN",messagingSenderId:"VUL_IN",appId:"VUL_IN"};delete f.measurementId;
   const t=`/* ============ INSTELLINGEN VOOR DEZE KLANT: ${k.naam||""} ============
    Dit bestand hoort naast index.html in de GitHub van deze klant.
@@ -4073,11 +4161,11 @@ window.KLANT={
   appNaam:${JSON.stringify(k.appNaam||"Planning")},
   code:${JSON.stringify(k.code||"")},
   leverancier:"Vollebregt",
+  deelBaas:${JSON.stringify(String(k.deelBaas||"").trim().toLowerCase())},
   firebase:${JSON.stringify(f)}
 };
-`;const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([t],{type:"text/javascript"}));a.download="klant.js";a.click();
-  melding(`⬇ klant.js voor ${esc(k.naam||"klant")} gedownload. Zet hem naast index.html in de GitHub van deze klant.`,"#2d6a4f")}
-function bhRegels(i){const k=beheerData().klanten[i],lees=x=>String(x||"").split(/[\s,;]+/).map(x=>x.trim().toLowerCase()).filter(Boolean),m=lees(k.emails),kk=i?lees(k.beheerder==null?"vollebregt.a@gmail.com":k.beheerder):[],m2=m.filter(x=>!kk.includes(x));
+`;return t}
+function bhRegels(i){const k=beheerData().klanten[i],lees=x=>String(x||"").split(/[\s,;]+/).map(x=>x.trim().toLowerCase()).filter(Boolean),m=lees(k.emails),m2=m;
   if(!m.length){alert("Vul eerst de e-mailadressen in.");return}
   const lijst=a=>a.map(x=>`          "${x}"`).join(",\n");
   if(!m2.length){alert("Er staat geen e-mailadres van de klant zelf in.");return}
@@ -4090,14 +4178,12 @@ service cloud.firestore {
         && request.auth.token.email in [
 ${lijst(m2)}
         ];
-    }${kk.length?`
-    // beheerder: alleen lezen wat de klant deelt
-    match /planning/delen {
+    }
+    // meekijken: iemand mag alleen zijn eigen gedeelde deel lezen (de klant kiest in de app wie wat ziet)
+    match /planning/{doc} {
       allow read: if request.auth != null
-        && request.auth.token.email in [
-${lijst(kk)}
-        ];
-    }`:""}
+        && doc == "delen_" + request.auth.token.email;
+    }
   }
 }`;toonPop("Regels Firebase · "+(k.naam||""),`<p class="status" style="margin:0 0 6px">Firebase → Firestore → tabblad <b>Rules</b> → alles vervangen door deze tekst → <b>Publish</b>.</p><textarea id="bhRegelTxt" readonly style="width:100%;height:240px;font-family:monospace;font-size:13px;box-sizing:border-box">${esc(t)}</textarea>
     <div class="rij" style="margin-top:8px"><span style="flex:1"></span><button class="btn" onclick="const x=document.getElementById('bhRegelTxt');x.select();try{navigator.clipboard.writeText(x.value)}catch(e){document.execCommand('copy')}melding('✓ Regels gekopieerd','#2d6a4f')">📋 Kopiëren</button></div>`)}
