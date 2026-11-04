@@ -649,6 +649,8 @@ body.meekijk .ovlink,body.meekijk tr.wknot{display:none!important}
 .vkwkfilter{display:inline-flex;align-items:center;gap:6px;background:#dbe9f6;color:#16304d;font-weight:700;border-radius:14px;padding:3px 6px 3px 12px}.vkwkfilter button{border:0;background:#16304d;color:#fff;border-radius:50%;width:22px;height:22px;cursor:pointer}
 
 #ovBalk .ovk.inkcsv{background:#fff;border:1px solid #2d6a4f;color:#1f4d39;font-weight:700;padding:6px 12px;border-radius:6px}
+
+tr.kostrij td.kostjaar,tr.groepkop td.kostjaar{font-size:11px;white-space:nowrap;text-align:right;min-width:92px;line-height:1.25}td.kostjaar span{color:#8a5a00}
 </style>
 </head>
 <body>
@@ -810,7 +812,7 @@ body.meekijk .ovlink,body.meekijk tr.wknot{display:none!important}
 
 <script>
 "use strict";
-const VERSIE="34.1";
+const VERSIE="34.3";
 const VERSIE_DATUM="03-11-2026";
 /* ---------- Basis ---------- */
 const PALET=["#2d6a4f","#1B5EBE","#E8007D","#c77d1a","#7a4fa0","#0f8b8d","#5b6b2f","#3d5a80","#a0522d","#7AB648"];
@@ -2568,7 +2570,7 @@ function kopieVast(van,naar,vraag){const i=data.instellingen,heeft=k=>((i[k]||{}
   const nw=wekenIn(naar);for(const k of["vast","vastB"]){const a=[...(((i[k]||{})[van])||Array(53).fill(null))];while(a.length<53)a.push(null);
     if(nw<53&&a[52])a[51]=Math.max(a[51]||0,a[52]);if(nw<53)a[52]=null;if(!i[k])i[k]={};i[k][naar]=a.map(v=>v||null)}return true}
 function kopieKost(van,naar){const r=kostenRij(van),nw=wekenIn(naar),cp=a=>{const x=[...a];while(x.length<53)x.push(null);if(nw<53&&x[52]!=null&&x[51]==null)x[51]=x[52];if(nw<53)x[52]=null;return x};
-  const i=data.instellingen;if(!i.kostenJ)i.kostenJ={};i.kostenJ[naar]={a:cp(r.a),b:cp(r.b)}}
+  const i=data.instellingen;if(!i.kostenJ)i.kostenJ={};i.kostenJ[naar]=Object.fromEntries(KOST_R.map(f=>[f,cp(r[f]||[])]))}
 function kopieJaar(){const van=+$("#kjVan").value,naar=+$("#kjNaar").value,wat=$("#kjWat").value,alle=wat==="alle"||wat==="allesv";
   if(van===naar){alert("Kies twee verschillende jaren.");return}
   if(wat==="vast"){if(kopieVast(van,naar,true)){planJaar=naar;wijzig();melding(`✓ Vaste bezetting ${van} gekopieerd naar ${naar} (Ctrl + Z = terug)`,"#2d6a4f")}return}
@@ -2589,22 +2591,31 @@ function kopieJaar(){const van=+$("#kjVan").value,naar=+$("#kjNaar").value,wat=$
   for(const t of tl)telOp(t,data.rassen);planJaar=naar;wijzig();melding(`✓ Inkoop ${van} gekopieerd naar ${naar} (Ctrl + Z = terug)`,"#2d6a4f")}
 /* Kosten per week·m² (voor alle teelten en alle jaren gelijk, per weeknummer 1–53) */
 function kostenData(){const i=data.instellingen;if(!i.kosten)i.kosten={};const k=i.kosten;
-  if(!Array.isArray(k.a))k.a=Array(53).fill(null);if(!Array.isArray(k.b))k.b=Array(53).fill(null);if(k.la==null)k.la="Vaste kosten";if(k.lb==null)k.lb="Variabele kosten";return k}
+  for(const f of KOST_R){if(!Array.isArray(k[f]))k[f]=Array(53).fill(null);if(k["l"+f]==null)k["l"+f]=f==="a"?"Vaste kosten":f==="b"?"Variabele kosten":""}return k}
+const KOST_R=["a","b","c","d","e"]; /* a en b vast, c t/m e extra (optioneel) */
 const vastData=(j,f)=>{const i=data.instellingen,k=f==="b"?"vastB":"vast";if(!i[k])i[k]={};if(!Array.isArray(i[k][j]))i[k][j]=Array(53).fill(null);return i[k][j]};
 const vastLabels=()=>{const i=data.instellingen;if(!i.vastL)i.vastL={a:"Verhuur",b:"Stekopslag"};return i.vastL};
 let inkOpen={v:true,k:false};try{const o=JSON.parse(localStorage.getItem("potplanning-inkopen")||"null");if(o)inkOpen=o}catch(e){}
 function inkGroep(id){inkOpen[id]=!inkOpen[id];try{localStorage.setItem("potplanning-inkopen",JSON.stringify(inkOpen))}catch(e){}render()}
 /* kosten per jaar (namen gelden voor alle jaren). Nog niets voor een jaar? dan de oude, algemene waarden */
-const kostenRij=j=>{const i=data.instellingen,K=kostenData();return(i.kostenJ&&i.kostenJ[j])||{a:K.a,b:K.b}};
-const kostenSchrijf=j=>{const i=data.instellingen;if(!i.kostenJ)i.kostenJ={};if(!i.kostenJ[j]){const r=kostenRij(j);i.kostenJ[j]={a:[...r.a],b:[...r.b]}}return i.kostenJ[j]};
-const kostWeek=(w,j)=>{const k=kostenRij(j??planJaar);return(+k.a[w-1]||0)+(+k.b[w-1]||0)};
+const kostenRij=j=>{const i=data.instellingen,K=kostenData(),r=(i.kostenJ&&i.kostenJ[j])||K;if(r!==K)for(const f of KOST_R)if(!Array.isArray(r[f]))r[f]=Array(53).fill(null);return r};
+const kostenSchrijf=j=>{const i=data.instellingen;if(!i.kostenJ)i.kostenJ={};if(!i.kostenJ[j]){const r=kostenRij(j);i.kostenJ[j]=Object.fromEntries(KOST_R.map(f=>[f,[...r[f]]]))}const o=i.kostenJ[j];for(const f of KOST_R)if(!Array.isArray(o[f]))o[f]=Array(53).fill(null);return o};
+const kostWeek=(w,j)=>{const k=kostenRij(j??planJaar);return KOST_R.reduce((s,f)=>s+(+(k[f]||[])[w-1]||0),0)};
+/* jaarkosten per regel: € per week·m² × bruto m² (hele kas), en het deel dat op lege m² valt (leegloop) */
+function kostJaar(j){const NW=wekenIn(j),bruto=+data.instellingen.brutoM2||0,K=kostenRij(j),{kaart}=ruimteBerekening();
+  const leeg=Array.from({length:NW},(_,w)=>{const e=kaart.get(+maandagIso(j,w+1))||{f1:0,f2:0};return Math.max(0,bruto-(e.f1+e.f2+(e.vast||0)))});
+  const uit={bruto};for(const f of KOST_R){let jt=0,lt=0;for(let w=0;w<NW;w++){const c=+(K[f]||[])[w]||0;jt+=c*bruto;lt+=c*leeg[w]}uit[f]={jaar:jt,leeg:lt}}
+  uit.tot={jaar:KOST_R.reduce((s,f)=>s+uit[f].jaar,0),leeg:KOST_R.reduce((s,f)=>s+uit[f].leeg,0)};return uit}
+function kostTotalen(){if(!document.getElementById("kj-tot"))return;const T=kostJaar(planJaar),e=v=>"€ "+getal(Math.round(v));
+  const zet=(id,o)=>{const c=document.getElementById(id);if(!c)return;c.innerHTML=!T.bruto?'<span class="let">bruto m² ontbreekt</span>':o.jaar?`<b>${e(o.jaar)}</b><br><span title="Kosten van de lege m² (leegloop)">leeg ${e(o.leeg)}</span>`:"–"};
+  for(const f of KOST_R)zet("kj-"+f,T[f]);zet("kj-tot",T.tot)}
 $("#inhoud").addEventListener("change",e=>{const el=e.target;
   if(el.classList.contains("vastin")){const w=+el.dataset.w,v=String(el.value).trim().replace(/[.\s]/g,"").replace(",",".");const n=v===""||isNaN(+v)?null:Math.max(0,Math.round(+v));
     vastData(planJaar,el.dataset.kf==="vastb"?"b":"a")[w]=n;el.value=n?getal(n):"";const t=document.getElementById("vt-"+w);if(t){const s=(+vastData(planJaar)[w]||0)+(+vastData(planJaar,"b")[w]||0);t.innerHTML=s?"<b>"+getal(s)+"</b>":""}
     opslaanLater();if(typeof inkRuimteLater==="function")inkRuimteLater();return}
   if(el.classList.contains("vastnaam")){vastLabels()[el.dataset.kf]=el.value.trim();opslaanLater();return}
   if(el.classList.contains("kost")){const k=kostenData(),w=+el.dataset.w,v=String(el.value).trim().replace("€","").replace(",",".");const n=v===""||isNaN(+v)?null:+v;
-    kostenSchrijf(planJaar)[el.dataset.kf][w]=n;el.value=n==null?"":String(n).replace(".",",");const t=document.getElementById("kt-"+w);if(t){const s=kostWeek(w+1);t.innerHTML=s?"<b>"+String(Math.round(s*100)/100).replace(".",",")+"</b>":""}opslaanLater()}
+    kostenSchrijf(planJaar)[el.dataset.kf][w]=n;el.value=n==null?"":String(n).replace(".",",");const t=document.getElementById("kt-"+w);if(t){const s=kostWeek(w+1);t.innerHTML=s?"<b>"+String(Math.round(s*100)/100).replace(".",",")+"</b>":""}kostTotalen();opslaanLater()}
   if(el.classList.contains("kostnaam")){kostenData()["l"+el.dataset.kf]=el.value.trim();opslaanLater()}});
 let oppotToon=new Set(); /* soorten die u in de Inkoop net hebt gekozen */
 /* Excel (CSV) van de inkoop: alle teelten, per soort de aantallen per week. Werkt ook bij meekijken (= de order) */
@@ -2685,12 +2696,12 @@ function toonOppot(){
     </div>
     <div id="maxUit"></div>`;
   const K=kostenData(),eur2=v=>v?String(Math.round(v*100)/100).replace(".",","):"";
-  const kRij=(f,ph)=>`<tr class="kostrij"><td class="vast"><input class="kostnaam" data-kf="${f}" value="${esc(K["l"+f])}" title="Naam van deze kostenregel (u kunt hem aanpassen)"></td>${Array.from({length:NW},(_,w)=>`<td><input class="kost" inputmode="decimal" data-kf="${f}" data-w="${w}" value="${eur2(kostenRij(planJaar)[f][w])}" placeholder="${ph}"></td>`).join("")}<td class="tot status" style="font-size:11px">€/week·m²</td></tr>`;
+  const kRij=(f,ph)=>`<tr class="kostrij"><td class="vast"><input class="kostnaam" data-kf="${f}" value="${esc(K["l"+f])}" placeholder="${"abcde".indexOf(f)>1?"extra regel (optioneel)":""}" title="Naam van deze kostenregel (u kunt hem aanpassen)"></td>${Array.from({length:NW},(_,w)=>`<td><input class="kost" inputmode="decimal" data-kf="${f}" data-w="${w}" value="${eur2(kostenRij(planJaar)[f][w])}" placeholder="${ph}"></td>`).join("")}<td class="tot kostjaar" id="kj-${f}" title="Jaarkosten: € per week·m² × bruto m² (Bestand). 'leeg' = deel op lege m² (leegloop)"></td></tr>`;
   const VA=vastData(planJaar),VB=vastData(planJaar,"b"),VL=vastLabels(),vTot=w=>(+VA[w]||0)+(+VB[w]||0);
   const vRij=(f,arr)=>`<tr class="kostrij vastrij"><td class="vast"><input class="kostnaam vastnaam" data-kf="${f}" value="${esc(VL[f])}" title="Naam van deze regel (u kunt hem aanpassen)"></td>${Array.from({length:NW},(_,w)=>`<td><input class="kost vastin" inputmode="numeric" data-kf="vast${f}" data-w="${w}" value="${arr[w]?getal(arr[w]):""}"></td>`).join("")}<td class="tot status" style="font-size:11px">m² · ${planJaar}</td></tr>`;
   const kop2=(id,titel,cel,eenh)=>`<tr class="kostrij groepkop" onclick="inkGroep('${id}')"><td class="vast"><b>${inkOpen[id]?"▾":"▸"} ${titel}</b></td>${Array.from({length:NW},(_,w)=>`<td id="${id}t-${w}"><b>${cel(w)}</b></td>`).join("")}<td class="tot status" style="font-size:11px">${eenh}</td></tr>`;
   const kostHTML=kop2("v","Vaste bezetting m²",w=>vTot(w)?getal(vTot(w)):"","m² totaal")+(inkOpen.v?vRij("a",VA)+vRij("b",VB):"")
-    +(niveau()>=3?kop2("k","Kosten € per week·m²",w=>eur2(kostWeek(w+1)),"€/week·m²")+(inkOpen.k?kRij("a","")+kRij("b",""):""):"");
+    +(niveau()>=3?kop2("k","Kosten € per week·m²",w=>eur2(kostWeek(w+1)),"€/week·m²").replace(/<td class="tot status" style="font-size:11px">€\/week·m²<\/td><\/tr>$/,'<td class="tot kostjaar" id="kj-tot" title="Jaarkosten totaal"></td></tr>')+(inkOpen.k?KOST_R.map(f=>kRij(f,"")).join(""):""):"");
   h+=`<div class="scroll"><table class="duur oppot invoer">
     <tr class="verschilrij"><td class="vast" title="Hoeveel m² er per week bij komt (+) of af gaat (−) door uw wijzigingen sinds het nulpunt"><b>Verschil m²</b> <button class="btn licht klein" style="padding:0 5px;font-size:10px" onclick="inkNulWeg()" title="Nieuw nulpunt: de verschillen weer op 0 zetten">↺</button></td>${Array.from({length:NW},(_,w)=>`<td id="rv-${w}"></td>`).join("")}<td class="tot status" id="rv-som" style="font-size:11px"></td></tr>
     ${kop("Soort")}`;
@@ -2705,7 +2716,7 @@ function toonOppot(){
 }
 /* Inkoop: ruimte die de kas nodig heeft per week (alle teelten), meteen bijgewerkt bij elk getal */
 const RKL=v=>v>95?"#E8007D":v>=85?"#F6B26B":"#86C49E";
-function inkRuimte(){const g=document.getElementById("inkGraf");if(!g)return;g.classList.toggle("groot",inkGroot);const{kaart}=ruimteBerekening(),NW=wekenIn(planJaar),bruto=+data.instellingen.brutoM2||0,tid=oppotKeuze,nu=dezeWeek();
+function inkRuimte(){const g=document.getElementById("inkGraf");if(!g)return;try{kostTotalen()}catch(e){console.log(e)}g.classList.toggle("groot",inkGroot);const{kaart}=ruimteBerekening(),NW=wekenIn(planJaar),bruto=+data.instellingen.brutoM2||0,tid=oppotKeuze,nu=dezeWeek();
   const rij=Array.from({length:NW},(_,w)=>{const t=+maandagIso(planJaar,w+1),e=kaart.get(t)||{f1:0,f2:0,per:{}};return{t,m:e.f1+e.f2+(e.vast||0),vast:e.vast||0,eigen:(e.per||{})[tid]||0}});
   /* nulpunt: de ruimte zoals die was toen u de Inkoop opende (of op ↺ klikte) */
   if(!inkNul||inkNul.jaar!==planJaar)inkNul={jaar:planJaar,m:rij.map(r=>r.m)};
@@ -3535,7 +3546,7 @@ $("#inhoud").addEventListener("change",e=>{const el=e.target;if(!el.dataset.kl)r
   if(veld==="naam"&&k.naam&&v!==k.naam){for(const l of Object.values(data.verkoop||{}))for(const x of l)if(x.klant===k.naam)x.klant=v} /* nieuwe naam ook bij de verkopen */
   k[veld]=v;if(veld==="naam")el.classList.toggle("mist",!v);opslaanLater()});
 /* ---------- Oppotoverzicht: per week wat er wordt opgepot (zoals een orderoverzicht) ---------- */
-let ovGroep="soort",ovEenheid="planten",ovWSig="",ovStart=null,ovEind=null,ovJaar=0;
+let ovKostLeeg=false,ovGroep="soort",ovEenheid="planten",ovWSig="",ovStart=null,ovEind=null,ovJaar=0;
 const fustAantal=f=>{const m=String(f||"").match(/(\d+)/);return m?+m[1]:0};
 let ovDetail={},ovRas={},teeltFilter="";
 /* Keuze van één teelt (of alle teelten) – geldt voor Opzetplanning, Afleverplanning en Bestelplanning */
@@ -3638,7 +3649,9 @@ function toonOppotOv(){
   const veelT=new Set(regels.map(r=>r.product)).size>1;
   const sleutel={soort:r=>veelT?r.product+" · "+r.soort:r.soort,teelt:r=>r.product,fust:r=>r.fust||"(geen fust)",lev:r=>{const l=data.leveranciers.find(x=>x.id===r.levId);return l&&l.naam?l.naam:"(geen leverancier)"}}[ovGroep]||(r=>r.soort);
   zvKlaar();const trays=ovEenheid==="trays",tekstMod=["afdop","vlop","afduit","vluit"].includes(ovEenheid);let zonderFust=false;
-  const EH={planten:"planten",trays:"trays",m2op:"m² opgepot",m2uit:"m² uitgezet",wm2:"week·m² partij",wm2k:"week·m² per 1000 planten",kost:"kosten per plant (€)",kosttot:"totaal kosten (€)",afdop:"afd opgepot",vlop:"vloer opgepot",afduit:"afd uitgezet",vluit:"vloer uitgezet"},ehNaam=EH[ovEenheid]||"planten";
+  const EH={planten:"planten",trays:"trays",m2op:"m² opgepot",m2uit:"m² uitgezet",wm2:"week·m² partij",wm2k:"week·m² per 1000 planten",kost:"kosten per plant (€)",kosttot:"totaal kosten (€)",afdop:"afd opgepot",vlop:"vloer opgepot",afduit:"afd uitgezet",vluit:"vloer uitgezet"},isKostEh=ovEenheid==="kost"||ovEenheid==="kosttot",ehNaam=(EH[ovEenheid]||"planten")+(isKostEh?(ovKostLeeg?" incl. leegloop":" excl. leegloop"):"");
+  /* incl. leegloop: de kosten van de lege m² per week verdelen over wat er staat (naar m²) → factor bruto / bezet */
+  const leegF=new Map();if(isKostEh&&ovKostLeeg){const bruto=+data.instellingen.brutoM2||0,{kaart}=ruimteBerekening();if(bruto)for(const[t,e]of kaart){const m=e.f1+e.f2+(e.vast||0);leegF.set(t,m>0?Math.max(1,bruto/m):1)}}
   /* week·m²: m² × weken, voor oppotfase + uitzetfase samen */
   const weekM2=r=>{const t=teeltVanRas(r.rasId)||data.teeltduren.find(x=>x.id===r.teeltId);if(!t||!t.dicht1||!t.dicht2)return 0;
     const ras=r.rasId&&data.rassen.find(x=>x.id===r.rasId),src=ras&&eigenDuur(ras)?ras:t,f1=(src.fase1||[])[r.w-1]||0,f2=(src.fase2||[])[r.w-1]||0;
@@ -3646,7 +3659,7 @@ function toonOppotOv(){
   /* kosten: per teeltweek (m² per plant in die fase) × (kosten per week·m² van die kalenderweek) */
   const kostPartij=r=>{const t=teeltVanRas(r.rasId)||data.teeltduren.find(x=>x.id===r.teeltId);if(!t||!t.dicht1||!t.dicht2)return 0;
     const ras=r.rasId&&data.rassen.find(x=>x.id===r.rasId),src=ras&&eigenDuur(ras)?ras:t,f1=Math.ceil((src.fase1||[])[r.w-1]||0),f2=Math.ceil((src.fase2||[])[r.w-1]||0),st=maandagIso(jaar,r.w);let e=0;
-    for(let k=0;k<f1+f2;k++){const iw=isoWeek(plusWeken(st,k));e+=kostWeek(iw.w,iw.y)/(k<f1?t.dicht1:t.dicht2)}return e*r.aantal};
+    for(let k=0;k<f1+f2;k++){const d=plusWeken(st,k),iw=isoWeek(d);e+=kostWeek(iw.w,iw.y)*(leegF.get(+d)||1)/(k<f1?t.dicht1:t.dicht2)}return e*r.aantal};
   const waarde=r=>{if(ovEenheid==="kost"||ovEenheid==="kosttot")return kostPartij(r);if(ovEenheid==="wm2"||ovEenheid==="wm2k")return weekM2(r);if(ovEenheid==="m2op"||ovEenheid==="m2uit"){const t=teeltVanRas(r.rasId),d=t?(ovEenheid==="m2op"?t.dicht1:t.dicht2):0;return d?r.aantal/d:0}
     if(!trays)return r.aantal;const n=fustAantal(r.fust);if(!n){zonderFust=true;return r.aantal}return Math.ceil(r.aantal/n)};
   const vlTekst=r=>{if(!r.rasId)return"";const v=vloerEff(r.rasId,jaar,r.w);return{afdop:v.opAfd,vlop:v.op,afduit:v.uitAfd,vluit:v.uit}[ovEenheid]||""};
@@ -3657,7 +3670,7 @@ function toonOppotOv(){
     ob.innerHTML=`<button class="ovk ovlink" onclick="naar('oppot')" title="Inkoop / opzetten">‹ Inkoop / opzetten</button><span class="ovtitel">Opzetplanning</span>
     <select class="ovjaar" onchange="planJaar=+this.value;render()">${[-2,-1,0,1,2].map(d=>planJaar+d).map(j=>`<option value="${j}" ${j===jaar?"selected":""}>Jaar ${j}</option>`).join("")}</select>
     ${teeltKeuze()}
-    <select class="ovjaar" onchange="ovEenheid=this.value;render()" title="Wat ziet u in de cellen">${Object.entries(EH).filter(([v])=>!ZV()||!["afdop","vlop","afduit","vluit","kost","kosttot"].includes(v)).map(([v,n])=>`<option value="${v}" ${ovEenheid===v?"selected":""}>${n.startsWith("m²")?n:n[0].toUpperCase()+n.slice(1)}</option>`).join("")}</select>
+    <select class="ovjaar" onchange="ovEenheid=this.value;render()" title="Wat ziet u in de cellen">${Object.entries(EH).filter(([v])=>!ZV()||!["afdop","vlop","afduit","vluit","kost","kosttot"].includes(v)).map(([v,n])=>`<option value="${v}" ${ovEenheid===v?"selected":""}>${n.startsWith("m²")?n:n[0].toUpperCase()+n.slice(1)}</option>`).join("")}</select>${isKostEh?`<select class="ovjaar" onchange="ovKostLeeg=this.value==='1';render()" title="Excl. leegloop: alleen de m² die de planten gebruiken. Incl. leegloop: de kosten van de lege m² worden ook over de planten verdeeld.${+data.instellingen.brutoM2?"":" (Vul bruto m² in bij Bestand.)"}"><option value="0" ${ovKostLeeg?"":"selected"}>excl. leegloop</option><option value="1" ${ovKostLeeg?"selected":""}>incl. leegloop</option></select>`:""}
     ${extra||""}
     <span style="flex:1"></span>
     <button class="ovk ovlink" onclick="naar('aflever')" title="Afleverplanning (overzicht)">Afleverplanning ›</button>`;return""};
