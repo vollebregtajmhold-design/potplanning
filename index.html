@@ -810,7 +810,7 @@ body.meekijk .ovlink,body.meekijk tr.wknot{display:none!important}
 
 <script>
 "use strict";
-const VERSIE="33.7";
+const VERSIE="33.8";
 const VERSIE_DATUM="03-11-2026";
 /* ---------- Basis ---------- */
 const PALET=["#2d6a4f","#1B5EBE","#E8007D","#c77d1a","#7a4fa0","#0f8b8d","#5b6b2f","#3d5a80","#a0522d","#7AB648"];
@@ -2608,15 +2608,29 @@ $("#inhoud").addEventListener("change",e=>{const el=e.target;
   if(el.classList.contains("kostnaam")){kostenData()["l"+el.dataset.kf]=el.value.trim();opslaanLater()}});
 let oppotToon=new Set(); /* soorten die u in de Inkoop net hebt gekozen */
 /* Excel (CSV) van de inkoop: alle teelten, per soort de aantallen per week. Werkt ook bij meekijken (= de order) */
-function inkoopCsv(){const j=planJaar,NW=wekenIn(j),q=x=>`"${String(x??"").replace(/"/g,'""')}"`,wk=Array.from({length:NW},(_,w)=>String(j).slice(2)+String(w+1).padStart(2,"0"));
-  const regels=[["Teelt","Soortnr","Soort","Fust",...wk,"Totaal"].map(q).join(";")],tot=Array(NW).fill(0);
+/* echt Excel-bestand (.xlsx): kolommen zo breed als de langste cel, filter op de bovenste regel */
+let xlsxLaden=null;
+function xlsxLib(){if(window.XLSX)return Promise.resolve(window.XLSX);
+  return xlsxLaden=xlsxLaden||new Promise((ok,nee)=>{const sc=document.createElement("script");sc.src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js";
+    sc.onload=()=>ok(window.XLSX);sc.onerror=()=>{xlsxLaden=null;nee(new Error("Excel-hulp kon niet laden (internet?)"))};document.head.appendChild(sc)})}
+async function xlsxDownload(rijen,naam,blad,filterTot){const X=await xlsxLib(),ws=X.utils.aoa_to_sheet(rijen);
+  const nk=Math.max(...rijen.map(r=>r.length));
+  ws["!cols"]=Array.from({length:nk},(_,c)=>({wch:Math.min(60,Math.max(4,...rijen.map(r=>{const v=r[c];return v==null?0:typeof v==="number"?v.toLocaleString("nl-NL").length:String(v).length}))+2)}));
+  ws["!autofilter"]={ref:X.utils.encode_range({s:{r:0,c:0},e:{r:Math.max(1,(filterTot||rijen.length)-1),c:nk-1}})};
+  const wb=X.utils.book_new();X.utils.book_append_sheet(wb,ws,String(blad||"Blad1").slice(0,31));X.writeFile(wb,naam)}
+/* Excel van de inkoop: alle teelten, per soort de aantallen per week. Werkt ook bij meekijken (= de order) */
+async function inkoopCsv(){const j=planJaar,NW=wekenIn(j),wk=Array.from({length:NW},(_,w)=>String(j).slice(2)+String(w+1).padStart(2,"0"));
+  const rijen=[["Teelt","Soortnr","Soort","Fust",...wk,"Totaal"]],tot=Array(NW).fill(0);
   for(const t of data.teeltduren)for(const r of oppotRegels(t)){const a=((r.a||{})[j]||[]).slice(0,NW).map(v=>+v||0);if(!a.some(v=>v))continue;
     const ras=r.b.startsWith("r:")?data.rassen.find(x=>"r:"+x.id===r.b):null;a.forEach((v,i)=>tot[i]+=v);
-    regels.push([q(teeltNaam(t)),q(r.nr||""),q(r.naam),q(ras&&ras.fust||""),...a.map(v=>v||""),a.reduce((x,y)=>x+y,0)].join(";"))}
-  if(regels.length<2){melding("Er staat niets in de inkoop van "+j+".");return}
-  regels.push([q("Totaal"),"","","",...tot.map(v=>v||""),tot.reduce((x,y)=>x+y,0)].join(";"));
-  const a=document.createElement("a");a.href=URL.createObjectURL(new Blob(["\ufeff"+regels.join("\n")],{type:"text/csv"}));
-  a.download=`inkoop ${KLANT.appNaam||""} ${j}.csv`.replace(/\s+/g," ");a.click();melding("⬇ Inkoop "+j+" als Excel-bestand gedownload","#2d6a4f")}
+    const nr=r.nr||"";rijen.push([teeltNaam(t),/^\d+$/.test(nr)?+nr:nr,r.naam,ras&&ras.fust||"",...a.map(v=>v||null),a.reduce((x,y)=>x+y,0)])}
+  if(rijen.length<2){melding("Er staat niets in de inkoop van "+j+".");return}
+  const nData=rijen.length;rijen.push(["Totaal","","","",...tot.map(v=>v||null),tot.reduce((x,y)=>x+y,0)]);
+  const naam=`inkoop ${KLANT.appNaam||""} ${j}`.replace(/\s+/g," ").trim();
+  try{melding("Excel-bestand maken…");await xlsxDownload(rijen,naam+".xlsx","Inkoop "+j,nData);melding("⬇ Inkoop "+j+" als Excel-bestand gedownload","#2d6a4f")}
+  catch(e){/* geen internet: dan als CSV */const q=x=>`"${String(x??"").replace(/"/g,'""')}"`;
+    const a=document.createElement("a");a.href=URL.createObjectURL(new Blob(["﻿"+rijen.map(r=>r.map(v=>typeof v==="number"?v:q(v)).join(";")).join("\n")],{type:"text/csv"}));
+    a.download=naam+".csv";a.click();melding("⬇ Gedownload als CSV ("+esc(e.message)+")","#6a3d9a")}}
 function oppotRegels(t){const soorten=data.rassen.filter(r=>r.teeltId===t.id);
   const r=soorten.map(x=>({b:"r:"+x.id,naam:x.naam||"(soort zonder naam)",nr:x.nr||"",a:x.aantallen}));
   const los=Object.values(t.losAantallen).some(a=>a.some(v=>v));
