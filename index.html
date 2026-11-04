@@ -166,7 +166,7 @@ body.toonKlik :is(button,a,summary,select,.ovtabel td[data-k],.ovtabel th[data-c
 .mvl.ok{border-color:#2d6a4f;background:#e8f5ee}.mvl.nee{border-color:#c62828;background:#fbeaea}
 .mvl label{gap:3px!important;font-size:12px}.mvl input{width:72px!important;height:38px;font-size:16px!important;padding-right:22px!important}.mvl .mvln{margin-left:auto;text-align:right}
 .verkoop{margin-top:12px;padding:10px;background:#eef4fb;border-radius:8px}.verkrij{display:flex;gap:6px;margin-top:6px;align-items:center}
-.verkrij input{flex:1;font-size:16px;padding:4px 6px;min-width:0;height:38px}.verkrij input.verkn{flex:none;width:90px;text-align:right}.ovtabel td.ovmin{color:#b00020}
+.verkrij input{flex:1;font-size:16px;padding:4px 6px;min-width:0;height:38px}.verkrij input.verkn{flex:none;width:90px;text-align:right}.verkrij input.verkp{flex:none;width:80px;text-align:right}.ovtabel td.ovmin{color:#b00020}
 .ovinvoer{margin-top:12px;padding:10px;background:#f4effa;border-radius:8px;display:flex;flex-wrap:wrap;gap:10px;align-items:center}
 .ovinvoer label{display:flex;align-items:center;gap:6px;font-size:13px}.ovinvoer input{width:90px;font-size:15px;padding:4px 6px;text-align:right}
 #grijs{background:var(--bg);margin:12px 14px 14px;border-radius:12px;min-height:calc(100vh - 100px);display:flow-root}
@@ -805,7 +805,7 @@ body.meekijk .ovlink,body.meekijk tr.wknot{display:none!important}
 
 <script>
 "use strict";
-const VERSIE="33.3";
+const VERSIE="33.4";
 const VERSIE_DATUM="03-11-2026";
 /* ---------- Basis ---------- */
 const PALET=["#2d6a4f","#1B5EBE","#E8007D","#c77d1a","#7a4fa0","#0f8b8d","#5b6b2f","#3d5a80","#a0522d","#7AB648"];
@@ -3748,11 +3748,15 @@ let aflS=null,aflDetail={},aflMod="afl",aflRij="teelt",raapLaatst=null,verkFocus
 const wkCode=t=>{const{w,y}=isoWeek(new Date(t));return String(y).slice(2)+String(w).padStart(2,"0")};
 const verkVan=(k,t)=>((data.verkoop||{})[k+"|"+wkCode(t)])||[];
 const verkSom=(k,t)=>verkVan(k,t).reduce((a,x)=>a+(+x.n||0),0);
+/* prijs per plant: "1,25" of "€ 1.25" → 1.25 ; leeg = geen prijs */
+const prijsLees=v=>{v=String(v??"").replace(/[€\s]/g,"").replace(",",".");return v===""||isNaN(+v)?null:Math.round(+v*1000)/1000};
+const prijsTxt=p=>p==null||p===""?"":"€ "+(+p).toLocaleString("nl-NL",{minimumFractionDigits:2,maximumFractionDigits:3});
+const euro=v=>"€ "+(+v).toLocaleString("nl-NL",{minimumFractionDigits:2,maximumFractionDigits:2});
 function verkZet(k,t,i,veld,v){data.verkoop=data.verkoop||{};const key=k+"|"+wkCode(t),l=data.verkoop[key]=data.verkoop[key]||[];
   if(i>=l.length)l.push({klant:"",n:0});v=String(v).trim();
   if(veld==="klant"&&v&&!data.klanten.some(x=>x.naam.toLowerCase()===v.toLowerCase())){klantErbij(v);melding("➕ Nieuwe klant '"+esc(v)+"' bij Klanten gezet","#2d6a4f")}
-  if(veld==="klant"){const b=data.klanten.find(x=>x.naam.toLowerCase()===v.toLowerCase());if(b)v=b.naam}l[i][veld]=veld==="n"?Math.max(0,Math.round(+v.replace(/[.\s]/g,"").replace(",",".")||0)):v;
-  data.verkoop[key]=l.filter(x=>x.klant||x.n||x.opmerking);if(!data.verkoop[key].length)delete data.verkoop[key];opslaanLater();verkFocus=veld==="klant"?[i,1]:[-1,0];if(raapLaatst)raapPop(...raapLaatst)}
+  if(veld==="klant"){const b=data.klanten.find(x=>x.naam.toLowerCase()===v.toLowerCase());if(b)v=b.naam}if(veld==="prijs"){const pr=prijsLees(v);if(pr==null)delete l[i].prijs;else l[i].prijs=pr}else l[i][veld]=veld==="n"?Math.max(0,Math.round(+v.replace(/[.\s]/g,"").replace(",",".")||0)):v;
+  data.verkoop[key]=l.filter(x=>x.klant||x.n||x.opmerking);if(!data.verkoop[key].length)delete data.verkoop[key];opslaanLater();verkFocus=veld==="klant"?[i,1]:veld==="n"?[i,2]:[-1,0];if(raapLaatst)raapPop(...raapLaatst)}
 function verkWeg(k,t,i){const key=k+"|"+wkCode(t),l=(data.verkoop||{})[key];if(!l)return;l.splice(i,1);if(!l.length)delete data.verkoop[key];opslaanLater();if(raapLaatst)raapPop(...raapLaatst)}
 function toonAflever(){syncSoorten();
   const jaar=planJaar,nu=dezeWeek(),S=seizoenStart(),van=seizoenVan(jaar),totT=seizoenVan(jaar+1);
@@ -3826,10 +3830,10 @@ function raapPop(k,t,l,onder){if(raapLaatst&&(raapLaatst[0]!==k||raapLaatst[1]!=
         h+=`<div class="vlinvrij mvl ${ok?"ok":"nee"}" oninput="this.classList.toggle('ok',!!this.querySelectorAll('input')[1].value.trim());this.classList.toggle('nee',!this.querySelectorAll('input')[1].value.trim())" onclick="setTimeout(()=>this.oninput(),0)"><b>${esc(partijNr(x.p))}</b>${veld("uitAfd","afd",d.uit||"",'numeric')}${veld("uit","vloer","",'decimal')}<b class="mvln">${getal(x.n)}</b></div>`}})}
   if(!l.length)h=`<div class="status" style="padding:6px 0">Deze week wordt hier niets afgeleverd.</div>`;
   else h+=`<div class="mrij tot"><span>Totaal</span><b>${getal(som)} planten</b></div>`;
-  if(!isTot&&niveau()>1){const vl=verkVan(k,t),vs=verkSom(k,t),K="this.closest('.verkoop').dataset.k",rij=(x,i)=>`<div class="verkrij"><input placeholder="klant" list="klantLijst" autocomplete="off" value="${esc(x.klant||"")}" onchange="verkZet(${K},${t},${i},'klant',this.value)"><input class="verkn" type="text" inputmode="numeric" pattern="[0-9]*" enterkeyhint="next" placeholder="aantal" value="${x.n||""}" onchange="verkZet(${K},${t},${i},'n',this.value)">${i<vl.length?`<button class="btn rood klein" onclick="verkWeg(${K},${t},${i})" title="Weg">✕</button>`:'<span style="width:30px"></span>'}</div>${x.opmerking?`<div class="status" style="font-size:12px;margin:2px 0 0 4px">💬 ${esc(x.opmerking)}</div>`:""}`;
+  if(!isTot&&niveau()>1){const vl=verkVan(k,t),vs=verkSom(k,t),K="this.closest('.verkoop').dataset.k",rij=(x,i)=>`<div class="verkrij"><input placeholder="klant" list="klantLijst" autocomplete="off" value="${esc(x.klant||"")}" onchange="verkZet(${K},${t},${i},'klant',this.value)"><input class="verkn" type="text" inputmode="numeric" pattern="[0-9]*" enterkeyhint="next" placeholder="aantal" value="${x.n||""}" onchange="verkZet(${K},${t},${i},'n',this.value)"><input class="verkp" type="text" inputmode="decimal" enterkeyhint="next" placeholder="€ /st" title="Prijs per plant" value="${x.prijs!=null?String(x.prijs).replace(".",","):""}" onchange="verkZet(${K},${t},${i},'prijs',this.value)">${i<vl.length?`<button class="btn rood klein" onclick="verkWeg(${K},${t},${i})" title="Weg">✕</button>`:'<span style="width:30px"></span>'}</div>${x.opmerking?`<div class="status" style="font-size:12px;margin:2px 0 0 4px">💬 ${esc(x.opmerking)}</div>`:""}`;
     h+=`<datalist id="klantLijst">${[...data.klanten].filter(x=>x.naam).sort((a,b)=>a.naam.localeCompare(b.naam,"nl")).map(x=>`<option value="${esc(x.naam)}">${esc(x.plaats||"")}</option>`).join("")}</datalist>
       <div class="verkoop" data-k="${esc(k)}"><b>Gereserveerd</b>${vl.map(rij).join("")}${rij({},vl.length)}
-      <div class="mrij" style="border:0;padding:4px 0 0"><span>Gereserveerd</span><b>${getal(vs)}</b></div>
+      <div class="mrij" style="border:0;padding:4px 0 0"><span>Gereserveerd</span><b>${getal(vs)}</b></div>${(()=>{const w=vl.reduce((a,x)=>a+(x.prijs!=null?x.prijs*(+x.n||0):0),0);return w?`<div class="mrij" style="border:0;padding:0"><span>Waarde</span><b>${euro(w)}</b></div>`:""})()}
       <div class="mrij" style="border:0;padding:0"><span>Nog beschikbaar</span><b class="${som-vs<0?"let":""}">${getal(som-vs)}</b></div></div>`}
   raapLaatst=[k,t,l,onder];toonPop(titel,h,onder);
   const rijen=document.querySelectorAll(".verkrij");if(verkFocus&&rijen.length){const[i,v]=verkFocus,r=rijen[i<0?rijen.length-1:Math.min(i,rijen.length-1)];const inp=r&&r.querySelectorAll("input")[v];if(inp)inp.focus();verkFocus=null}}
@@ -3861,6 +3865,7 @@ function voRender(){
     <label>Soort <select id="voSoort">${srt.length?srt.map(r=>`<option value="${esc(r.naam)}" ${r.naam===vo.soort?"selected":""}>${esc(r.naam)}</option>`).join(""):`<option value="">(zonder soort)</option>`}</select></label>
     <div class="vobes" id="voBes"></div>
     <label>Aantal <input id="voN" type="text" inputmode="numeric" pattern="[0-9]*" value="${esc(vo.n)}" placeholder="aantal planten"></label>
+    <label>Prijs <input id="voP" type="text" inputmode="decimal" value="${esc(vo.prijs||"")}" placeholder="€ per plant (mag leeg)"></label>
     <div id="voOver"></div>
     <label>Opmerking <input id="voOpm" value="${esc(vo.opm||"")}" placeholder="bijv. levering vrijdag, ophalen"></label>
     <button class="btn" id="voOk" style="width:100%;font-size:16px;padding:10px">✓ Opslaan als reservering</button></div>`);
@@ -3872,6 +3877,7 @@ function voRender(){
   $i("voSoort").onchange=e=>{vo.soort=e.target.value;voUpd()};
   $i("voN").oninput=e=>{vo.n=e.target.value;voUpd()};
   $i("voN").onkeydown=e=>{if(e.key==="Enter")voOpslaan()};
+  $i("voP").oninput=e=>{vo.prijs=e.target.value};$i("voP").onkeydown=e=>{if(e.key==="Enter")voOpslaan()};
   $i("voOpm").oninput=e=>{vo.opm=e.target.value};$i("voOpm").onkeydown=e=>{if(e.key==="Enter")voOpslaan()};
   $i("voOk").onclick=voOpslaan;
   voUpd();($i(vo.klant?"voN":"voKlant")).focus()}
@@ -3895,8 +3901,8 @@ function voSplits(d){const t=voWeekT(),k=voKey(),n=voGetal(vo.n),hier=Math.max(0
   let klant=String(vo.klant||"").trim();if(!klant){alert("Vul een klant in.");document.getElementById("voKlant").focus();return}
   const b=data.klanten.find(x=>x.naam.toLowerCase()===klant.toLowerCase());if(b)klant=b.naam;else klantErbij(klant);
   const opm=String(vo.opm||"").trim();data.verkoop=data.verkoop||{};
-  const zet=(tt,m)=>{if(m<=0)return;const key=k+"|"+wkCode(tt),dt=tt===t?vo.datum:datumTekst(plusWeken(leesDatum(vo.datum),d));(data.verkoop[key]=data.verkoop[key]||[]).push({klant,n:m,datum:dt,...(opm?{opmerking:opm}:{})})};
-  zet(t,hier);zet(t2,tek);opslaanLater();vo.n="";vo.opm="";vo.nieuw=false;vo.klant=klant;sluitMobSoort();if(tab!=="aflever"&&tab!=="mobiel"&&tab!=="oppotov")render();
+  const zet=(tt,m)=>{if(m<=0)return;const key=k+"|"+wkCode(tt),dt=tt===t?vo.datum:datumTekst(plusWeken(leesDatum(vo.datum),d));const pr=prijsLees(vo.prijs);(data.verkoop[key]=data.verkoop[key]||[]).push({klant,n:m,datum:dt,...(opm?{opmerking:opm}:{}),...(pr!=null?{prijs:pr}:{})})};
+  zet(t,hier);zet(t2,tek);opslaanLater();vo.n="";vo.opm="";vo.prijs="";vo.nieuw=false;vo.klant=klant;sluitMobSoort();if(tab!=="aflever"&&tab!=="mobiel"&&tab!=="oppotov")render();
   melding(`✓ Gereserveerd voor ${esc(klant)}: ${getal(hier)} in wk ${wkCode(t)} + ${getal(tek)} in wk ${wkCode(t2)}`,"#2d6a4f")}
 /* Klantkiezer: eigen lijst onder het vakje, gekozen regel blauw */
 function voKlantKiezer(){const inp=document.getElementById("voKlant"),lijst=document.getElementById("voKlLijst");let sel=0,items=[];
@@ -3923,8 +3929,8 @@ function voOpslaan(){const t=voWeekT(),k=voKey(),n=voGetal(vo.n);let klant=Strin
   if(!n){alert("Vul een aantal in.");document.getElementById("voN").focus();return}
   const over=voBes(k,t)-n;if(over<0&&!confirm(`Tekort van ${getal(-over)} planten in week ${wkCode(t)}.\nToch opslaan?`))return;
   const b=data.klanten.find(x=>x.naam.toLowerCase()===klant.toLowerCase());if(b)klant=b.naam;else klantErbij(klant);
-  data.verkoop=data.verkoop||{};const key=k+"|"+wkCode(t);const opm=String(vo.opm||"").trim();(data.verkoop[key]=data.verkoop[key]||[]).push({klant,n,datum:vo.datum,...(opm?{opmerking:opm}:{})});
-  opslaanLater();vo.n="";vo.opm="";vo.nieuw=false;vo.klant=klant;sluitMobSoort();if(tab!=="aflever"&&tab!=="mobiel"&&tab!=="oppotov")render();
+  data.verkoop=data.verkoop||{};const key=k+"|"+wkCode(t);const opm=String(vo.opm||"").trim();const pr=prijsLees(vo.prijs);(data.verkoop[key]=data.verkoop[key]||[]).push({klant,n,datum:vo.datum,...(opm?{opmerking:opm}:{}),...(pr!=null?{prijs:pr}:{})});
+  opslaanLater();vo.n="";vo.opm="";vo.prijs="";vo.nieuw=false;vo.klant=klant;sluitMobSoort();if(tab!=="aflever"&&tab!=="mobiel"&&tab!=="oppotov")render();
   melding(`✓ Gereserveerd: ${getal(n)} × ${esc(k.replace("|"," · "))} aan ${esc(klant)} · week ${wkCode(t)}`,"#2d6a4f")}
 /* sneltoets: alleen V (niet tijdens typen), of Alt + V */
 document.addEventListener("keydown",e=>{if(e.code!=="KeyR"||e.ctrlKey||e.metaKey||e.repeat)return;
@@ -3952,7 +3958,7 @@ function zetNiveau(n){n=Math.max(2,n);try{localStorage.setItem("potplanning-nive
 let vkVanaf=true,vkKlant="",vkPlek=null;
 function verkoopLijst(){const l=[];for(const[key,arr]of Object.entries(data.verkoop||{})){const p=key.split("|");if(p.length<3)continue;
     const code=p[2],y=2000+ +code.slice(0,2),w=+code.slice(2),t=+maandagIso(y,w);
-    (arr||[]).forEach((x,i)=>{if(!(+x.n))return;l.push({key,i,k:p[0]+"|"+p[1],gewas:p[0],soort:p[1],code,t,y,w,klant:x.klant||"(geen klant)",n:+x.n||0,opm:x.opmerking||"",datum:x.datum||""})})}
+    (arr||[]).forEach((x,i)=>{if(!(+x.n))return;l.push({key,i,k:p[0]+"|"+p[1],gewas:p[0],soort:p[1],code,t,y,w,klant:x.klant||"(geen klant)",n:+x.n||0,prijs:x.prijs??null,opm:x.opmerking||"",datum:x.datum||""})})}
   return l.sort((a,b)=>a.t-b.t||a.klant.localeCompare(b.klant,"nl")||a.gewas.localeCompare(b.gewas,"nl")||a.soort.localeCompare(b.soort,"nl"))}
 /* waar staan de planten: afd en vloer (uitzetfase) van de partijen die in die week rapen */
 function maakPlekMap(){vkPlek=new Map();
@@ -3973,13 +3979,13 @@ function toonVerkoop(){maakPlekMap();const nu=dezeWeek();let l=verkoopLijst();
     <div class="printkop"><h2>Reserveringen${vkKlant?" · "+esc(vkKlant):""}</h2></div>`;
   if(!l.length){$("#inhoud").innerHTML=h+`<div class="leeg">Geen reserveringen${vkVanaf?" vanaf deze week":""}. Maak er een met <b>toets R</b>.</div>`;return}
   h+=`<p class="status noprint" style="margin:0 0 6px">Klik op een regel voor de pakbon van die klant in die week.</p>
-    <table class="vktab"><tr><th>Week</th><th>Datum</th><th>Klant</th><th>Gewas</th><th>Soort</th><th style="text-align:right">Aantal</th><th class="zvweg">Afd</th><th class="zvweg">Vloer</th><th>Opmerking</th><th class="noprint"></th></tr>`;
+    <table class="vktab"><tr><th>Week</th><th>Datum</th><th>Klant</th><th>Gewas</th><th>Soort</th><th style="text-align:right">Aantal</th><th style="text-align:right">Prijs</th><th class="zvweg">Afd</th><th class="zvweg">Vloer</th><th>Opmerking</th><th class="noprint"></th></tr>`;
   let vorige=null;
   for(const r of l){if(r.code!==vorige){vorige=r.code;const som=l.filter(x=>x.code===r.code).reduce((a,x)=>a+x.n,0);
-      h+=`<tr class="vkwk"><td colspan="${ZV()?8:10}">Week ${r.code}${r.t===nu?" · deze week":""} · ${getal(som)} planten</td></tr>`}
+      h+=`<tr class="vkwk"><td colspan="${ZV()?9:11}">Week ${r.code}${r.t===nu?" · deze week":""} · ${getal(som)} planten</td></tr>`}
     const pl=plekVan(r.k,r.t);
     h+=`<tr class="vkrij" data-klant="${esc(r.klant)}" data-code="${r.code}" onclick="pakbonVan(this)"><td>${r.code}</td><td>${datNL(r.datum)}</td><td><b>${esc(r.klant)}</b></td><td>${esc(r.gewas)}</td><td>${esc(r.soort)}</td>
-      <td style="text-align:right"><b>${getal(r.n)}</b></td><td class="zvweg">${esc(pl.afd)}</td><td class="zvweg"><b>${esc(pl.vloer)||'<span class="let">?</span>'}</b></td><td class="vkopm">${esc(r.opm)}</td>
+      <td style="text-align:right"><b>${getal(r.n)}</b></td><td style="text-align:right;white-space:nowrap">${prijsTxt(r.prijs)}</td><td class="zvweg">${esc(pl.afd)}</td><td class="zvweg"><b>${esc(pl.vloer)||'<span class="let">?</span>'}</b></td><td class="vkopm">${esc(r.opm)}</td>
       <td class="noprint"><button class="btn rood klein" title="Order verwijderen" onclick="event.stopPropagation();vkWeg('${esc(r.key)}',${r.i})">✕</button></td></tr>`}
   $("#inhoud").innerHTML=h+`</table>`;
   /* vlak net zo breed als de tabel */
