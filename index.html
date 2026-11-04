@@ -812,7 +812,7 @@ tr.kostrij td.kostjaar,tr.groepkop td.kostjaar{font-size:11px;white-space:nowrap
 
 <script>
 "use strict";
-const VERSIE="34.3";
+const VERSIE="34.4";
 const VERSIE_DATUM="03-11-2026";
 /* ---------- Basis ---------- */
 const PALET=["#2d6a4f","#1B5EBE","#E8007D","#c77d1a","#7a4fa0","#0f8b8d","#5b6b2f","#3d5a80","#a0522d","#7AB648"];
@@ -2404,7 +2404,7 @@ function teeltKlap(id){teeltOpen.has(id)?teeltOpen.delete(id):teeltOpen.add(id);
 function toonSoorten(){
   let h="";
   h+=`<div class="rij" style="margin-bottom:12px"><button class="btn" onclick="teeltErbij()">+ Teelt</button>
-    ${data.teeltduren.length>1?`<button class="btn licht klein" onclick="data.teeltduren.forEach(t=>teeltOpen.add(t.id));render()">Alles open</button><button class="btn licht klein" onclick="teeltOpen.clear();render()">Alles dicht</button>`:""}
+    ${data.teeltduren.length>1?`<button class="btn licht klein" onclick="data.teeltduren.forEach(t=>teeltOpen.add(t.id));render()">Alles open</button><button class="btn licht klein" onclick="teeltOpen.clear();render()">Alles dicht</button>`:""}${data.teeltduren.length?`<button class="btn licht klein" onclick="parametersXlsx()" title="Alle parameters naar Excel: elk tabblad één teelt">⬇ Excel</button>`:""}
     ${data.leveranciers.some(l=>l.naam)?"":`<span class="status">Nog geen leveranciers – maak ze aan bij <a href="#" onclick="naar('leveranciers');return false">Stamdata → Leveranciers</a>.</span>`}
     </div>`;
   {const ob=document.getElementById("ovBalk");ob.hidden=false;ob.innerHTML=`<span class="navplek"></span><span class="ovtitel">Parameters</span><span style="flex:1"></span><button class="ovk ovlink" onclick="naar('oppot')" title="Inkoop / opzetten">Inkoop / opzetten ›</button>`}
@@ -2624,19 +2624,38 @@ let xlsxLaden=null;
 function xlsxLib(){if(window.XLSX)return Promise.resolve(window.XLSX);
   return xlsxLaden=xlsxLaden||new Promise((ok,nee)=>{const sc=document.createElement("script");sc.src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js";
     sc.onload=()=>ok(window.XLSX);sc.onerror=()=>{xlsxLaden=null;nee(new Error("Excel-hulp kon niet laden (internet?)"))};document.head.appendChild(sc)})}
-async function xlsxDownload(rijen,naam,blad,filterTot,vanKol){const X=await xlsxLib(),ws=X.utils.aoa_to_sheet(rijen);
-  /* getallen met duizendtal-punt (1.000), vanaf kolom vanKol (soortnummers niet) */
-  for(const adr in ws){if(adr[0]==="!")continue;const c=ws[adr],k=X.utils.decode_cell(adr).c;if(c.t==="n"&&k>=(vanKol||0))c.z="#,##0"}
-  const nk=Math.max(...rijen.map(r=>r.length));
-  ws["!cols"]=Array.from({length:nk},(_,c)=>({wch:Math.min(60,Math.max(4,...rijen.map(r=>{const v=r[c];return v==null?0:typeof v==="number"?v.toLocaleString("nl-NL").length:String(v).length}))+2)}));
-  ws["!autofilter"]={ref:X.utils.encode_range({s:{r:0,c:0},e:{r:Math.max(1,(filterTot||rijen.length)-1),c:nk-1}})};
-  const wb=X.utils.book_new();X.utils.book_append_sheet(wb,ws,String(blad||"Blad1").slice(0,31));
+/* Excel-bestand met één of meer bladen: [{naam, rijen, filterTot, vanKol}] */
+async function xlsxBoek(bladen,bestand){const X=await xlsxLib(),wb=X.utils.book_new(),gebruikt=new Set();
+  for(const b of bladen){const rijen=b.rijen,ws=X.utils.aoa_to_sheet(rijen),nk=Math.max(1,...rijen.map(r=>r.length));
+    for(const adr in ws){if(adr[0]==="!")continue;const c=ws[adr],k=X.utils.decode_cell(adr).c;if(c.t==="n"&&k>=(b.vanKol??99)&&Number.isInteger(c.v))c.z="#,##0"}
+    ws["!cols"]=Array.from({length:nk},(_,c)=>({wch:Math.min(60,Math.max(4,...rijen.map(r=>{const v=r[c];return v==null?0:typeof v==="number"?v.toLocaleString("nl-NL").length:String(v).length}))+2)}));
+    ws["!autofilter"]={ref:X.utils.encode_range({s:{r:0,c:0},e:{r:Math.max(1,(b.filterTot||rijen.length)-1),c:(b.filterKol||nk)-1}})};
+    let nm=String(b.naam||"Blad").replace(/[\[\]:*?\/\\]/g,"-").slice(0,31)||"Blad",i=2;while(gebruikt.has(nm.toLowerCase()))nm=nm.slice(0,28)+" "+i++;gebruikt.add(nm.toLowerCase());
+    X.utils.book_append_sheet(wb,ws,nm)}
   /* bovenste regel vastzetten (blijft staan bij scrollen) */
   let uit=X.write(wb,{type:"array",bookType:"xlsx"});
-  try{const z=X.CFB.read(new Uint8Array(uit),{type:"array"}),i=z.FullPaths.findIndex(p=>/xl\/worksheets\/sheet1\.xml$/.test(p));
-    if(i>=0){const t=new TextDecoder().decode(z.FileIndex[i].content).replace('<sheetView workbookViewId="0"/>','<sheetView workbookViewId="0"><pane ySplit="1" topLeftCell="A2" activePane="bottomLeft" state="frozen"/><selection pane="bottomLeft" activeCell="A2" sqref="A2"/></sheetView>');
-      z.FileIndex[i].content=new TextEncoder().encode(t);z.FileIndex[i].size=z.FileIndex[i].content.length;uit=X.CFB.write(z,{fileType:"zip",type:"array"})}}catch(e){console.log("vastzetten",e)}
-  const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([uit],{type:"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"}));a.download=naam;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},1500)}
+  try{const z=X.CFB.read(new Uint8Array(uit),{type:"array"});let ok=false;
+    z.FullPaths.forEach((p,i)=>{if(!/xl\/worksheets\/sheet\d+\.xml$/.test(p))return;const t=new TextDecoder().decode(z.FileIndex[i].content).replace('<sheetView workbookViewId="0"/>','<sheetView workbookViewId="0"><pane ySplit="1" topLeftCell="A2" activePane="bottomLeft" state="frozen"/><selection pane="bottomLeft" activeCell="A2" sqref="A2"/></sheetView>');
+      z.FileIndex[i].content=new TextEncoder().encode(t);z.FileIndex[i].size=z.FileIndex[i].content.length;ok=true});
+    if(ok)uit=X.CFB.write(z,{fileType:"zip",type:"array"})}catch(e){console.log("vastzetten",e)}
+  const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([uit],{type:"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"}));a.download=bestand;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},1500)}
+const xlsxDownload=(rijen,naam,blad,filterTot,vanKol)=>xlsxBoek([{naam:blad,rijen,filterTot,vanKol}],naam);
+/* Excel van alle parameters: elk tabblad één teelt */
+async function parametersXlsx(){if(!data.teeltduren.length){melding("Er zijn nog geen teelten.");return}
+  const nr=v=>/^\d+$/.test(String(v||""))?+v:(v||""),getalN=v=>v==null||v===""||isNaN(+v)?"":+v;
+  const duurRijen=o=>(o.perioden||[]).map(p=>[p.van,getalN(p.totaal),getalN(p.fase1),p.totaal!=null&&p.fase1!=null?Math.round((p.totaal-p.fase1)*10)/10:""]);
+  const bladen=data.teeltduren.map(t=>{const srt=data.rassen.filter(r=>r.teeltId===t.id).sort((a,b)=>String(a.naam).localeCompare(String(b.naam),"nl"));
+    const rijen=[["Soortnr","Soort","Fust","Raaptijd (wk)","Raap % per week","Uitval %","Levertijd (wk)","Leverancier","Teeltduur","Klopt"]];
+    for(const r of srt){const lev=data.leveranciers.find(l=>l.id===r.leverancierId);
+      rijen.push([nr(r.nr),r.naam||"",r.fust||"",r.raaptijd||1,(r.raaptijd||1)>1?raapVerdeling(r).map(v=>pctTekst(v)).join(" / "):"100",getalN(r.uitval),r.levertijd??"",lev?lev.naam:"",eigenDuur(r)?"eigen: "+duurKort(r):"standaard",r.klopt?"✓ "+r.klopt:""])}
+    const ft=rijen.length;
+    rijen.push([],["Teelt",teeltNaam(t)],["Gewas",t.product||""],["Potmaat (cm)",getalN(t.potmaat)],["Planten/m² oppotten",getalN(t.dicht1)],["Planten/m² uitzetten",getalN(t.dicht2)],
+      [],["Teeltduur (standaard)"],["Vanaf week","Totaal (wk)","Fase 1 (wk)","Fase 2 (wk)"],...duurRijen(t));
+    for(const r of srt.filter(eigenDuur))rijen.push([],["Teeltduur "+(r.naam||"")],["Vanaf week","Totaal (wk)","Fase 1 (wk)","Fase 2 (wk)"],...duurRijen(r));
+    return{naam:teeltNaam(t),rijen,filterTot:ft,filterKol:10}});
+  const naam=`parameters ${KLANT.appNaam||""} ${datumTekst(new Date())}`.replace(/\s+/g," ").trim();
+  try{melding("Excel-bestand maken…");await xlsxBoek(bladen,naam+".xlsx");melding("⬇ Parameters als Excel-bestand gedownload ("+bladen.length+" tabbladen)","#2d6a4f")}
+  catch(e){alert("Excel maken lukt niet: "+e.message)}}
 /* Excel van de inkoop: alle teelten, per soort de aantallen per week. Werkt ook bij meekijken (= de order) */
 async function inkoopCsv(){const j=planJaar,NW=wekenIn(j),wk=Array.from({length:NW},(_,w)=>String(j).slice(2)+String(w+1).padStart(2,"0"));
   const rijen=[["Teelt","Soortnr","Soort","Fust",...wk,"Totaal"]],tot=Array(NW).fill(0);
