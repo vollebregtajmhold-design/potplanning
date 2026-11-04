@@ -837,7 +837,7 @@ input.ac.wzMeer{background:#c9f0d3!important;border-color:#2d8a4e!important;font
 
 <script>
 "use strict";
-const VERSIE="35.3";
+const VERSIE="35.4";
 const VERSIE_DATUM="03-11-2026";
 /* ---------- Basis ---------- */
 const PALET=["#2d6a4f","#1B5EBE","#E8007D","#c77d1a","#7a4fa0","#0f8b8d","#5b6b2f","#3d5a80","#a0522d","#7AB648"];
@@ -2520,7 +2520,8 @@ function toonSoorten(){
         <span class="pijl">${open?"▾":"▸"}</span><b>${esc(t.product||"(nieuwe teelt)")}</b>${t.potmaat!==""?` <span class="status">${esc(t.potmaat)} cm</span>`:""}${KLANT.code&&isAnders(t)?` <span class="levlabel" title="Jonge planten van een andere leverancier">${esc(t.levNaam||"andere leverancier")}</span>`:""}
         <span class="status">· ${n?esc(duurKort(t)):'<span class="let">teeltduur leeg</span>'} · ${srt.length} soort${srt.length===1?"":"en"}${srt.length?": "+esc(srt.map(r=>r.naam+(eigenDuur(r)?"*":"")).filter(Boolean).join(", ")):""}</span>
         <span style="flex:1"></span>${isVast(t)?`<button type="button" class="ovk" style="margin-right:6px" onclick="event.stopPropagation();toonHistorie()" title="Versiegeschiedenis van Cyclamen">🕘 Geschiedenis</button>`:""}<button type="button" class="ovk ovlink" onclick="event.stopPropagation();naarOppot('${t.id}')" title="Naar de inkoop van deze teelt">Inkoop / opzetten ›</button>${ok?`<span style="color:var(--groen)" title="Alles ingevuld">✓</span>`:`<span class="let" title="Nog niet alles ingevuld">⚠</span>`}</div>`;
-    if(open)h+=`<table class="tkop"><tr><th style="width:34%">Teelt</th><th style="width:13%">Potmaat (cm)</th><th style="width:15%">Pl/m² oppotten</th><th style="width:15%">Pl/m² uitzetten</th><th>Wijderzetten</th>${KLANT.code?`<th style="width:20%">Jonge planten van</th>`:""}<th style="width:44px"></th></tr>
+    if(open)h+=`<table class="tkop"><tr>${KLANT.code?`<th style="width:24%">Teelt</th><th style="width:10%">Potmaat (cm)</th><th style="width:12%">Pl/m² oppotten</th><th style="width:12%">Pl/m² uitzetten</th><th style="width:13%">Wijderzetten</th><th style="width:22%">Jonge planten van</th>`
+      :`<th style="width:34%">Teelt</th><th style="width:13%">Potmaat (cm)</th><th style="width:15%">Pl/m² oppotten</th><th style="width:15%">Pl/m² uitzetten</th><th>Wijderzetten</th>`}<th style="width:44px"></th></tr>
       <tr><td>${isVast(t)?`<input value="${esc(t.product)}" readonly title="Deze naam ligt vast" style="width:calc(100% - 26px);background:#eee;color:#444;font-weight:700;cursor:not-allowed"> <span title="Naam ligt vast">🔒</span>`:veld(i,"product","100%","t","bijv. Cyclamen")}</td><td>${veld(i,"potmaat","100%","n","cm")}</td>
         <td>${veld(i,"dicht1","100%","n","pl/m²")}</td><td>${veld(i,"dicht2","100%","n","pl/m²")}</td>
         <td class="status" id="wz-${i}" style="white-space:nowrap">${t.dicht1&&t.dicht2?"1 m² → "+String(Math.round(t.dicht1/t.dicht2*10)/10).replace(".",",")+" m²":""}</td>
