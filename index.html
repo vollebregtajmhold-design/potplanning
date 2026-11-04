@@ -820,7 +820,7 @@ tr.kostrij td.kostjaar,tr.groepkop td.kostjaar{font-size:11px;white-space:nowrap
 
 <script>
 "use strict";
-const VERSIE="34.5";
+const VERSIE="34.6";
 const VERSIE_DATUM="03-11-2026";
 /* ---------- Basis ---------- */
 const PALET=["#2d6a4f","#1B5EBE","#E8007D","#c77d1a","#7a4fa0","#0f8b8d","#5b6b2f","#3d5a80","#a0522d","#7AB648"];
@@ -1240,7 +1240,7 @@ function toonMeekijkBesch(){const B=meekijk&&meekijk.besch,ob=document.getElemen
 const VW_VERSIE="1"; /* hoger maken bij een grote wijziging: dan moet iedereen opnieuw akkoord geven */
 function vwTekst(){const app=esc(KLANT.appNaam||"de app"),lev=esc(KLANT.leverancier||"Vollebregt");
   return`<h3 style="margin:0 0 8px">Voorwaarden gebruik ${app}</h3><ul class="vwlijst">
-  <li><b>Hulpmiddel.</b> Deze app helpt bij het plannen. Alle berekeningen (teeltduur, ruimte, kosten, beschikbaarheid) zijn een schatting. Controleer belangrijke beslissingen zelf, zoals bestellingen en verkoop.</li>
+  <li><b>Hulpmiddel.</b> Deze app helpt bij het plannen. Alle berekeningen (teeltduur, ruimte, kosten, beschikbaarheid) zijn gebaseerd op de parameters die u zelf heeft ingevuld. Controleer belangrijke beslissingen zelf, zoals bestellingen en verkoop.</li>
   <li><b>Geen aansprakelijkheid.</b> ${lev} is niet aansprakelijk voor schade door fouten in de app of de berekeningen, door het verlies van gegevens, of doordat de app (tijdelijk) niet werkt.</li>
   <li><b>Uw gegevens.</b> De gegevens blijven van u. Ze staan in een beveiligde database van Google (Firebase). Alleen de mensen die toegang hebben gekregen, kunnen erbij.</li>
   <li><b>Meekijken.</b> De beheerder (${lev}) ziet alleen wat u deelt via <i>Wie mag wat zien</i>. Parameters, inkoop en beschikbaarheid zijn altijd zichtbaar voor de beheerder.</li>
