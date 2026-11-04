@@ -651,6 +651,13 @@ body.meekijk .ovlink,body.meekijk tr.wknot{display:none!important}
 #ovBalk .ovk.inkcsv{background:#fff;border:1px solid #2d6a4f;color:#1f4d39;font-weight:700;padding:6px 12px;border-radius:6px}
 
 tr.kostrij td.kostjaar,tr.groepkop td.kostjaar{font-size:11px;white-space:nowrap;text-align:right;min-width:92px;line-height:1.25}td.kostjaar span{color:#8a5a00}
+
+/* 34.5 voorwaarden */
+#vwPop{position:fixed;inset:0;z-index:10002;background:rgba(0,0,0,.55);display:flex;align-items:center;justify-content:center;padding:16px}#vwPop[hidden]{display:none}
+.vwkaart{background:#fff;border-radius:14px;max-width:620px;width:100%;max-height:88vh;overflow:auto;padding:20px 22px;font-size:14px;line-height:1.45;border-top:5px solid #4b2a6e;box-shadow:0 10px 40px rgba(0,0,0,.35)}
+.vwkaart h3{color:#4b2a6e}.vwlijst{margin:0;padding-left:18px}.vwlijst li{margin:5px 0}
+.vwregel{margin-top:12px;font-size:12px;color:#666}.vwregel a{color:#4b2a6e;font-weight:600}
+.alleenKlantVw{display:none!important}body.klantApp .alleenKlantVw{display:flex!important}
 </style>
 </head>
 <body>
@@ -708,6 +715,7 @@ tr.kostrij td.kostjaar,tr.groepkop td.kostjaar{font-size:11px;white-space:nowrap
       <button type="button" class="wolkAlleen alleenKlantApp" onclick="document.querySelectorAll('#balk .menu.open').forEach(m=>m.classList.remove('open'));toonDelen()">👥 Wie mag wat zien</button>
       <button id="btnUitlog" class="wolkAlleen" type="button">🚪 Uitloggen</button>
       <button type="button" class="alleenBeheer" onclick="document.querySelectorAll('#balk .menu.open').forEach(m=>m.classList.remove('open'));naar('beheer')">🛠 Beheer klanten</button>
+      <button type="button" class="alleenKlantVw" onclick="document.querySelectorAll('#balk .menu.open').forEach(m=>m.classList.remove('open'));toonVoorwaarden()">📄 Voorwaarden</button>
       <button type="button" onclick="document.querySelectorAll('#balk .menu.open').forEach(m=>m.classList.remove('open'));toonWelkom()">ℹ️ Uitleg (welkom)</button>
       <button type="button" class="wolkAlleen" onclick="toonKopieen()" title="Automatische reservekopieën (elke week één)">🗂 Reservekopieën</button>
       <button id="btnKopie" type="button" title="Download een kopie van al je gegevens (.json), bijvoorbeeld om te versturen">⬇ Kopie downloaden</button>
@@ -812,7 +820,7 @@ tr.kostrij td.kostjaar,tr.groepkop td.kostjaar{font-size:11px;white-space:nowrap
 
 <script>
 "use strict";
-const VERSIE="34.4";
+const VERSIE="34.5";
 const VERSIE_DATUM="03-11-2026";
 /* ---------- Basis ---------- */
 const PALET=["#2d6a4f","#1B5EBE","#E8007D","#c77d1a","#7a4fa0","#0f8b8d","#5b6b2f","#3d5a80","#a0522d","#7AB648"];
@@ -1199,7 +1207,7 @@ function probeerDelen(db){db.collection("planning").doc("delen_"+String(wolkMail
     const b=document.getElementById("kijkLabel");if(b){b.textContent="👁 Meekijken";b.title="U kijkt mee met wat de klant deelt. U kunt niets veranderen."}
     data=normaliseer({teeltduren:o.teeltduren||[],rassen:o.rassen||[],instellingen:o.instellingen||{},verkoop:o.verkoop||{},klanten:o.klanten||[],notities:o.notities||[],weekNotitie:o.weekNotitie||{}});
     laatsteKern=kernVan(data);terugStapel=[];
-    const ok=meekijkTabs();if(!ok.includes(tab))tab=ok[0]||"mkbesch";render();
+    const ok=meekijkTabs();if(!ok.includes(tab))tab=ok[0]||"mkbesch";render();setTimeout(vwControle,800);
     wolkStatus("Meekijken · bijgewerkt "+(g?new Date(g).toLocaleString("nl-NL"):""))},
   e=>wolkStatus("⚠ "+(e.code==="permission-denied"?"Geen toegang met dit account ("+wolkMail+")":e.message),false))}
 const meekijkTabs=()=>{const d=(meekijk&&meekijk.delen)||{},l=[];if(d.param||d.inkoop)l.push("soorten");if(d.inkoop)l.push("oppot");if(d.opzet)l.push("oppotov");if(d.afl)l.push("aflever");if(d.besch)l.push("mkbesch");if(d.reserveringen)l.push("verkoop");return l};
@@ -1227,6 +1235,32 @@ function toonMeekijkBesch(){const B=meekijk&&meekijk.besch,ob=document.getElemen
   for(const r of R){const[pr,so]=r.k.split("|");h+=`<tr><td class="ovnaam"><span class="ovtl">${esc(pr)}</span> · <span class="ovsl">${esc(so)}</span></td>${C.map((c,i)=>{const v=r.v[c]||0;return`<td data-c="${i}" data-v="${Math.abs(v)}"${vis(i)} class="${v<0?"ovmin":""}">${v?getal(v):'<span class="ovleeg">—</span>'}</td>`}).join("")}</tr>`}
   h+=`<tr class="ovtot"><td class="ovnaam">Totaal</td>${C.map((c,i)=>{const v=R.reduce((a,r)=>a+(r.v[c]||0),0);return`<td data-c="${i}"${vis(i)}>${v?getal(v):'<span class="ovleeg">—</span>'}</td>`}).join("")}</tr></table>`;
   $("#inhoud").innerHTML=h;ovSchuifLive()}
+
+/* ================= Voorwaarden (disclaimer) – alleen in de apps van klanten ================= */
+const VW_VERSIE="1"; /* hoger maken bij een grote wijziging: dan moet iedereen opnieuw akkoord geven */
+function vwTekst(){const app=esc(KLANT.appNaam||"de app"),lev=esc(KLANT.leverancier||"Vollebregt");
+  return`<h3 style="margin:0 0 8px">Voorwaarden gebruik ${app}</h3><ul class="vwlijst">
+  <li><b>Hulpmiddel.</b> Deze app helpt bij het plannen. Alle berekeningen (teeltduur, ruimte, kosten, beschikbaarheid) zijn een schatting. Controleer belangrijke beslissingen zelf, zoals bestellingen en verkoop.</li>
+  <li><b>Geen aansprakelijkheid.</b> ${lev} is niet aansprakelijk voor schade door fouten in de app of de berekeningen, door het verlies van gegevens, of doordat de app (tijdelijk) niet werkt.</li>
+  <li><b>Uw gegevens.</b> De gegevens blijven van u. Ze staan in een beveiligde database van Google (Firebase). Alleen de mensen die toegang hebben gekregen, kunnen erbij.</li>
+  <li><b>Meekijken.</b> De beheerder (${lev}) ziet alleen wat u deelt via <i>Wie mag wat zien</i>. Parameters, inkoop en beschikbaarheid zijn altijd zichtbaar voor de beheerder.</li>
+  <li><b>Reservekopieën.</b> De app maakt elke week een kopie; de laatste 8 blijven bewaard. Download zelf ook regelmatig een kopie (Bestand → Kopie downloaden).</li>
+  <li><b>Vertrouwelijk.</b> ${lev} deelt uw gegevens niet met anderen.</li>
+  <li><b>Wijzigingen.</b> De app en deze voorwaarden kunnen veranderen. Bij grote wijzigingen krijgt u een melding.</li>
+  <li><b>Contact:</b> Vollebregt Cyclamen, Amstelveen · <a href="https://www.vollebregtcyclamen.nl" target="_blank" rel="noopener">www.vollebregtcyclamen.nl</a></li></ul>`}
+function toonVoorwaarden(vragen){let m=document.getElementById("vwPop");if(!m){m=document.createElement("div");m.id="vwPop";document.body.appendChild(m)}
+  const ak=vwAkkoordVan(wolkMail);
+  m.innerHTML=`<div class="vwkaart">${vwTekst()}${vragen?`<div class="rij" style="margin-top:12px;gap:8px"><button class="btn licht" onclick="if(confirm('Zonder akkoord kunt u de app niet gebruiken. Uitloggen?'))firebase.auth().signOut().then(()=>{document.getElementById('vwPop').hidden=true})">Niet akkoord</button><span style="flex:1"></span><button class="btn" onclick="vwAkkoord()">✓ Akkoord</button></div>`
+    :`${ak?`<p class="status" style="margin:10px 0 0">Akkoord gegeven door ${esc(wolkMail)} op ${new Date(ak.t).toLocaleString("nl-NL")}.</p>`:""}<div class="rij" style="margin-top:12px"><span style="flex:1"></span><button class="btn" onclick="document.getElementById('vwPop').hidden=true">Sluiten</button></div>`}</div>`;
+  m.onclick=vragen?null:e=>{if(e.target===m)m.hidden=true};m.hidden=false}
+const vwSl=()=>"potplanning-vw-"+(KLANT.code||"")+"-"+String(wolkMail||"").toLowerCase();
+function vwAkkoordVan(mail){if(!mail)return null;const a=(data.akkoord||{})[String(mail).toLowerCase()];if(a&&a.v===VW_VERSIE)return a;
+  try{const l=JSON.parse(localStorage.getItem(vwSl())||"null");if(l&&l.v===VW_VERSIE)return l}catch(e){}return null}
+function vwAkkoord(){const a={v:VW_VERSIE,t:new Date().toISOString()};try{localStorage.setItem(vwSl(),JSON.stringify(a))}catch(e){}
+  document.getElementById("vwPop").hidden=true;
+  if(!kijker){(data.akkoord=data.akkoord||{})[String(wolkMail).toLowerCase()]=a;wijzig()}melding("✓ Bedankt. U kunt de app nu gebruiken.","#2d6a4f")}
+/* na het inloggen: nog geen akkoord? dan eerst de voorwaarden */
+function vwControle(){if(!KLANT.code||!wolkMail)return;if(!vwAkkoordVan(wolkMail))toonVoorwaarden(true)}
 /* Ongedaan maken: de laatste 30 versies onthouden (per bestand) */
 let terugStapel=[],laatsteKern=null;
 const kernVan=d=>JSON.stringify({...d,gewijzigd:0,programmaVersie:0});
@@ -1309,7 +1343,7 @@ function toonLogin(fout){let m=document.getElementById("login");
   if(!m){m=document.createElement("div");m.id="login";document.body.appendChild(m)}
   const ic=(document.querySelector('link[rel=apple-touch-icon]')||{}).href||"";
   m.innerHTML=`<div class="kaart">${ic?`<img src="${ic}" alt="">`:""}<h2>${esc(KLANT.appNaam)}</h2><div class="status">Log in om uw planning te openen.</div>
-    <button type="button" onclick="wolkLogin()">Inloggen met Google</button>${fout?`<div class="fout">${esc(fout)}</div>`:""}</div>`;m.hidden=false}
+    <button type="button" onclick="wolkLogin()">Inloggen met Google</button>${fout?`<div class="fout">${esc(fout)}</div>`:""}${KLANT.code?`<div class="vwregel">Door in te loggen gaat u akkoord met de <a href="#" onclick="toonVoorwaarden();return false">voorwaarden</a>.</div>`:""}</div>`;m.hidden=false}
 async function wolkLogin(){const p=new firebase.auth.GoogleAuthProvider();p.setCustomParameters({prompt:"select_account"});
   try{await firebase.auth().signInWithPopup(p)}
   catch(e){if(e.code==="auth/popup-blocked"||e.code==="auth/operation-not-supported-in-this-environment"){try{await firebase.auth().signInWithRedirect(p)}catch(x){toonLogin(x.message)}}
@@ -1337,7 +1371,7 @@ async function wolkStart(){
       if(proef){try{echt=normaliseer(JSON.parse(v.json))}catch(e){}melding("☁️ De echte planning is online bijgewerkt (u bent aan het proberen)");return}
       try{data=normaliseer(JSON.parse(v.json))}catch(e){wolkStatus("⚠ Online gegevens zijn beschadigd",false);return}
       try{localStorage.setItem(OPSLAG_SLEUTEL,JSON.stringify(data))}catch(e){}
-      if(wolkEerste){wolkEerste=false;terugStapel=[];setTimeout(deelOpslaan,3000);tab=!data.teeltduren.length?"soorten":window.innerWidth<700?"mobiel":"aflever"}
+      if(wolkEerste){wolkEerste=false;terugStapel=[];setTimeout(deelOpslaan,3000);setTimeout(vwControle,800);tab=!data.teeltduren.length?"soorten":window.innerWidth<700?"mobiel":"aflever"}
       else melding("☁️ Planning bijgewerkt"+(v.door&&v.door!==wolkMail?" door "+esc(v.door):""));
       laatsteKern=kernVan(data);zetTerugKnop();render();
       wolkStatus("Bijgewerkt om "+new Date().toLocaleTimeString("nl-NL"));
