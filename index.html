@@ -663,6 +663,14 @@ tr.kostrij td.kostjaar,tr.groepkop td.kostjaar{font-size:11px;white-space:nowrap
 .kvtab td:first-child,.kvtab th:first-child{text-align:left}.kvtab tr.sub td{background:#f3efe6;font-style:italic}.kvtab tr.tot td{font-weight:800;background:#e3f3ea}
 
 .bhact{font-size:12px;font-weight:700;padding:3px 9px;border-radius:12px;background:#eee}.bhact.ok{background:#e3f3ea;color:#1f4d39}.bhact.half{background:#fff3a8;color:#5a4a00}.bhact.oud{background:#fde7e7;color:#b3261e}
+
+/* 35.1 bevestigen, wijzigingen, uitleg */
+tr.bevrij td{background:#f4f8fc;text-align:center;font-size:13px;height:24px}tr.bevrij td.vast{text-align:left}
+tr.bevrij td.ok{background:#d9f0e1;color:#1f6b3d;font-weight:800}tr.bevrij td.anders{background:#ffe9c2;color:#8a5a00;font-weight:800}tr.bevrij input{cursor:pointer;margin:0}
+input.ac.wzMeer{background:#c9f0d3!important;border-color:#2d8a4e!important;font-weight:700}input.ac.wzMinder{background:#ffd3d3!important;border-color:#c0392b!important;font-weight:700}
+.wzbalk{margin:6px 0;padding:6px 12px;border-radius:8px;background:#fff3a8;font-size:14px;display:flex;gap:8px;align-items:center;flex-wrap:wrap}.wzbalk.rustig{background:#eef4fb;color:#555}
+.wzm{color:#1f6b3d;font-weight:800}.wzn{color:#b3261e;font-weight:800}
+#ovBalk .hulpknop{width:30px;height:30px;border-radius:50%;border:1px solid #2d6a4f;background:#fff;color:#1f4d39;font-weight:800;font-size:16px;cursor:pointer;flex:none;margin-left:6px}#ovBalk .hulpknop:hover{background:#dff0e6}
 </style>
 </head>
 <body>
@@ -825,7 +833,7 @@ tr.kostrij td.kostjaar,tr.groepkop td.kostjaar{font-size:11px;white-space:nowrap
 
 <script>
 "use strict";
-const VERSIE="35.0";
+const VERSIE="35.1";
 const VERSIE_DATUM="03-11-2026";
 /* ---------- Basis ---------- */
 const PALET=["#2d6a4f","#1B5EBE","#E8007D","#c77d1a","#7a4fa0","#0f8b8d","#5b6b2f","#3d5a80","#a0522d","#7AB648"];
@@ -1130,7 +1138,7 @@ function zetKijker(v){kijker=!!v;document.body.classList.toggle("kijker",kijker)
   if(!b){b=document.createElement("span");b.id="kijkLabel";b.textContent="👁 Alleen kijken";b.title="Met dit account kunt u alles bekijken, maar niets veranderen.";const t=document.querySelector("#balk .titel");if(t)t.after(b)}
   b.hidden=!kijker}
 /* Notitie per week: data.weekNotitie["JJWW"] = tekst */
-setTimeout(()=>{const r0=render;render=function(){const x=r0.apply(this,arguments);try{weekNotRijen()}catch(e){console.log(e)}return x};try{weekNotRijen()}catch(e){}},0);
+setTimeout(()=>{const r0=render;render=function(){const x=r0.apply(this,arguments);try{weekNotRijen()}catch(e){console.log(e)}try{hulpKnop()}catch(e){console.log(e)}return x};try{weekNotRijen()}catch(e){}},0);
 const wkNot=c=>((data.weekNotitie||{})[c]||"");
 function weekNotPop(c){const y=2000+ +c.slice(0,2),w=+c.slice(2);
   toonPop("📝 Notitie week "+w+(y!==isoWeek(new Date()).y?" ("+y+")":""),`<textarea id="wkNotTxt" ${kijker?"readonly":""} style="width:100%;height:120px;font-size:15px;box-sizing:border-box;padding:8px" placeholder="bijv. kas 3 eerder leeg">${esc(wkNot(c))}</textarea>
@@ -1212,7 +1220,7 @@ function probeerDelen(db){db.collection("planning").doc("delen_"+String(wolkMail
     const b=document.getElementById("kijkLabel");if(b){b.textContent="👁 Meekijken";b.title="U kijkt mee met wat de klant deelt. U kunt niets veranderen."}
     data=normaliseer({teeltduren:o.teeltduren||[],rassen:o.rassen||[],instellingen:o.instellingen||{},verkoop:o.verkoop||{},klanten:o.klanten||[],notities:o.notities||[],weekNotitie:o.weekNotitie||{}});
     laatsteKern=kernVan(data);terugStapel=[];
-    const ok=meekijkTabs();if(!ok.includes(tab))tab=ok[0]||"mkbesch";render();setTimeout(vwControle,800);
+    const ok=meekijkTabs();if(!ok.includes(tab))tab=ok[0]||"mkbesch";render();setTimeout(vwControle,800);if(!bevLuistert)bevLuister(db);
     wolkStatus("Meekijken · bijgewerkt "+(g?new Date(g).toLocaleString("nl-NL"):""))},
   e=>wolkStatus("⚠ "+(e.code==="permission-denied"?"Geen toegang met dit account ("+wolkMail+")":e.message),false))}
 const meekijkTabs=()=>{const d=(meekijk&&meekijk.delen)||{},l=[];if(d.param||d.inkoop)l.push("soorten");if(d.inkoop)l.push("oppot");if(d.opzet)l.push("oppotov");if(d.afl)l.push("aflever");if(d.besch)l.push("mkbesch");if(d.reserveringen)l.push("verkoop");return l};
@@ -1241,6 +1249,48 @@ function toonMeekijkBesch(){const B=meekijk&&meekijk.besch,ob=document.getElemen
   h+=`<tr class="ovtot"><td class="ovnaam">Totaal</td>${C.map((c,i)=>{const v=R.reduce((a,r)=>a+(r.v[c]||0),0);return`<td data-c="${i}"${vis(i)}>${v?getal(v):'<span class="ovleeg">—</span>'}</td>`}).join("")}</tr></table>`;
   $("#inhoud").innerHTML=h;ovSchuifLive()}
 
+
+/* ================= Beheerder ↔ klant: bevestigen en wijzigingen zien ================= */
+let bevest={},bevLuistert=false;
+function bevLuister(db){bevLuistert=true;db.collection("planning").doc("bevestigd").onSnapshot(s=>{bevest=s.exists?(s.data().weken||{}):{};if(tab==="oppot")render()},()=>{})}
+const isBeheerHier=()=>!!KLANT.code&&(!!meekijk||toegang.meekijken.includes(String(wolkMail||"").toLowerCase()));
+/* rij 'Bevestigd' in de Inkoop: beheerder vinkt weken aan, klant ziet ✓ (of ⚠ als er daarna iets veranderd is) */
+function bevRij(t,NW){if(!KLANT.code)return"";const beh=isBeheerHier(),tot=aantalRij(t,planJaar);
+  return`<tr class="bevrij"><td class="vast" title="${beh?"Vink een week aan als u de order van die week bevestigt":"✓ = door de beheerder bevestigd. ⚠ = na de bevestiging veranderd"}"><b>Bevestigd</b>${beh?' <span class="status">(vinkje = order bevestigd)</span>':""}</td>${Array.from({length:NW},(_,w)=>{
+    const k=planJaar+"|"+t.id+"|"+(w+1),b=bevest[k],nu=Math.round(+tot[w]||0),anders=b&&Math.round(+b.som||0)!==nu;
+    const tip=b?`Bevestigd op ${new Date(b.t).toLocaleString("nl-NL")}${b.door?" door "+b.door:""} · ${getal(b.som||0)} planten${anders?" · NU "+getal(nu)+" (veranderd!)":""}`:"";
+    if(beh)return`<td class="bevcel ${b?(anders?"anders":"ok"):""}" title="${esc(tip||"Nog niet bevestigd")}">${nu||b?`<input type="checkbox" ${b?"checked":""} onchange="bevZet('${k}',this.checked,${nu})">${anders?"⚠":""}`:""}</td>`;
+    return`<td class="bevcel ${b?(anders?"anders":"ok"):""}" title="${esc(tip)}">${b?(anders?"⚠":"✓"):""}</td>`}).join("")}<td class="tot status" style="font-size:11px">${beh?"":"door beheerder"}</td></tr>`}
+async function bevZet(k,aan,som){try{const fv=firebase.firestore.FieldValue;
+    await firebase.firestore().collection("planning").doc("bevestigd").set({weken:{[k]:aan?{t:new Date().toISOString(),door:wolkMail,som}:fv.delete()}},{merge:true});
+    melding(aan?"✓ Week "+k.split("|")[2]+" bevestigd":"Bevestiging weggehaald","#2d6a4f")}
+  catch(e){melding("⚠ Bevestigen lukt niet: "+(e.code==="permission-denied"?"plak eerst de nieuwe Regels Firebase bij deze klant":esc(e.message)),"#b3261e");render()}}
+/* wijzigingen sinds de vorige keer kijken (alleen voor de beheerder, onthouden op deze computer) */
+const wzSl=()=>"potplanning-gezien-"+KLANT.code+"-"+String(wolkMail||"").toLowerCase()+"-"+planJaar;
+function wzStand(){const v={};for(const t of data.teeltduren)for(const r of oppotRegels(t)){const a=(r.a||{})[planJaar]||[];a.forEach((x,w)=>{if(+x)v[r.b+"|"+w]=+x})}return v}
+function wzGezien(){try{localStorage.setItem(wzSl(),JSON.stringify({t:new Date().toISOString(),v:wzStand()}))}catch(e){}render();melding("✓ Alles gezien – nieuwe wijzigingen worden vanaf nu getoond","#2d6a4f")}
+function inkWzMarkeer(){if(!isBeheerHier())return;let S=null;try{S=JSON.parse(localStorage.getItem(wzSl())||"null")}catch(e){}
+  if(!S){try{localStorage.setItem(wzSl(),JSON.stringify({t:new Date().toISOString(),v:wzStand()}))}catch(e){}return}
+  const nu=wzStand(),keys=new Set([...Object.keys(S.v),...Object.keys(nu)]);let n=0,meer=0,minder=0;
+  for(const k of keys){const a=S.v[k]||0,b=nu[k]||0;if(a===b)continue;n++;b>a?meer+=b-a:minder+=a-b}
+  document.querySelectorAll("#inhoud input.ac").forEach(c=>{const k=c.dataset.b+"|"+c.dataset.w,a=S.v[k]||0,b=+String(c.value).replace(/\./g,"")||0;
+    if(a!==b){c.classList.add(b>a?"wzMeer":"wzMinder");c.title=`Was ${getal(a)}, nu ${getal(b)} (${b>a?"+":"−"}${getal(Math.abs(b-a))})`}});
+  const sc=document.querySelector("#inhoud .scroll");if(!sc)return;const d=document.createElement("div");d.className="wzbalk "+(n?"":"rustig");
+  d.innerHTML=n?`🔎 <b>${n} wijziging${n>1?"en":""}</b> in de inkoop ${planJaar} sinds ${new Date(S.t).toLocaleString("nl-NL",{day:"numeric",month:"short",hour:"2-digit",minute:"2-digit"})} · <span class="wzm">+${getal(meer)}</span> <span class="wzn">−${getal(minder)}</span> planten <span class="status">(groen = meer, rood = minder; ga op een vakje staan)</span> <button class="btn klein" onclick="wzGezien()">✓ Gezien</button>`
+    :`🔎 Geen wijzigingen sinds ${new Date(S.t).toLocaleString("nl-NL",{day:"numeric",month:"short",hour:"2-digit",minute:"2-digit"})}`;
+  sc.before(d)}
+/* ================= ? uitleg per pagina ================= */
+const HULP={
+  soorten:["Parameters","<li>Hier staan uw <b>teelten</b> en <b>soorten</b>.</li><li>Per teelt: potmaat, planten per m² en de <b>teeltduur</b> per opzetweek.</li><li>Per soort: fust, raaptijd, uitval en levertijd.</li><li>Een soort met een andere teeltduur? Klik op <b>standaard duur</b> om een eigen duur te maken.</li><li>Het vinkje <b>klopt</b> zet u aan als de planning van die soort klopt met de praktijk.</li>"],
+  oppot:["Inkoop / opzetten","<li>Vul per <b>soort</b> en per <b>week</b> in hoeveel planten u opzet.</li><li>De <b>grafiek</b> laat zien hoe vol de kas wordt. De rode lijn is de bruto kasruimte.</li><li>Rij <b>Verschil m²</b>: wat er verandert door uw invoer.</li><li><b>Rechtermuisknop</b> op een vakje: Max, Proberen of leeg maken.</li><li>Sleep het <b>groene blokje</b> rechtsonder in een vakje om te kopiëren, net als in Excel.</li><li><b>🪴 Lege ruimte</b>: hoeveel er nog bij past. <b>⬇ Excel</b>: alles naar Excel.</li>"],
+  oppotov:["Opzetplanning","<li>Wat er <b>per week</b> wordt opgezet, per soort.</li><li>De rode week onder het weeknummer is de <b>uiterste bestelweek</b>.</li><li>Kies bij <b>Eenheid</b>: planten, trays, m² of kosten.</li><li>Met de <b>schuif</b> kiest u welke weken u ziet.</li><li>Klik op een soort om naar de Parameters te gaan.</li>"],
+  aflever:["Afleverplanning","<li>Wat er <b>per week</b> klaar is om af te leveren.</li><li>Kies: <b>Afleverplan</b>, <b>Gereserveerd</b> of <b>Nog beschikbaar</b>.</li><li>Klik op een <b>vakje</b> om een reservering te maken (klant, aantal, prijs).</li><li>Klik op een <b>weeknummer</b> voor het overzicht van alle reserveringen.</li><li>Toets <b>R</b>: snel een reservering maken.</li>"],
+  verkoop:["Reserveringen","<li>Alle reserveringen, per week en per klant.</li><li>Klik op een regel voor de <b>pakbon</b>.</li><li>Met <b>+ Reservering</b> of toets <b>R</b> maakt u een nieuwe.</li>"],
+  mkbesch:["Beschikbaar","<li>Hoeveel er per week <b>nog beschikbaar</b> is: afleverplan min reserveringen.</li><li>Deze gegevens zijn gedeeld door de klant.</li>"],
+  beheer:["Beheer klanten","<li>Elke klant heeft een eigen <b>GitHub</b> (de app) en een eigen <b>Firebase</b> (de gegevens).</li><li><b>⬆ Alles bijwerken</b>: nieuwe versie bij alle klanten.</li><li><b>🧙 GitHub klaarzetten</b>: nieuwe klant in één keer online.</li><li><b>🕒 Laatst actief</b>: wanneer de klant voor het laatst werkte.</li>"]};
+function hulpKnop(){const ob=document.getElementById("ovBalk");if(!ob||ob.hidden||!HULP[tab]||ob.querySelector(".hulpknop"))return;
+  const b=document.createElement("button");b.type="button";b.className="hulpknop";b.textContent="?";b.title="Uitleg van deze pagina";b.onclick=()=>toonHulp(tab);ob.appendChild(b)}
+function toonHulp(t){const h=HULP[t];if(!h)return;toonPop("❓ "+h[0],`<ul class="vwlijst" style="font-size:15px">${h[1]}</ul>`)}
 /* ================= Voorwaarden (disclaimer) – alleen in de apps van klanten ================= */
 const VW_VERSIE="1"; /* hoger maken bij een grote wijziging: dan moet iedereen opnieuw akkoord geven */
 function vwTekst(){const app=esc(KLANT.appNaam||"de app"),lev=esc(KLANT.leverancier||"Vollebregt");
@@ -1365,6 +1415,7 @@ async function wolkStart(){
     if(!u){wolkDoc=null;wolkMail="";toonLogin();return}
     wolkMail=u.email||"";const lg=document.getElementById("login");if(lg)lg.hidden=true;
     wolkDoc=db.collection("planning").doc("hoofd");wolkEerste=true;wolkStatus("Verbinden…");
+    if(KLANT.code)bevLuister(db);
     if(KLANT.code)db.collection("planning").doc("toegang").onSnapshot(t=>{const v=t.exists?t.data():{};toegang={klant:lijstLaag(v.klant),meekijken:lijstLaag(v.meekijken),baas:String(v.baas||"").trim().toLowerCase(),geladen:true};setTimeout(deelOpslaan,1500)},()=>{});
     wolkStop=wolkDoc.onSnapshot(snap=>{
       if(!snap.exists){if(wolkEerste){wolkEerste=false;
@@ -2818,7 +2869,7 @@ function toonOppot(){
     +(niveau()>=3?kop2("k","Kosten € per week·m²",w=>eur2(kostWeek(w+1)),"€/week·m²").replace(/<td class="tot status" style="font-size:11px">€\/week·m²<\/td><\/tr>$/,'<td class="tot kostjaar" id="kj-tot" title="Jaarkosten totaal"></td></tr>')+(inkOpen.k?KOST_R.map(f=>kRij(f,"")).join(""):""):"");
   h+=`<div class="scroll"><table class="duur oppot invoer">
     <tr class="verschilrij"><td class="vast" title="Hoeveel m² er per week bij komt (+) of af gaat (−) door uw wijzigingen sinds het nulpunt"><b>Verschil m²</b> <button class="btn licht klein" style="padding:0 5px;font-size:10px" onclick="inkNulWeg()" title="Nieuw nulpunt: de verschillen weer op 0 zetten">↺</button></td>${Array.from({length:NW},(_,w)=>`<td id="rv-${w}"></td>`).join("")}<td class="tot status" id="rv-som" style="font-size:11px"></td></tr>
-    ${kop("Soort")}`;
+    ${kop("Soort")}${bevRij(t,NW)}`;
   regels.forEach((r,ri)=>{const a=((r.a[planJaar])||Array(53).fill(null)).slice(0,NW);
     h+=`<tr><td class="vast" title="${esc((r.nr?r.nr+" · ":"")+r.naam)}">${r.nr?`<span class="snr">${esc(r.nr)}</span> `:""}${esc(r.naam)}</td>${a.map((v,w)=>`<td><input class="ac ${v===null?"leegc":""} ${inkWijz.has(planJaar+"|"+r.b+"|"+w)?"gewijzigd":""}" inputmode="numeric" pattern="[0-9]*" data-b="${r.b}" data-r="${ri}" data-w="${w}" value="${v??""}"></td>`).join("")}
       <td class="tot" id="rs-${ri}">${getal(som(a))}</td></tr>`});
@@ -2826,7 +2877,7 @@ function toonOppot(){
   h+=`<tr class="nieuwsoort"><td class="vast">${verborgen.length?`<select onchange="if(this.value){oppotToon.add(this.value);render();setTimeout(()=>{const c=document.querySelector('.ac[data-b=&quot;'+this.value+'&quot;]');if(c)c.focus()},50)}"><option value="">➕ soort toevoegen…</option>${verborgen.map(r=>`<option value="${r.b}">${r.nr?esc(r.nr)+" · ":""}${esc(r.naam)}</option>`).join("")}</select>`:`<span class="status">alle soorten staan erin</span>`}</td><td colspan="${NW+1}" class="status" style="text-align:left;padding-left:8px">Kies een soort uit de lijst. Nieuwe soort maken? <a href="#" onclick="naarTeeltId('${t.id}');return false">Parameters ›</a></td></tr>`;
   h+=`<tr class="totrij"><td class="vast"><b>Totaal ${esc(t.product)}</b></td>${tot.slice(0,NW).map((v,w)=>`<td id="tt-${w}"><b>${v?kort1k(v):""}</b></td>`).join("")}<td class="tot" id="tt-som"><b>${getal(som(tot))}</b></td></tr>${kostHTML}</table></div>
     ${mist.length?`<p class="let">⚠ ${esc(mist.join(" · "))} (Stamdata)</p>`:""}`;
-  $("#inhoud").innerHTML=h;inkRuimte();
+  $("#inhoud").innerHTML=h;inkRuimte();try{inkWzMarkeer()}catch(e){console.log(e)}
 }
 /* Inkoop: ruimte die de kas nodig heeft per week (alle teelten), meteen bijgewerkt bij elk getal */
 const RKL=v=>v>95?"#E8007D":v>=85?"#F6B26B":"#86C49E";
@@ -4426,9 +4477,11 @@ service cloud.firestore {
       function rechten() { return /databases/$(database)/documents/planning/rechten; }
       // meekijker mag ook veranderen zolang de klant 'Wijzigen' niet heeft uitgevinkt
       function magWijzigen() { return isKijker() && (!exists(rechten()) || mail() in get(rechten()).data.wijzigen); }
-      allow read: if isKlant() || magWijzigen() || (isKijker() && doc == "delen_" + mail());
-      allow write: if (isKlant() && doc != "toegang")
-        || (magWijzigen() && doc != "toegang" && doc != "rechten");
+      allow read: if isKlant() || magWijzigen()
+        || (isKijker() && (doc == "delen_" + mail() || doc == "bevestigd"));
+      allow write: if (isKlant() && doc != "toegang" && doc != "bevestigd")
+        || (magWijzigen() && doc != "toegang" && doc != "rechten" && doc != "bevestigd")
+        || (isKijker() && doc == "bevestigd");   // alleen de beheerder bevestigt orders
     }
   }
 }`;toonPop("Regels Firebase · "+(k.naam||""),`<p class="status" style="margin:0 0 6px">Firebase → Firestore → tabblad <b>Rules</b> → alles vervangen door deze tekst → <b>Publish</b>.</p><textarea id="bhRegelTxt" readonly style="width:100%;height:240px;font-family:monospace;font-size:13px;box-sizing:border-box">${esc(t)}</textarea>
