@@ -810,7 +810,7 @@ body.meekijk .ovlink,body.meekijk tr.wknot{display:none!important}
 
 <script>
 "use strict";
-const VERSIE="34.0";
+const VERSIE="34.1";
 const VERSIE_DATUM="03-11-2026";
 /* ---------- Basis ---------- */
 const PALET=["#2d6a4f","#1B5EBE","#E8007D","#c77d1a","#7a4fa0","#0f8b8d","#5b6b2f","#3d5a80","#a0522d","#7AB648"];
@@ -3461,21 +3461,25 @@ function leesPlak(txt){
   const sep=regels[0].includes("\t")?"\t":regels[0].includes(";")?";":"\t";
   const rij=x=>x.split(sep).map(c=>c.trim());
   const kop=rij(regels[0]),k=n=>kop.findIndex(c=>new RegExp(n,"i").test(c));
-  const iG=k("^gewas"),iS=k("^soort|^ras|^naam"),iF=k("^fust"),iP=k("€|prijs");
+  const k1=n=>{const e=k(n);return e};
+  const iG=k("^gewas"),iT=k("^teelt$"),iN=k("^soortnr|^nr\\.?$|^artikel"),iF=k("^fust"),iP=k("€|prijs");
+  let iS=k("^(soort|ras|naam)$");if(iS<0)iS=kop.findIndex((c,i)=>i!==iN&&/^soort|^ras|^naam/i.test(c));
   const weken=[];kop.forEach((c,i)=>{const m=c.replace(/\s/g,"").match(/^(?:wk)?(\d{2})(\d{2})$/i)||c.match(/^\s*(?:wk\s*)?(\d{1,2})\s*$/i);
-    if(!m||[iG,iS,iF,iP].includes(i))return;
+    if(!m||[iG,iS,iF,iP,iT,iN].includes(i))return;
     if(m.length===3){const y=2000+ +m[1],w=+m[2];if(w>=1&&w<=53)weken.push({i,y,w})}else{const w=+m[1];if(w>=1&&w<=53)weken.push({i,y:planJaar,w})}});
   if(iS<0||!weken.length)return{fout:"Ik vind geen kolom <b>Soort</b> of geen <b>weken</b> (bijv. 2608) in de eerste regel."};
   const getal2=v=>{v=String(v||"").trim();if(!v||/^[—–-]+$/.test(v))return 0;v=v.replace(/\./g,"").replace(/\s/g,"").replace(",",".");return isNaN(+v)?0:Math.round(+v)};
   const prijs=v=>{v=String(v||"").replace("€","").trim().replace(",",".");return v===""||isNaN(+v)?null:+v};
-  const lijst=regels.slice(1).map(rij).filter(c=>c[iS]).map(c=>({gewas:iG>=0?c[iG]:"",soort:c[iS],fust:iF>=0?c[iF]:"",prijs:iP>=0?prijs(c[iP]):null,
+  const lijst=regels.slice(1).map(rij).filter(c=>c[iS]&&!/^totaal$/i.test(c[iT>=0?iT:iS]||"")).map(c=>({gewas:iG>=0?c[iG]:"",teelt:iT>=0?c[iT]:"",nr:iN>=0?c[iN]:"",soort:c[iS],fust:iF>=0?c[iF]:"",prijs:iP>=0?prijs(c[iP]):null,
     aantal:weken.map(x=>({y:x.y,w:x.w,n:getal2(c[x.i])}))}));
   return{lijst,weken}}
 function plakVoorbeeld(){const r=leesPlak($("#plakTekst").value),v=$("#plakVoorbeeld");
   if(!r){v.innerHTML="";$("#plakDoe").disabled=true;return}
   if(r.fout){v.innerHTML=`<p class="let">${r.fout}</p>`;$("#plakDoe").disabled=true;return}
-  const tId=$("#plakTeelt").value,bestaand=n=>data.rassen.some(x=>(tId==="__nieuw"||x.teeltId===tId)&&x.naam.toLowerCase()===n.toLowerCase());
-  const tot=r.lijst.reduce((a,x)=>a+x.aantal.reduce((b,q)=>b+q.n,0),0),nieuw=r.lijst.filter(x=>!bestaand(x.soort));
+  const tId=$("#plakTeelt").value,nrm=v=>String(v||"").toLowerCase().replace(/[^a-z0-9]/g,"");
+  const tVan=x=>{const t=x.teelt&&data.teeltduren.find(q=>nrm(teeltNaam(q))===nrm(x.teelt)||nrm((q.product||"")+(q.potmaat||""))===nrm(x.teelt));return t?t.id:tId};
+  const bestaand=x=>{const id=tVan(x);return data.rassen.some(q=>(id==="__nieuw"||q.teeltId===id)&&q.naam.toLowerCase()===x.soort.toLowerCase())};
+  const tot=r.lijst.reduce((a,x)=>a+x.aantal.reduce((b,q)=>b+q.n,0),0),nieuw=r.lijst.filter(x=>!bestaand(x));
   const jaren=[...new Set(r.weken.map(x=>x.y))];
   v.innerHTML=`<div class="melding" style="background:#e6f2e9;border-color:var(--groen)">✓ <b>${r.lijst.length} soorten</b> · <b>${r.weken.length} weken</b> (<b>jaar ${jaren.join(", ")}</b>: wk ${r.weken[0].w} t/m ${r.weken[r.weken.length-1].w}) · samen <b>${getal(tot)} planten</b>
     ${nieuw.length?`<br>Nieuwe soorten (${nieuw.length}): ${esc(nieuw.slice(0,12).map(x=>x.soort).join(", "))}${nieuw.length>12?" …":""}`:"<br>Alle soorten bestaan al."}</div>`;
@@ -3483,13 +3487,15 @@ function plakVoorbeeld(){const r=leesPlak($("#plakTekst").value),v=$("#plakVoorb
 function plakInlezen(){const r=leesPlak($("#plakTekst").value);if(!r||r.fout)return;
   const kw=data.instellingen.kwekerij.naam;if(kw&&!confirm(`Inlezen in ${kw}?\n(bestand: ${bestand?bestand.name:"alleen in browser"})`))return;
   const tSel=$("#plakTeelt").value,lev=$("#plakLev").value,nul=$("#plakNul").checked;let nieuw=0,bij=0;
-  const teeltVoor=x=>{if(tSel!=="__nieuw")return data.teeltduren.find(t=>t.id===tSel);
+  const nrm=v=>String(v||"").toLowerCase().replace(/[^a-z0-9]/g,"");
+  const teeltVoor=x=>{if(x.teelt){const t=data.teeltduren.find(q=>nrm(teeltNaam(q))===nrm(x.teelt)||nrm((q.product||"")+(q.potmaat||""))===nrm(x.teelt));if(t)return t}
+    if(tSel!=="__nieuw")return data.teeltduren.find(t=>t.id===tSel);
     const naam=x.gewas||"Nieuwe teelt";let t=data.teeltduren.find(q=>q.product.toLowerCase()===naam.toLowerCase());
     if(!t){duurErbij();t=data.teeltduren[data.teeltduren.length-1];t.product=naam}return t};
   for(const x of r.lijst){const t=teeltVoor(x);if(!t)continue;
     let ras=data.rassen.find(q=>q.teeltId===t.id&&q.naam.toLowerCase()===x.soort.toLowerCase());
     if(!ras){ras={id:uid(),teeltId:t.id,naam:x.soort,leverancierId:"",aantallen:{},raaptijd:1};data.rassen.push(ras);nieuw++}else bij++;
-    if(x.gewas)ras.gewas=x.gewas;if(x.fust)ras.fust=x.fust;if(x.prijs!=null)ras.prijs=x.prijs;if(lev)ras.leverancierId=lev;
+    if(x.gewas)ras.gewas=x.gewas;if(x.fust)ras.fust=x.fust;if(x.nr)ras.nr=String(x.nr);if(x.prijs!=null)ras.prijs=x.prijs;if(lev)ras.leverancierId=lev;
     ras.aantallen=ras.aantallen||{};
     for(const q of x.aantal){if(!q.n&&!nul)continue;const a=ras.aantallen[q.y]=ras.aantallen[q.y]||Array(53).fill(null);a[q.w-1]=q.n||null}}
   data.teeltduren.forEach(t=>telOp(t,data.rassen));
