@@ -671,6 +671,8 @@ input.ac.wzMeer{background:#c9f0d3!important;border-color:#2d8a4e!important;font
 .wzbalk{margin:6px 0;padding:6px 12px;border-radius:8px;background:#fff3a8;font-size:14px;display:flex;gap:8px;align-items:center;flex-wrap:wrap}.wzbalk.rustig{background:#eef4fb;color:#555}
 .wzm{color:#1f6b3d;font-weight:800}.wzn{color:#b3261e;font-weight:800}
 #ovBalk .hulpknop{width:30px;height:30px;border-radius:50%;border:1px solid #2d6a4f;background:#fff;color:#1f4d39;font-weight:800;font-size:16px;cursor:pointer;flex:none;margin-left:6px}#ovBalk .hulpknop:hover{background:#dff0e6}
+
+.welhulp{display:flex;gap:10px;align-items:center;margin-top:10px;padding:8px 10px;background:#eef6f1;border:1px solid #cfe5d8;border-radius:10px;font-size:14px}.welvraag{flex:none;width:28px;height:28px;border-radius:50%;border:1px solid #2d6a4f;background:#fff;color:#1f4d39;font-weight:800;display:flex;align-items:center;justify-content:center;font-size:16px}
 </style>
 </head>
 <body>
@@ -833,7 +835,7 @@ input.ac.wzMeer{background:#c9f0d3!important;border-color:#2d8a4e!important;font
 
 <script>
 "use strict";
-const VERSIE="35.1";
+const VERSIE="35.2";
 const VERSIE_DATUM="03-11-2026";
 /* ---------- Basis ---------- */
 const PALET=["#2d6a4f","#1B5EBE","#E8007D","#c77d1a","#7a4fa0","#0f8b8d","#5b6b2f","#3d5a80","#a0522d","#7AB648"];
@@ -4724,6 +4726,7 @@ function toonWelkom(){const st=(t,n,tab,uitleg)=>`<button type="button" class="w
     ${st("Inkoop / opzetten",2,"oppot","per week invullen wat u opzet · ziet direct de ruimte in de kas")}
     ${st("Opzetplanning",3,"oppotov","overzicht per week: planten, trays, m², bestelweek")}
     ${st("Afleverplanning",4,"aflever","wanneer is het klaar · gereserveerd · nog beschikbaar")}
+    <div class="welhulp"><span class="welvraag">?</span><span>Op elke pagina staat rechtsboven een rond knopje met een <b>vraagteken</b>. Klik erop voor een korte <b>uitleg</b> van die pagina.</span></div>
     <p class="status" style="margin:10px 0 0;font-size:13px">Tip: 📝 post-it voor vragen · 🔍 zoeken (toets Z) · rechtermuisknop op een vak bij Inkoop voor Max en Proberen.</p>
     <div class="rij" style="margin-top:12px"><label class="status"><input type="checkbox" onchange="try{localStorage.setItem('potplanning-welkom-uit',this.checked?'1':'0')}catch(e){}"> niet meer tonen</label><span style="flex:1"></span><button class="btn" onclick="sluitMobSoort()">Aan de slag</button></div>`)}
 (function welkomBijStart(){let n=0;const kijk=()=>{n++;try{if(localStorage.getItem("potplanning-welkom-uit")==="1"||sessionStorage.getItem("potplanning-welkom"))return}catch(e){}
