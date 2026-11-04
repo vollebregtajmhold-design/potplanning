@@ -661,6 +661,8 @@ tr.kostrij td.kostjaar,tr.groepkop td.kostjaar{font-size:11px;white-space:nowrap
 
 .kvtab{border-collapse:collapse;font-size:14px;width:100%}.kvtab th,.kvtab td{border:1px solid #ddd5c4;padding:5px 9px;text-align:right;white-space:nowrap}.kvtab th{background:#eee}
 .kvtab td:first-child,.kvtab th:first-child{text-align:left}.kvtab tr.sub td{background:#f3efe6;font-style:italic}.kvtab tr.tot td{font-weight:800;background:#e3f3ea}
+
+.bhact{font-size:12px;font-weight:700;padding:3px 9px;border-radius:12px;background:#eee}.bhact.ok{background:#e3f3ea;color:#1f4d39}.bhact.half{background:#fff3a8;color:#5a4a00}.bhact.oud{background:#fde7e7;color:#b3261e}
 </style>
 </head>
 <body>
@@ -823,7 +825,7 @@ tr.kostrij td.kostjaar,tr.groepkop td.kostjaar{font-size:11px;white-space:nowrap
 
 <script>
 "use strict";
-const VERSIE="34.7";
+const VERSIE="34.8";
 const VERSIE_DATUM="03-11-2026";
 /* ---------- Basis ---------- */
 const PALET=["#2d6a4f","#1B5EBE","#E8007D","#c77d1a","#7a4fa0","#0f8b8d","#5b6b2f","#3d5a80","#a0522d","#7AB648"];
@@ -1149,7 +1151,7 @@ function kijkTerug(){if(laatsteKern){try{data=normaliseer(JSON.parse(laatsteKern
 /* ================= Meekijken: de klant deelt een deel van zijn planning met de beheerder =================
    De klant kiest wat hij deelt (Bestand → Delen). De app zet dat in planning/delen.
    De regels van Firebase geven de beheerder ALLEEN leesrecht op planning/delen, niet op de rest. */
-let meekijk=null,deelLaatst={};
+let meekijk=null,deelLaatst={},deelLaatstT={};
 const BEHEER_MAIL=(KLANT.beheerMail||"vollebregt.a@gmail.com").toLowerCase();
 const DEEL_VAST=["param","inkoop","besch"]; /* ziet de beheerder altijd */
 const DEEL_OPT=[["param","Parameters","teelten, soorten, teeltduur"],["inkoop","Inkoop","aantallen per week"],["besch","Beschikbaar","nog beschikbaar per week"],
@@ -1181,7 +1183,7 @@ let rechtenLaatst="";
 async function deelOpslaan(){if(!wolkDoc||meekijk||!KLANT.code||!toegang.geladen)return;const col=wolkDoc.parent,L=deelLijst();
   if(toegang.klant.includes(String(wolkMail).toLowerCase())){const w=L.filter(x=>x.opt.wijzigen).map(x=>x.mail),j=JSON.stringify(w);
     if(j!==rechtenLaatst){try{await col.doc("rechten").set({wijzigen:w,gemaakt:new Date().toISOString(),door:wolkMail});rechtenLaatst=j}catch(e){console.log("rechten",e)}}}
-  for(const x of L){try{const j=JSON.stringify(deelData(x.opt));if(deelLaatst[x.mail]===j)continue;
+  for(const x of L){try{const j=JSON.stringify(deelData(x.opt));if(deelLaatst[x.mail]===j&&Date.now()-(deelLaatstT[x.mail]||0)<6e5)continue;deelLaatstT[x.mail]=Date.now(); /* ook elke 10 min een teken van leven, voor 'laatst actief' bij de beheerder */
     await col.doc("delen_"+x.mail).set({json:j,gemaakt:new Date().toISOString(),door:wolkMail});deelLaatst[x.mail]=j}catch(e){console.log("delen",x.mail,e)}}
   /* wie niet meer mag meekijken: gedeeld deel weghalen */
   try{const q=await col.get();for(const d of q.docs)if(d.id.startsWith("delen_")&&!L.some(x=>"delen_"+x.mail===d.id)){await d.ref.delete();delete deelLaatst[d.id.slice(6)]}}catch(e){}}
@@ -2720,6 +2722,33 @@ function toonKostVerdeling(){const j=planJaar,V=kostVerdeling(j),e=v=>"€ "+get
     <tr class="tot"><td>Totaal</td><td>${getal(Math.round(S.wm2))}</td><td>${e(S.direct)}</td><td>${e(S.leeg+V.leegZonder)}</td><td>${e(S.direct+S.leeg+V.leegZonder)}</td><td>100%</td></tr></table>
     <p class="status" style="margin:8px 0 0">Bruto ${getal(V.bruto)} m² · leeg ${getal(Math.round(V.totLeegM))} week·m² · jaarkosten ${e(V.totKost)}${Math.abs(V.totKost-(S.direct+S.leeg+V.leegZonder))>1?" (verschil door weken die te vol zijn)":""}.</p>`);
   const m=document.querySelector("#mobPop .mpop");if(m){m.style.maxWidth="760px";m.style.width="auto"}}
+/* CSV-tekst (;) omzetten naar een echt Excel-bestand; lukt dat niet (geen internet), dan gewoon CSV */
+async function csvXlsx(tekst,naam,blad,labelKols,metTotaal){const lees=l=>{const uit=[];let c="",q=false;for(let i=0;i<l.length;i++){const ch=l[i];
+      if(q){if(ch==='"'&&l[i+1]==='"'){c+='"';i++}else if(ch==='"')q=false;else c+=ch}else if(ch==='"')q=true;else if(ch===";"){uit.push(c);c=""}else c+=ch}uit.push(c);return uit};
+  const getalV=v=>{v=String(v).trim();if(/^-?\d+$/.test(v))return+v;if(/^-?\d+,\d+$/.test(v))return+v.replace(",",".");if(/^€ ?-?[\d.]+(,\d+)?$/.test(v))return+v.replace(/[€\s.]/g,"").replace(",",".");return v===""?null:v};
+  const rijen=String(tekst).replace(/^\ufeff/,"").split("\n").filter(l=>l.length).map((l,i)=>lees(l).map((v,k)=>i===0||k<labelKols?(v===""?null:v):getalV(v)));
+  try{melding("Excel-bestand maken…");await xlsxBoek([{naam:blad,rijen,filterTot:metTotaal?rijen.length-1:rijen.length,vanKol:labelKols}],naam+".xlsx");melding("⬇ "+esc(naam)+" als Excel-bestand gedownload","#2d6a4f")}
+  catch(e){const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([tekst],{type:"text/csv"}));a.download=naam+".csv";a.click();melding("⬇ Gedownload als CSV ("+esc(e.message)+")","#6a3d9a")}}
+
+/* Lege ruimte vullen: per opzetweek hoeveel planten van deze teelt er nog bij passen (geen week boven bruto) */
+let lrSoort="";
+function legeRuimte(){const t=data.teeltduren.find(x=>x.id===oppotKeuze),bruto=+data.instellingen.brutoM2||0,j=planJaar,NW=wekenIn(j);
+  if(!t){alert("Kies eerst een teelt.");return}if(!bruto){alert("Vul eerst de bruto kasruimte in bij Bestand ▾.");return}
+  const{kaart}=ruimteBerekening(),srt=data.rassen.filter(r=>r.teeltId===t.id).sort((a,b)=>String(a.naam).localeCompare(String(b.naam),"nl"));
+  if(srt.length&&!srt.some(r=>r.id===lrSoort))lrSoort=srt[0].id;
+  const nu=dezeWeek(),r=[];
+  for(let w=0;w<NW;w++){const st=+maandagIso(j,w+1);if(st<+nu)continue;const pr=inkProfiel(lrSoort?"r:"+lrSoort:"l:"+t.id,w);if(!pr)continue;
+    let extra=Infinity,krap=null;for(const x of pr){const e=kaart.get(x.t)||{f1:0,f2:0},vrij=bruto-(e.f1+e.f2+(e.vast||0)),n=Math.floor(vrij/x.m);if(n<extra){extra=n;krap=x.t}}
+    const e0=kaart.get(st)||{f1:0,f2:0};if(extra>0)r.push({w,extra,krap,leeg:Math.max(0,bruto-(e0.f1+e0.f2+(e0.vast||0)))})}
+  const ras=srt.find(x=>x.id===lrSoort),fn=ras?fustAantal(ras.fust):0,af=n=>fn?Math.floor(n/fn)*fn:n;
+  toonPop("🪴 Lege ruimte vullen · "+esc(teeltNaam(t))+" "+j,`<p class="status" style="margin:0 0 8px">Per opzetweek: hoeveel planten er nog bij passen zonder dat een week tijdens de teelt boven de bruto ${getal(bruto)} m² komt. Elke week is apart berekend; na toevoegen rekent de lijst opnieuw.</p>
+    ${srt.length?`<div class="rij" style="margin-bottom:8px"><span class="status">Toevoegen bij soort</span><select onchange="lrSoort=this.value;legeRuimte()">${srt.map(x=>`<option value="${x.id}" ${x.id===lrSoort?"selected":""}>${esc(x.naam)}${x.fust?" ("+esc(x.fust)+")":""}</option>`).join("")}</select></div>`:""}
+    ${r.length?`<table class="kvtab"><tr><th>Opzetweek</th><th>Leeg m² nu</th><th>Past nog bij</th><th>Krapste week</th><th></th></tr>${r.map(x=>{const n=af(x.extra);return`<tr><td>${String(j).slice(2)}${String(x.w+1).padStart(2,"0")}</td><td>${getal(Math.round(x.leeg))}</td><td><b>${getal(n)}</b>${fn?` <span class="status">(${getal(n/fn)} trays)</span>`:""}</td><td>${wkCode(x.krap)}</td><td>${n>0&&!kijker?`<button class="btn klein" onclick="lrToevoegen(${x.w},${n})">+ toevoegen</button>`:""}</td></tr>`}).join("")}</table>`
+      :`<p>Er past vanaf deze week <b>niets</b> meer bij zonder dat de kas te vol wordt.</p>`}`);
+  const m=document.querySelector("#mobPop .mpop");if(m){m.style.maxWidth="720px";m.style.width="auto"}}
+function lrToevoegen(w,n){const t=data.teeltduren.find(x=>x.id===oppotKeuze);if(!t)return;const b=bronArr(lrSoort?"r:"+lrSoort:"l:"+t.id,planJaar);if(!b)return;
+  const kk=planJaar+"|"+(lrSoort?"r:"+lrSoort:"l:"+t.id)+"|"+w;if(!inkWijz.has(kk))inkWijz.set(kk,b.arr[w]??null);b.arr[w]=(+b.arr[w]||0)+n;telOp(t,data.rassen);wijzig();
+  melding(`✓ ${getal(n)} planten erbij in week ${w+1} (Ctrl + Z = terug)`,"#2d6a4f");legeRuimte()}
 /* Excel van de inkoop: alle teelten, per soort de aantallen per week. Werkt ook bij meekijken (= de order) */
 async function inkoopCsv(){const j=planJaar,NW=wekenIn(j),wk=Array.from({length:NW},(_,w)=>String(j).slice(2)+String(w+1).padStart(2,"0"));
   const rijen=[["Teelt","Soortnr","Soort","Fust",...wk,"Totaal"]],tot=Array(NW).fill(0);
@@ -2746,7 +2775,7 @@ function toonOppot(){
   let h="";
   {const ob=document.getElementById("ovBalk");ob.hidden=false;ob.innerHTML=`<button class="ovk ovlink" onclick="if(oppotKeuze&&oppotKeuze!=='alle')naarTeeltId(oppotKeuze);else naar('soorten')" title="Parameters (instellen)">‹ Parameters</button><span class="ovtitel">Inkoop / opzetten</span>
     <span class="oppjaar"><button class="btn licht klein" onclick="planJaar--;render()" title="Jaar terug">◀</button><b>${planJaar}</b><button class="btn licht klein" onclick="planJaar++;render()" title="Jaar verder">▶</button></span>
-    <span style="flex:1"></span>${niveau()>=3?`<button class="ovk inkcsv" onclick="toonKostVerdeling()" title="Welk deel van de kosten hoort bij welke teelt en bij de vaste bezetting">📊 Kostenverdeling</button>`:""}<button class="ovk inkcsv" onclick="inkoopCsv()" title="Inkoop van ${planJaar} als Excel-bestand (CSV): alle teelten en soorten, per week">⬇ Excel</button><button class="ovk ovlink" onclick="naar('oppotov')" title="Opzetplanning (overzicht)">Opzetplanning ›</button>`}
+    <span style="flex:1"></span><button class="ovk inkcsv" onclick="legeRuimte()" title="Hoeveel planten passen er per opzetweek nog bij (zonder dat de kas te vol wordt)">🪴 Lege ruimte</button>${niveau()>=3?`<button class="ovk inkcsv" onclick="toonKostVerdeling()" title="Welk deel van de kosten hoort bij welke teelt en bij de vaste bezetting">📊 Kostenverdeling</button>`:""}<button class="ovk inkcsv" onclick="inkoopCsv()" title="Inkoop van ${planJaar} als Excel-bestand (CSV): alle teelten en soorten, per week">⬇ Excel</button><button class="ovk ovlink" onclick="naar('oppotov')" title="Opzetplanning (overzicht)">Opzetplanning ›</button>`}
   if(!data.teeltduren.length){$("#inhoud").innerHTML=h+`<div class="leeg">Nog geen teelten. Maak ze eerst aan bij <b>Stamdata → Teelt</b>, of <button class="btn" onclick="openPlak()">📋 Plak een bestellijst</button></div>`;return}
   if(!data.teeltduren.some(t=>t.id===oppotKeuze))oppotKeuze=data.teeltduren[0].id; /* "Alle teelten" is weg */
   h+=`<div class="tchips">${data.teeltduren.map(t=>{const n=som(aantalRij(t,planJaar));return`<button type="button" class="tchip ${t.id===oppotKeuze?"aan":""}" onclick="oppotKeuze='${t.id}';render()" oncontextmenu="naarTeeltId('${t.id}');return false" title="Klik: inkoop van deze teelt · Rechtermuisknop: teelt bewerken"><b>${esc(teeltNaamKort(t))}</b><small>${getal(n)}</small></button>`}).join("")}
@@ -4285,6 +4314,25 @@ function ghAlles(){if(!ghToken()){alert("Eerst de GitHub-sleutel invullen (knop 
   i.click()}
 /* firebaseConfig uit geplakte tekst halen (ook "const firebaseConfig = {...}") */
 function fbLees(t){t=String(t||"");const o={};for(const k of["apiKey","authDomain","projectId","storageBucket","messagingSenderId","appId","measurementId"]){const m=t.match(new RegExp(k+'["\']?\\s*:\\s*["\']([^"\']+)["\']'));if(m)o[k]=m[1]}return o}
+
+/* Laatst actief: bij de klant (eigen Firebase) kijken wanneer er voor het laatst is opgeslagen.
+   Eén keer inloggen per klant; daarna onthoudt de browser dat. */
+const bhAct={};
+function bhActTekst(k,i){const a=i?bhAct[k.id]:{t:data.gewijzigd,door:wolkMail};if(!a)return"";
+  if(a.fout)return`<span class="status" title="${esc(a.fout)}">🕒 ?</span>`;if(!a.t)return"";
+  const d=new Date(a.t),dagen=Math.floor((Date.now()-d)/864e5),kl=dagen>14?"oud":dagen>3?"half":"ok";
+  return`<span class="bhact ${kl}" title="Laatst opgeslagen${a.door?" door "+esc(a.door):""}">🕒 ${dagen<1?"vandaag "+d.toLocaleTimeString("nl-NL",{hour:"2-digit",minute:"2-digit"}):dagen===1?"gisteren":dagen+" dagen geleden"}</span>`}
+function bhFbApp(k){const cfg=fbLees(k.firebase);if(!cfg.apiKey||!window.firebase)return null;const nm="bh_"+String(k.code||k.id).replace(/\W/g,"");
+  return firebase.apps.find(a=>a.name===nm)||firebase.initializeApp(cfg,nm)}
+const bhAuthKlaar=app=>new Promise(ok=>{const u=app.auth().onAuthStateChanged(x=>{u();ok(x)})});
+async function bhActief(i,stil){const k=beheerData().klanten[i];if(!k||!i)return;const app=bhFbApp(k);if(!app){if(!stil)alert("Vul eerst de firebaseConfig in.");return}
+  let u=await bhAuthKlaar(app);
+  if(!u){if(stil)return;try{const p=new firebase.auth.GoogleAuthProvider();p.setCustomParameters({prompt:"select_account"});u=(await app.auth().signInWithPopup(p)).user}
+    catch(e){bhAct[k.id]={fout:e.message};if(tab==="beheer")render();return}}
+  const col=app.firestore().collection("planning"),mail=String(u.email||"").toLowerCase();let a=null;
+  try{const h=await col.doc("hoofd").get();if(h.exists)a={t:h.data().gewijzigd,door:h.data().door}}catch(e){}
+  if(!a)try{const d=await col.doc("delen_"+mail).get();a=d.exists?{t:d.data().gemaakt,door:d.data().door}:{fout:"Er is nog niets gedeeld met "+mail}}catch(e){a={fout:e.code==="permission-denied"?mail+" staat niet bij 'meekijken' in Firebase":e.message}}
+  bhAct[k.id]=a;if(tab==="beheer")render()}
 const bhVersies={},bhOpen1=new Set();let bhAutoCheck=false;
 function bhKlap(id){bhOpen1.has(id)?bhOpen1.delete(id):bhOpen1.add(id);render()}
 function toonBeheer(){const B=beheerData(),ob=document.getElementById("ovBalk");ob.hidden=false;if(!bhAutoCheck){bhAutoCheck=true;setTimeout(()=>bhAlleVersies(true),50)}
@@ -4293,12 +4341,12 @@ function toonBeheer(){const B=beheerData(),ob=document.getElementById("ovBalk");
   $("#inhoud").innerHTML=`<p class="status" style="margin:0 0 12px">Hier beheert u al uw klanten. Elke klant heeft een eigen GitHub (index.html + klant.js) en een eigen Firebase. Deze lijst staat alleen in uw eigen planning.</p>`+B.klanten.map((k,i)=>{const fb=fbLees(k.firebase),v=bhVersies[k.id];
     const st=v===undefined?`<span class="bhstat">versie ?</span>`:v===null?`<span class="bhstat oud">niet bereikbaar</span>`:v===VERSIE?`<span class="bhstat ok">versie ${esc(v)} ✓</span>`:`<span class="bhstat oud">versie ${esc(v)} → update naar ${VERSIE}</span>`;
     const open=bhOpen1.has(k.id);
-    return`<div class="bhkaart ${i===0?"eigen":""} ${open?"":"dicht"}"><div class="bhkop" onclick="if(!event.target.closest('button'))bhKlap('${k.id}')" title="Klik om ${open?"in":"uit"} te klappen"><span class="bhpijl">${open?"▾":"▸"}</span><h3>${esc(k.naam||"(nieuwe klant)")}</h3>${st}<button class="ovk ovlink" onclick="bhOpen(${i},'app')">Meekijken ›</button>${fb.projectId?`<span class="status">Firebase: ${esc(fb.projectId)}</span>`:`<span class="let">Firebase nog niet ingevuld</span>`}<span style="flex:1"></span>${i?`<button class="btn rood klein" onclick="bhWeg(${i})" title="Uit de lijst halen">✕</button>`:""}</div>
+    return`<div class="bhkaart ${i===0?"eigen":""} ${open?"":"dicht"}"><div class="bhkop" onclick="if(!event.target.closest('button'))bhKlap('${k.id}')" title="Klik om ${open?"in":"uit"} te klappen"><span class="bhpijl">${open?"▾":"▸"}</span><h3>${esc(k.naam||"(nieuwe klant)")}</h3>${st}<button class="ovk ovlink" onclick="bhOpen(${i},'app')">Meekijken ›</button>${bhActTekst(k,i)}${fb.projectId?`<span class="status">Firebase: ${esc(fb.projectId)}</span>`:`<span class="let">Firebase nog niet ingevuld</span>`}<span style="flex:1"></span>${i?`<button class="btn rood klein" onclick="bhWeg(${i})" title="Uit de lijst halen">✕</button>`:""}</div>
       <div class="bhgrid">${veld("naam",i,"Klant","t","bijv. Kwekerij Jansen")}${veld("appNaam",i,"Naam van de app","t","bijv. Jansenplan")}${veld("code",i,"Code (kort woord)","t","bijv. jansen")}
         ${veld("appUrl",i,"Webadres app","t","https://….github.io/naam/")}${veld("repo",i,"GitHub","t","https://github.com/…/naam")}
         ${veld("firebase",i,"firebaseConfig","ta","plak hier het stukje firebaseConfig = { … } uit Firebase")}${veld("emails",i,"E-mailadressen klant (1 per regel)","ta","naam@gmail.com")}${veld("notitie",i,"Notitie","t","")}</div>
       <div class="bhknop"><button class="ovk ovlink" onclick="bhOpen(${i},'repo')">GitHub ›</button><button class="ovk ovlink" onclick="bhOpen(${i},'fb')">Firebase ›</button>
-        <button class="ovk ovlink" onclick="bhVersie(${i})">↻ Versie</button><button class="ovk ovlink" onclick="bhKlantJs(${i})">⬇ klant.js</button><button class="ovk ovlink" onclick="bhRegels(${i})">Regels Firebase</button></div></div>`}).join("")}
+        <button class="ovk ovlink" onclick="bhVersie(${i})">↻ Versie</button>${i?`<button class="ovk ovlink" onclick="bhActief(${i})" title="Wanneer heeft deze klant voor het laatst in de app gewerkt? (eerste keer: inloggen bij deze klant)">🕒 Laatst actief</button>`:""}<button class="ovk ovlink" onclick="bhKlantJs(${i})">⬇ klant.js</button><button class="ovk ovlink" onclick="bhRegels(${i})">Regels Firebase</button></div></div>`}).join("")}
 $("#inhoud").addEventListener("change",e=>{const el=e.target;if(!el.dataset||el.dataset.bk==null||tab!=="beheer")return;const B=beheerData(),k=B.klanten[+el.dataset.bi];if(!k)return;
   k[el.dataset.bk]=el.value.trim();opslaanLater();if(["naam","firebase"].includes(el.dataset.bk))render()});
 function bhNieuw(){const nid=uid();bhOpen1.add(nid);beheerData().klanten.push({id:nid,naam:"",appNaam:"",code:"",appUrl:"",repo:"",firebase:"",emails:"vollebregt.a@gmail.com",notitie:""});wijzig();setTimeout(()=>{const l=[...document.querySelectorAll('input[data-bk="naam"]')].pop();if(l){l.scrollIntoView({block:"center"});l.focus()}},80)}
@@ -4308,7 +4356,7 @@ function bhOpen(i,w){const k=beheerData().klanten[i],fb=fbLees(k.firebase);const
 async function bhVersie(i,stil){const k=beheerData().klanten[i];if(!k||!k.appUrl){if(!stil)alert("Vul eerst het webadres van de app in.");return}
   try{const u=k.appUrl.replace(/\/?$/,"/")+"index.html?v="+Date.now(),r=await fetch(u,{cache:"no-store"}),t=await r.text(),m=t.match(/const VERSIE="([^"]+)"/);bhVersies[k.id]=m?m[1]:null}catch(e){bhVersies[k.id]=null}
   if(!stil&&tab==="beheer")render()}
-async function bhAlleVersies(stil){const l=beheerData().klanten;await Promise.all(l.map((k,i)=>bhVersie(i,true)));if(tab==="beheer")render();if(stil===true)return;
+async function bhAlleVersies(stil){const l=beheerData().klanten;await Promise.all([...l.map((k,i)=>bhVersie(i,true)),...l.map((k,i)=>bhActief(i,true).catch(()=>{}))]);if(tab==="beheer")render();if(stil===true)return;
   const oud=l.filter(k=>bhVersies[k.id]&&bhVersies[k.id]!==VERSIE).length;melding(oud?`${oud} klant(en) hebben een oudere versie`:"Alle bereikbare klanten zijn bijgewerkt","#2d6a4f")}
 function bhKlantJs(i){const k=beheerData().klanten[i];if(!k.appNaam&&!confirm("Er is nog geen naam van de app ingevuld. Toch maken?"))return;
   const t=bhKlantJsTekst(k);const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([t],{type:"text/javascript"}));a.download="klant.js";a.click();
@@ -4437,7 +4485,7 @@ function oppotCsv(){const o=window.__ovCsv;if(!o)return;const wk=o.weken.slice(o
   const lijn=(nm,v,som)=>[...nm.map(q),...v.map(x=>o.tekstMod?q(x):getalC(x)),o.tekstMod||o.gem?"":getalC(som)].join(";");
   const regels=[[...kop,...wk.map(o.code),o.tekstMod?"":"Totaal"].map(q).join(";"),...rijen.map(r=>lijn(r.naam,r.v,o.tekstMod?0:r.v.reduce((a,b)=>a+b,0)))];
   if(!o.tekstMod){const t=wk.map(w=>o.tot[w]||0);regels.push(lijn([o.ehNaam.startsWith("totaal")?"Totaal kosten (€)":"Totaal "+o.ehNaam,...kop.slice(1).map(()=>"")],t,t.reduce((a,b)=>a+b,0)))}
-  const a=document.createElement("a");a.href=URL.createObjectURL(new Blob(["\ufeff"+regels.join("\n")],{type:"text/csv"}));a.download=`opzetplanning ${o.ehNaam} ${o.jaar}.csv`;a.click()}
+  csvXlsx("\ufeff"+regels.join("\n"),`opzetplanning ${o.ehNaam} ${o.jaar}`,"Opzetplanning "+o.jaar,kop.length,!o.tekstMod)}
 /* Excel (CSV): dezelfde tabel als op het scherm (zelfde weken, keuze en rijen), elke week een eigen kolom */
 function afleverCsv(){const jaar=planJaar,van=seizoenVan(jaar),totT=seizoenVan(jaar+1),tlF=teeltLabelF();
   const alleWk=[];for(let i=0,n=Math.round((totT-van)/6048e5);i<n;i++)alleWk.push(+plusWeken(new Date(van),i));
@@ -4454,7 +4502,7 @@ function afleverCsv(){const jaar=planJaar,van=seizoenVan(jaar),totT=seizoenVan(j
   rijen=rijen.filter(r=>r.v.some(x=>x));
   const tot=wk.map((_,i)=>rijen.reduce((a,r)=>a+r.v[i],0)),lijn=(nm,v)=>[...nm.map(q),...v.map(x=>x||""),v.reduce((a,b)=>a+b,0)||""].join(";");
   const tekst="﻿"+[[...kop,...wk.map(wkCode),"Totaal"].map(q).join(";"),...rijen.map(r=>lijn(r.naam,r.v)),lijn(["Totaal "+naam,...kop.slice(1).map(()=>"")],tot)].join("\n");
-  const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([tekst],{type:"text/csv"}));a.download=`afleverplanning ${naam}${aflRij==="klant"?" per klant":""} seizoen ${jaar}.csv`;a.click()}
+  csvXlsx(tekst,`afleverplanning ${naam}${aflRij==="klant"?" per klant":""} seizoen ${jaar}`,"Afleverplanning "+jaar,kop.length,true)}
 function bestelCsv(){const jaar=planJaar,lev=data.leveranciers.find(l=>l.id===bestelLev);
   const regels=bestelRegels(jaar).filter(r=>(bestelLev==="__geen"?!r.levId:r.levId===bestelLev)),weken=[...new Set(regels.map(r=>r.w))].sort((a,b)=>a-b);
   const sl=r=>r.gewas+"|"+r.soort,rijen=[...new Map(regels.map(r=>[sl(r),r])).values()].sort((a,b)=>a.gewas.localeCompare(b.gewas,"nl")||a.soort.localeCompare(b.soort,"nl"));
