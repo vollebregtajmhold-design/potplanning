@@ -658,6 +658,9 @@ tr.kostrij td.kostjaar,tr.groepkop td.kostjaar{font-size:11px;white-space:nowrap
 .vwkaart h3{color:#4b2a6e}.vwlijst{margin:0;padding-left:18px}.vwlijst li{margin:5px 0}
 .vwregel{margin-top:12px;font-size:12px;color:#666}.vwregel a{color:#4b2a6e;font-weight:600}
 .alleenKlantVw{display:none!important}body.klantApp .alleenKlantVw{display:flex!important}
+
+.kvtab{border-collapse:collapse;font-size:14px;width:100%}.kvtab th,.kvtab td{border:1px solid #ddd5c4;padding:5px 9px;text-align:right;white-space:nowrap}.kvtab th{background:#eee}
+.kvtab td:first-child,.kvtab th:first-child{text-align:left}.kvtab tr.sub td{background:#f3efe6;font-style:italic}.kvtab tr.tot td{font-weight:800;background:#e3f3ea}
 </style>
 </head>
 <body>
@@ -820,7 +823,7 @@ tr.kostrij td.kostjaar,tr.groepkop td.kostjaar{font-size:11px;white-space:nowrap
 
 <script>
 "use strict";
-const VERSIE="34.6";
+const VERSIE="34.7";
 const VERSIE_DATUM="03-11-2026";
 /* ---------- Basis ---------- */
 const PALET=["#2d6a4f","#1B5EBE","#E8007D","#c77d1a","#7a4fa0","#0f8b8d","#5b6b2f","#3d5a80","#a0522d","#7AB648"];
@@ -2690,6 +2693,33 @@ async function parametersXlsx(){if(!data.teeltduren.length){melding("Er zijn nog
   const naam=`parameters ${KLANT.appNaam||""} ${datumTekst(new Date())}`.replace(/\s+/g," ").trim();
   try{melding("Excel-bestand maken…");await xlsxBoek(bladen,naam+".xlsx");melding("⬇ Parameters als Excel-bestand gedownload ("+bladen.length+" tabbladen)","#2d6a4f")}
   catch(e){alert("Excel maken lukt niet: "+e.message)}}
+
+/* Kostenverdeling per jaar: welk deel van de kosten hoort bij welke teelt en bij de vaste bezetting.
+   Per week: kosten per week·m² × m² van die post (direct) + een deel van de lege m² (leegloop), naar verhouding van de m². */
+function kostVerdeling(j){const NW=wekenIn(j),bruto=+data.instellingen.brutoM2||0,{kaart}=ruimteBerekening(),VA=vastData(j),VB=vastData(j,"b"),VL=vastLabels();
+  const posten=[...data.teeltduren.map(t=>({id:t.id,naam:teeltNaam(t),soort:"teelt"})),{id:"vastA",naam:VL.a||"Vaste bezetting 1",soort:"vast"},{id:"vastB",naam:VL.b||"Vaste bezetting 2",soort:"vast"}];
+  const o=Object.fromEntries(posten.map(p=>[p.id,{...p,wm2:0,direct:0,leeg:0}]));let totLeegM=0,totKost=0,leegZonder=0;
+  for(let w=0;w<NW;w++){const t=+maandagIso(j,w+1),e=kaart.get(t)||{per:{}},c=kostWeek(w+1,j);
+    const m={};for(const id in (e.per||{}))if(o[id])m[id]=e.per[id];m.vastA=+VA[w]||0;m.vastB=+VB[w]||0;
+    const bezet=Object.values(m).reduce((a,b)=>a+b,0),leeg=Math.max(0,bruto-bezet);totLeegM+=leeg;totKost+=c*Math.max(bruto,bezet);
+    if(!bezet){leegZonder+=c*leeg;continue}
+    for(const id in m){if(!m[id])continue;o[id].wm2+=m[id];o[id].direct+=c*m[id];o[id].leeg+=c*leeg*m[id]/bezet}}
+  return{posten:posten.map(p=>o[p.id]).filter(p=>p.wm2),bruto,totKost,totLeegM,leegZonder}}
+function toonKostVerdeling(){const j=planJaar,V=kostVerdeling(j),e=v=>"€ "+getal(Math.round(v)),pct=(a,b)=>b?Math.round(a/b*100)+"%":"";
+  if(!V.bruto){toonPop("📊 Kostenverdeling "+j,`<p>Vul eerst de <b>bruto kasruimte</b> in bij <b>Bestand ▾</b>.</p>`);return}
+  if(!V.totKost){toonPop("📊 Kostenverdeling "+j,`<p>Er zijn nog geen <b>kosten per week·m²</b> ingevuld voor ${j} (Inkoop → onderaan).</p>`);return}
+  const S={wm2:0,direct:0,leeg:0};V.posten.forEach(p=>{S.wm2+=p.wm2;S.direct+=p.direct;S.leeg+=p.leeg});
+  const rij=(p,kl)=>`<tr class="${kl||""}"><td>${esc(p.naam)}</td><td>${getal(Math.round(p.wm2))}</td><td>${e(p.direct)}</td><td>${e(p.leeg)}</td><td><b>${e(p.direct+p.leeg)}</b></td><td>${pct(p.direct+p.leeg,V.totKost)}</td></tr>`;
+  const teelt=V.posten.filter(p=>p.soort==="teelt"),vast=V.posten.filter(p=>p.soort==="vast"),som=l=>l.reduce((a,p)=>({naam:"",wm2:a.wm2+p.wm2,direct:a.direct+p.direct,leeg:a.leeg+p.leeg}),{wm2:0,direct:0,leeg:0});
+  const st=som(teelt),sv=som(vast);
+  toonPop("📊 Kostenverdeling "+j,`<p class="status" style="margin:0 0 8px">Kosten per week·m² × m² per week, opgeteld over ${j}. De kosten van de lege m² (leegloop) zijn verdeeld naar verhouding van de m² die in die week bezet waren.</p>
+    <table class="kvtab"><tr><th>Post</th><th>week·m²</th><th>Direct</th><th>Leegloop</th><th>Totaal</th><th>%</th></tr>
+    ${teelt.map(p=>rij(p)).join("")}${teelt.length>1?rij({...st,naam:"Subtotaal teelten"},"sub"):""}
+    ${vast.map(p=>rij(p)).join("")}${vast.length>1?rij({...sv,naam:"Subtotaal vaste bezetting"},"sub"):""}
+    ${V.leegZonder?`<tr><td>Leeg, niets bezet</td><td>–</td><td>–</td><td>${e(V.leegZonder)}</td><td><b>${e(V.leegZonder)}</b></td><td>${pct(V.leegZonder,V.totKost)}</td></tr>`:""}
+    <tr class="tot"><td>Totaal</td><td>${getal(Math.round(S.wm2))}</td><td>${e(S.direct)}</td><td>${e(S.leeg+V.leegZonder)}</td><td>${e(S.direct+S.leeg+V.leegZonder)}</td><td>100%</td></tr></table>
+    <p class="status" style="margin:8px 0 0">Bruto ${getal(V.bruto)} m² · leeg ${getal(Math.round(V.totLeegM))} week·m² · jaarkosten ${e(V.totKost)}${Math.abs(V.totKost-(S.direct+S.leeg+V.leegZonder))>1?" (verschil door weken die te vol zijn)":""}.</p>`);
+  const m=document.querySelector("#mobPop .mpop");if(m){m.style.maxWidth="760px";m.style.width="auto"}}
 /* Excel van de inkoop: alle teelten, per soort de aantallen per week. Werkt ook bij meekijken (= de order) */
 async function inkoopCsv(){const j=planJaar,NW=wekenIn(j),wk=Array.from({length:NW},(_,w)=>String(j).slice(2)+String(w+1).padStart(2,"0"));
   const rijen=[["Teelt","Soortnr","Soort","Fust",...wk,"Totaal"]],tot=Array(NW).fill(0);
@@ -2716,7 +2746,7 @@ function toonOppot(){
   let h="";
   {const ob=document.getElementById("ovBalk");ob.hidden=false;ob.innerHTML=`<button class="ovk ovlink" onclick="if(oppotKeuze&&oppotKeuze!=='alle')naarTeeltId(oppotKeuze);else naar('soorten')" title="Parameters (instellen)">‹ Parameters</button><span class="ovtitel">Inkoop / opzetten</span>
     <span class="oppjaar"><button class="btn licht klein" onclick="planJaar--;render()" title="Jaar terug">◀</button><b>${planJaar}</b><button class="btn licht klein" onclick="planJaar++;render()" title="Jaar verder">▶</button></span>
-    <span style="flex:1"></span><button class="ovk inkcsv" onclick="inkoopCsv()" title="Inkoop van ${planJaar} als Excel-bestand (CSV): alle teelten en soorten, per week">⬇ Excel</button><button class="ovk ovlink" onclick="naar('oppotov')" title="Opzetplanning (overzicht)">Opzetplanning ›</button>`}
+    <span style="flex:1"></span>${niveau()>=3?`<button class="ovk inkcsv" onclick="toonKostVerdeling()" title="Welk deel van de kosten hoort bij welke teelt en bij de vaste bezetting">📊 Kostenverdeling</button>`:""}<button class="ovk inkcsv" onclick="inkoopCsv()" title="Inkoop van ${planJaar} als Excel-bestand (CSV): alle teelten en soorten, per week">⬇ Excel</button><button class="ovk ovlink" onclick="naar('oppotov')" title="Opzetplanning (overzicht)">Opzetplanning ›</button>`}
   if(!data.teeltduren.length){$("#inhoud").innerHTML=h+`<div class="leeg">Nog geen teelten. Maak ze eerst aan bij <b>Stamdata → Teelt</b>, of <button class="btn" onclick="openPlak()">📋 Plak een bestellijst</button></div>`;return}
   if(!data.teeltduren.some(t=>t.id===oppotKeuze))oppotKeuze=data.teeltduren[0].id; /* "Alle teelten" is weg */
   h+=`<div class="tchips">${data.teeltduren.map(t=>{const n=som(aantalRij(t,planJaar));return`<button type="button" class="tchip ${t.id===oppotKeuze?"aan":""}" onclick="oppotKeuze='${t.id}';render()" oncontextmenu="naarTeeltId('${t.id}');return false" title="Klik: inkoop van deze teelt · Rechtermuisknop: teelt bewerken"><b>${esc(teeltNaamKort(t))}</b><small>${getal(n)}</small></button>`}).join("")}
