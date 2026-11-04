@@ -677,6 +677,16 @@ input.ac.wzMeer{background:#c9f0d3!important;border-color:#2d8a4e!important;font
 .levlabel{font-size:12px;font-weight:700;background:#fde7e7;color:#8a2a1e;border-radius:10px;padding:2px 8px;margin-left:6px}
 
 table.oppot th.jaarstart,table.oppot td.jaarstart{border-left:3px solid #4b2a6e!important}
+
+/* 35.6 deze week */
+.stgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:14px;padding:4px}
+.stkaart{background:#fff;border:1px solid #ddd5c4;border-radius:12px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,.06)}.stkaart.warm{border-color:#e0a100;box-shadow:0 0 0 2px #ffe9a8}
+.stkop{display:flex;align-items:center;justify-content:space-between;padding:9px 14px;background:#dbe9f6;font-size:16px}.stkop[onclick]{cursor:pointer}.stkop[onclick]:hover{background:#cfe0f3}.stpijl{font-size:20px;color:#16304d}
+.stinh{padding:8px 14px 12px;max-height:330px;overflow:auto}.sttab{width:100%;border-collapse:collapse;font-size:14px}.sttab td{padding:3px 4px;border-bottom:1px solid #f0ebe0}.sttab td.g{text-align:right;white-space:nowrap}
+.sttot{margin-top:6px;font-size:13px;color:#555;text-align:right}.stw{margin:0;padding-left:18px;font-size:14px}.stw li{margin:3px 0}
+.stkas{display:flex;gap:6px;align-items:flex-end;height:120px;margin:4px 0 6px}.stbar{flex:1;height:100%;position:relative;background:#f3efe6;border-radius:5px;display:flex;flex-direction:column;justify-content:flex-end;align-items:center}
+.stvul{width:100%;border-radius:5px}.stbar span{position:absolute;top:2px;font-size:11px;font-weight:700}.stbar small{position:absolute;bottom:-16px;font-size:11px;color:#666}.stkas{margin-bottom:20px}
+#balk .mknop.startknop{background:#fff6c2}
 </style>
 </head>
 <body>
@@ -694,6 +704,7 @@ table.oppot th.jaarstart,table.oppot td.jaarstart{border-left:3px solid #4b2a6e!
     </div></div>
   
   <button id="btnZoekE" type="button" class="eenvoudigAlleen mknop zoekknop" title="Zoeken (toets Z of Ctrl + K)" onclick="zoekOpen()">🔍<span class="lang"> Zoeken</span></button>
+  <button class="mknop groot startknop" data-tab="start" type="button" title="Deze week (toets 0)"><span class="lang">🏠 Deze week</span><span class="kort">🏠</span></button>
   <button class="mknop groot" data-tab="soorten" type="button"><span class="lang">Parameters</span><span class="kort">Param.</span></button>
   <button class="mknop groot" data-tab="oppot" type="button"><span class="lang">Inkoop / opzetten</span><span class="kort">Inkoop</span></button>
   <button class="mknop groot" data-tab="oppotov" type="button"><span class="lang">Opzetplanning</span><span class="kort">Opzetten</span></button>
@@ -839,7 +850,7 @@ table.oppot th.jaarstart,table.oppot td.jaarstart{border-left:3px solid #4b2a6e!
 
 <script>
 "use strict";
-const VERSIE="35.5";
+const VERSIE="35.6";
 const VERSIE_DATUM="03-11-2026";
 /* ---------- Basis ---------- */
 const PALET=["#2d6a4f","#1B5EBE","#E8007D","#c77d1a","#7a4fa0","#0f8b8d","#5b6b2f","#3d5a80","#a0522d","#7AB648"];
@@ -851,7 +862,7 @@ const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&
 const getal=n=>Math.round(+n||0).toLocaleString("nl-NL");
 
 let data=leeg();
-let tab=window.innerWidth<700?"mobiel":"aflever"; /* bij openen: afleverplanning */
+let tab=window.innerWidth<700?"mobiel":"start"; /* bij openen: Deze week */
 const celToon="partij"; let planWeergave="vloer"; // vloerenplan: per vak (rij) of per vloer (totaal)
 let celToonDummy=0; // wat staat er in een vakje van het vloerenplan: "partij" of "pct"
 let planJaar=new Date().getFullYear();
@@ -1144,7 +1155,7 @@ function zetKijker(v){kijker=!!v;document.body.classList.toggle("kijker",kijker)
   if(!b){b=document.createElement("span");b.id="kijkLabel";b.textContent="👁 Alleen kijken";b.title="Met dit account kunt u alles bekijken, maar niets veranderen.";const t=document.querySelector("#balk .titel");if(t)t.after(b)}
   b.hidden=!kijker}
 /* Notitie per week: data.weekNotitie["JJWW"] = tekst */
-setTimeout(()=>{const r0=render;render=function(){const x=r0.apply(this,arguments);try{weekNotRijen()}catch(e){console.log(e)}try{hulpKnop()}catch(e){console.log(e)}return x};try{weekNotRijen()}catch(e){}},0);
+setTimeout(()=>{const r0=render;render=function(){try{keuzeSync()}catch(e){}const x=r0.apply(this,arguments);try{weekNotRijen()}catch(e){console.log(e)}try{hulpKnop()}catch(e){console.log(e)}try{urlZet()}catch(e){}return x};try{weekNotRijen()}catch(e){}},0);
 const wkNot=c=>((data.weekNotitie||{})[c]||"");
 function weekNotPop(c){const y=2000+ +c.slice(0,2),w=+c.slice(2);
   toonPop("📝 Notitie week "+w+(y!==isoWeek(new Date()).y?" ("+y+")":""),`<textarea id="wkNotTxt" ${kijker?"readonly":""} style="width:100%;height:120px;font-size:15px;box-sizing:border-box;padding:8px" placeholder="bijv. kas 3 eerder leeg">${esc(wkNot(c))}</textarea>
@@ -1293,6 +1304,7 @@ function inkWzMarkeer(){if(!isBeheerHier())return;let S=null;try{S=JSON.parse(lo
   sc.before(d)}
 /* ================= ? uitleg per pagina ================= */
 const HULP={
+  start:["Deze week","<li>Alles wat er <b>deze week</b> speelt, op één scherm.</li><li>Klik op de kop van een blok om naar die pagina te gaan.</li><li><b>Toetsen</b>: 0 = deze week, 1 = Parameters, 2 = Inkoop, 3 = Opzetplanning, 4 = Afleverplanning.</li><li>De <b>terug-knop</b> van de browser brengt u naar de vorige pagina.</li>"],
   soorten:["Parameters","<li>Hier staan uw <b>teelten</b> en <b>soorten</b>.</li><li>Per teelt: potmaat, planten per m² en de <b>teeltduur</b> per opzetweek.</li><li>Per soort: fust, raaptijd, uitval en levertijd.</li><li>Een soort met een andere teeltduur? Klik op <b>standaard duur</b> om een eigen duur te maken.</li><li>Het vinkje <b>klopt</b> zet u aan als de planning van die soort klopt met de praktijk.</li>"],
   oppot:["Inkoop / opzetten","<li>Vul per <b>soort</b> en per <b>week</b> in hoeveel planten u opzet.</li><li>De <b>grafiek</b> laat zien hoe vol de kas wordt. De rode lijn is de bruto kasruimte.</li><li>Rij <b>Verschil m²</b>: wat er verandert door uw invoer.</li><li><b>Rechtermuisknop</b> op een vakje: Max, Proberen of leeg maken.</li><li>Sleep het <b>groene blokje</b> rechtsonder in een vakje om te kopiëren, net als in Excel.</li><li><b>🪴 Lege ruimte</b>: hoeveel er nog bij past. <b>⬇ Excel</b>: alles naar Excel.</li>"],
   oppotov:["Opzetplanning","<li>Wat er <b>per week</b> wordt opgezet, per soort.</li><li>De rode week onder het weeknummer is de <b>uiterste bestelweek</b>.</li><li>Kies bij <b>Eenheid</b>: planten, trays, m² of kosten.</li><li>Met de <b>schuif</b> kiest u welke weken u ziet.</li><li>Klik op een soort om naar de Parameters te gaan.</li>"],
@@ -1303,6 +1315,65 @@ const HULP={
 function hulpKnop(){const ob=document.getElementById("ovBalk");if(!ob||ob.hidden||!HULP[tab]||ob.querySelector(".hulpknop"))return;
   const b=document.createElement("button");b.type="button";b.className="hulpknop";b.textContent="?";b.title="Uitleg van deze pagina";b.onclick=()=>toonHulp(tab);ob.appendChild(b)}
 function toonHulp(t){const h=HULP[t];if(!h)return;toonPop("❓ "+h[0],`<ul class="vwlijst" style="font-size:15px">${h[1]}</ul>`)}
+
+/* ================= Snelle winst: terug-knop, toetsen 1–4, keuzes onthouden ================= */
+/* A. elke pagina een eigen adres (#inkoop) → de terug-knop van de browser werkt */
+const TAB_URL={start:"deze-week",soorten:"parameters",oppot:"inkoop",oppotov:"opzetplanning",aflever:"afleverplanning",verkoop:"reserveringen",beheer:"beheer",mkbesch:"beschikbaar",mobiel:"mobiel"};
+const URL_TAB=Object.fromEntries(Object.entries(TAB_URL).map(([a,b])=>[b,a]));
+let urlBezig=false;
+function urlZet(){if(urlBezig||!TAB_URL[tab])return;const h="#"+TAB_URL[tab];if(location.hash===h)return;
+  try{if(!location.hash)history.replaceState({tab},"",h);else history.pushState({tab},"",h)}catch(e){}}
+window.addEventListener("popstate",()=>{const t=URL_TAB[location.hash.slice(1)]||(location.hash?"":"start");if(t&&t!==tab){urlBezig=true;try{tab=t;render()}finally{urlBezig=false}}});
+function startTab(){const t=URL_TAB[location.hash.slice(1)];if(t&&t!=="beheer"&&t!=="mkbesch")return t;return!data.teeltduren.length?"soorten":window.innerWidth<700?"mobiel":"start"}
+/* toetsen 0–4 */
+document.addEventListener("keydown",e=>{if(e.ctrlKey||e.metaKey||e.altKey||e.repeat)return;const t={"0":"start","1":"soorten","2":"oppot","3":"oppotov","4":"aflever"}[e.key];if(!t)return;
+  const el=document.activeElement;if(el&&el.closest("input,textarea,select,[contenteditable]"))return;const m=document.getElementById("mobPop");if((m&&!m.hidden)||document.querySelector("dialog[open]"))return;
+  if(meekijk&&!meekijkTabs().includes(t))return;e.preventDefault();naar(t)});
+/* B. jaar en teelt: één keuze voor alle pagina's, en onthouden op deze computer */
+const KEUZE_SL="potplanning-keuze-"+(KLANT.code||"");let keuzeVorig={};
+let keuzeWacht="";
+try{const k=JSON.parse(localStorage.getItem(KEUZE_SL)||"{}");if(k.planJaar>2000&&k.planJaar<2100)planJaar=k.planJaar;if(k.teelt)keuzeWacht=k.teelt;if(k.half)inkHalf=true}catch(e){}
+function keuzeSync(){if(!data.teeltduren.length)return; /* nog geen gegevens: niets onthouden of overschrijven */
+  if(keuzeWacht){const t=keuzeWacht;keuzeWacht="";if(data.teeltduren.some(x=>x.id===t)){oppotKeuze=t;teeltFilter=t;keuzeVorig.ok=t;keuzeVorig.tf=t}}if(oppotKeuze&&oppotKeuze!==keuzeVorig.ok&&oppotKeuze!=="alle")teeltFilter=oppotKeuze; /* teelt gekozen bij Inkoop → ook bij de andere pagina's */
+  else if(teeltFilter&&teeltFilter!==keuzeVorig.tf)oppotKeuze=teeltFilter;       /* teelt gekozen bij Opzet/Aflever → ook bij Inkoop */
+  keuzeVorig.ok=oppotKeuze;keuzeVorig.tf=teeltFilter;
+  try{localStorage.setItem(KEUZE_SL,JSON.stringify({planJaar,teelt:teeltFilter||oppotKeuze||"",half:inkHalf}))}catch(e){}}
+/* ================= C. Startpagina: Deze week ================= */
+function toonStart(){const ob=document.getElementById("ovBalk");const nu=new Date(+dezeWeek()),iw=isoWeek(nu),c=wkCode(nu),bruto=+data.instellingen.brutoM2||0,e=v=>getal(Math.round(v));
+  ob.hidden=false;ob.innerHTML=`<span class="ovtitel">🏠 Deze week</span><span class="ovinfo">week ${iw.w} · ${iw.y} · ${nu.toLocaleDateString("nl-NL",{day:"numeric",month:"long"})} t/m ${plusWeken(nu,1).toLocaleDateString("nl-NL",{day:"numeric",month:"long"})}</span><span style="flex:1"></span><span class="status">toetsen: 0 deze week · 1 parameters · 2 inkoop · 3 opzet · 4 aflever</span>`;
+  if(!data.teeltduren.length){$("#inhoud").innerHTML=`<div class="leeg">Nog geen teelten. Begin bij <a href="#" onclick="naar('soorten');return false">Parameters ›</a></div>`;return}
+  const kaart=(titel,naar,inh,kl)=>`<div class="stkaart ${kl||""}"><div class="stkop" ${naar?`onclick="${naar}" title="Openen"`:""}><b>${titel}</b>${naar?'<span class="stpijl">›</span>':""}</div><div class="stinh">${inh}</div></div>`;
+  const leeg=t=>`<div class="status" style="padding:6px 0">${t}</div>`,lijst=(rijen,kols)=>rijen.length?`<table class="sttab">${rijen.map(r=>`<tr>${r.map((v,i)=>`<td class="${i?"g":""}">${v}</td>`).join("")}</tr>`).join("")}</table>`:"";
+  /* opzetten deze week */
+  const bR=[...bestelRegels(iw.y),...bestelRegels(iw.y+1)];
+  const opz={};for(const r of bR)if(r.jaar===iw.y&&r.w===iw.w){const k=r.product+" · "+r.soort;opz[k]=(opz[k]||0)+r.aantal}
+  const opzR=Object.entries(opz).sort((a,b)=>a[0].localeCompare(b[0],"nl"));
+  /* bestellen: uiterste bestelweek is deze of volgende week */
+  const best={};for(const r of bR){const ras=r.rasId&&data.rassen.find(x=>x.id===r.rasId),lt=ras&&ras.levertijd!=null?ras.levertijd:levTijd(data.leveranciers.find(l=>l.id===r.levId));
+    const bw=plusWeken(maandagIso(r.jaar,r.w),-lt),d=Math.round((bw-nu)/(7*864e5));if(d<0||d>1)continue;const k=r.product+" · "+r.soort;const o=best[k]=best[k]||{n:0,d,opz:new Set()};o.n+=r.aantal;o.d=Math.min(o.d,d);o.opz.add(String(r.jaar).slice(2)+String(r.w).padStart(2,"0"))}
+  const bestR=Object.entries(best).sort((a,b)=>a[1].d-b[1].d||a[0].localeCompare(b[0],"nl"));
+  /* afleveren deze week */
+  const afl={};for(const r of afleverRegels()){if(wkCode(r.t)!==c||!(r.aantal>0))continue;const k=r.product+"|"+r.soort;afl[k]=(afl[k]||0)+r.aantal}
+  const aflR=Object.entries(afl).sort((a,b)=>a[0].localeCompare(b[0],"nl")).map(([k,n])=>{const g=verkSom(k,+nu);return[esc(k.replace("|"," · ")),e(n),g?`<span class="status">${e(g)} gereserveerd</span>`:"",`<b>${e(n-g)}</b>`]});
+  /* kas: deze en de komende 8 weken */
+  const{kaart:K}=ruimteBerekening(),kw=Array.from({length:9},(_,i)=>{const t=plusWeken(nu,i),x=K.get(+t)||{f1:0,f2:0},m=x.f1+x.f2+(x.vast||0);return{t,m,p:bruto?m/bruto*100:0}});
+  const kasH=bruto?`<div class="stkas">${kw.map((x,i)=>`<div class="stbar" title="week ${isoWeek(x.t).w}: ${e(x.m)} m² · ${Math.round(x.p)}%"><div class="stvul" style="height:${Math.min(100,x.p)}%;background:${RKL(x.p)}"></div><span>${Math.round(x.p)}%</span><small>${isoWeek(x.t).w}</small></div>`).join("")}</div>
+    <div class="status">nu ${e(kw[0].m)} van ${e(bruto)} m² · leeg ${e(Math.max(0,bruto-kw[0].m))} m²</div>`:leeg("Vul de bruto kasruimte in bij Bestand ▾.");
+  /* waarschuwingen */
+  const w=[];if(bruto){const vol=[];for(let i=0;i<12;i++){const t=plusWeken(nu,i),x=K.get(+t)||{f1:0,f2:0},m=x.f1+x.f2+(x.vast||0);if(m>bruto)vol.push(isoWeek(t).w)}if(vol.length)w.push(`⚠ Kas te vol in week ${vol.join(", ")}`)}
+  for(const t of data.teeltduren){if(!t.dicht1||!t.dicht2)w.push(`⚠ ${esc(teeltNaam(t))}: planten per m² ontbreekt`);if(!(t.perioden||[]).some(p=>p.totaal))w.push(`⚠ ${esc(teeltNaam(t))}: teeltduur ontbreekt`)}
+  const laat=Object.entries(best).filter(([,o])=>o.d<0);
+  const notO=(data.notities||[]).filter(x=>!x.klaar),wn=wkNot(c);
+  const res=Object.entries(data.verkoop||{}).filter(([k])=>k.endsWith("|"+c)).flatMap(([,l])=>l),resN=res.reduce((a,x)=>a+(+x.n||0),0);
+  $("#inhoud").innerHTML=`<div class="stgrid">
+    ${kaart("🌱 Opzetten deze week","naar('oppotov')",opzR.length?lijst(opzR.map(([k,n])=>[esc(k),`<b>${e(n)}</b>`]))+`<div class="sttot">Totaal <b>${e(opzR.reduce((a,x)=>a+x[1],0))}</b></div>`:leeg("Deze week wordt er niets opgezet."))}
+    ${kaart("🚚 Afleveren deze week","naar('aflever')",aflR.length?lijst(aflR)+`<div class="sttot">Nog beschikbaar = afleverplan − gereserveerd</div>`:leeg("Deze week is er niets klaar."))}
+    ${kaart("🛒 Bestellen","naar('oppotov')",bestR.length?lijst(bestR.map(([k,o])=>[esc(k),e(o.n),`<span class="${o.d===0?"let":"status"}">${o.d===0?"deze week":"volgende week"}</span>`,`<span class="status">opzet ${[...o.opz].join(", ")}</span>`])):leeg("Deze en volgende week hoeft er niets besteld te worden."),bestR.some(([,o])=>o.d===0)?"warm":"")}
+    ${kaart("🏠 Kas · komende 9 weken","naar('oppot')",kasH)}
+    ${kaart("📦 Reserveringen deze week","vkPop()",res.length?`<div style="font-size:22px;font-weight:800">${e(resN)} <span class="status" style="font-size:14px;font-weight:400">planten · ${res.length} regel${res.length>1?"s":""}</span></div>`:leeg("Geen reserveringen deze week."))}
+    ${kaart("📝 Notities","toonPostit()",(wn?`<div class="mnot heeft">📝 week ${iw.w}: ${esc(wn)}</div>`:"")+(notO.length?lijst(notO.slice(0,5).map(x=>[esc(String(x.tekst||"").slice(0,80))])):(!wn?leeg("Geen open post-its."):"")))}
+    ${w.length?kaart("⚠ Let op","",`<ul class="stw">${w.slice(0,8).map(x=>`<li>${x}</li>`).join("")}</ul>`,"warm"):""}
+  </div>`}
 /* ================= Voorwaarden (disclaimer) – alleen in de apps van klanten ================= */
 const VW_VERSIE="1"; /* hoger maken bij een grote wijziging: dan moet iedereen opnieuw akkoord geven */
 function vwTekst(){const app=esc(KLANT.appNaam||"de app"),lev=esc(KLANT.leverancier||"Vollebregt");
@@ -1439,7 +1510,7 @@ async function wolkStart(){
       if(proef){try{echt=normaliseer(JSON.parse(v.json))}catch(e){}melding("☁️ De echte planning is online bijgewerkt (u bent aan het proberen)");return}
       try{data=normaliseer(JSON.parse(v.json))}catch(e){wolkStatus("⚠ Online gegevens zijn beschadigd",false);return}
       try{localStorage.setItem(OPSLAG_SLEUTEL,JSON.stringify(data))}catch(e){}
-      if(wolkEerste){wolkEerste=false;terugStapel=[];setTimeout(deelOpslaan,3000);setTimeout(vwControle,800);tab=!data.teeltduren.length?"soorten":window.innerWidth<700?"mobiel":"aflever"}
+      if(wolkEerste){wolkEerste=false;terugStapel=[];setTimeout(deelOpslaan,3000);setTimeout(vwControle,800);tab=startTab()}
       else melding("☁️ Planning bijgewerkt"+(v.door&&v.door!==wolkMail?" door "+esc(v.door):""));
       laatsteKern=kernVan(data);zetTerugKnop();render();
       wolkStatus("Bijgewerkt om "+new Date().toLocaleTimeString("nl-NL"));
@@ -1577,7 +1648,7 @@ function render(){document.body.classList.toggle("isBeheer",isBeheerder());if(ta
   /* eenvoudige versie: alleen teelt & soorten, leveranciers, oppotplan, bestel-, aflever- en werkplanning en mobiel */
   const eenv=!!data.instellingen.eenvoudig;document.body.classList.toggle("eenvoudig",eenv);
   {const b=document.getElementById("btnModus");if(b)b.textContent=eenv?"⚙️ Alle functies tonen":"⚙️ Eenvoudige versie"}
-  if(eenv&&!["mkbesch","soorten","leveranciers","klanten","oppot","oppotov","bestel","aflever","werk","mobiel","verkoop","ruimtegraf","beheer"].includes(tab))tab="oppot"; // Soort en Teeltduur zitten nu bij Parameters
+  if(eenv&&!["start","mkbesch","soorten","leveranciers","klanten","oppot","oppotov","bestel","aflever","werk","mobiel","verkoop","ruimtegraf","beheer"].includes(tab))tab="oppot"; // Soort en Teeltduur zitten nu bij Parameters
   onthoudPagina();
   /* Parameters opent altijd met alles ingeklapt */
   if(tab==="soorten"&&vorigeTab!=="soorten"&&!houdOpen&&typeof teeltOpen!=="undefined")teeltOpen.clear();
@@ -1591,18 +1662,18 @@ function render(){document.body.classList.toggle("isBeheer",isBeheerder());if(ta
   document.querySelectorAll("#balk .menu").forEach(m=>m.querySelector(".mknop").classList.toggle("actief",!!m.querySelector(".mlijst .actief")));
   zetVinkjes(); zetNavKnoppen(); toonKwekerij(); $("#btnStart").textContent=(zelfPlannen()?"Partijen klaarzetten ":"Vloeren vullen ")+planJaar;
   $("#btnStart").title=zelfPlannen()?"Maak de partijen uit het oppotplan klaar. Jij sleept ze daarna zelf naar een vloer.":"Zet alle partijen van het oppotplan op de vloeren";
-  document.body.classList.toggle("ovmodus",tab==="mkbesch"||tab==="oppotov"||tab==="aflever"||tab==="bestel"||tab==="ruimtegraf");{const ob=document.getElementById("ovBalk");if(ob&&!["mkbesch","oppotov","aflever","bestel","ruimtegraf","soorten","oppot"].includes(tab))ob.hidden=true}
+  document.body.classList.toggle("ovmodus",tab==="mkbesch"||tab==="oppotov"||tab==="aflever"||tab==="bestel"||tab==="ruimtegraf");{const ob=document.getElementById("ovBalk");if(ob&&!["start","mkbesch","oppotov","aflever","bestel","ruimtegraf","soorten","oppot"].includes(tab))ob.hidden=true}
   document.body.classList.toggle("afl",tab==="ruimtegraf"||tab==="verkoop"||tab==="aflever"||tab==="werk"||tab==="bestel"||tab==="oppotov");
   document.body.classList.toggle("smal",["kappen","soorten","rassen","duren","leveranciers","klanten","bestel","oppotov","aflever","werk","weeklijst","verkoop","ruimtegraf"].includes(tab));
   document.body.classList.toggle("duren",tab==="duren");
   document.body.classList.toggle("pgSoorten",tab==="soorten");
   $("#vensterKnoppen").style.display=(tab==="plan"||tab==="teelt")?"":"none";
-  $("#zoek").style.display=["kappen","soorten","rassen","duren","oppot","leveranciers","mobiel","klanten","bestel","oppotov","aflever","werk","weeklijst","proef","verkoop","ruimtegraf","beheer"].includes(tab)?"none":"";
+  $("#zoek").style.display=["start","kappen","soorten","rassen","duren","oppot","leveranciers","mobiel","klanten","bestel","oppotov","aflever","werk","weeklijst","proef","verkoop","ruimtegraf","beheer"].includes(tab)?"none":"";
   document.body.classList.toggle("mobiel",tab==="mobiel");
   document.body.classList.toggle("klassiek",data.instellingen.kleuren==="klassiek");
   $("#jaarLabel").textContent=planJaar;
   if($("#duurVenster")&&$("#duurVenster").open)vulDuur();
-  ({mkbesch:toonMeekijkBesch,beheer:toonBeheer,ruimtegraf:toonRuimteGraf,verkoop:toonVerkoop,soorten:toonSoorten,rassen:toonRassen,leveranciers:toonLeveranciers,mobiel:toonMobiel,registraties:toonRegistraties,bestel:toonBestel,oppotov:toonOppotOv,klanten:toonKlanten,aflever:toonAflever,werk:toonWerk,weeklijst:toonWeeklijst,proef:toonProef,plan:toonPlan,teelt:toonTeelt,partijen:toonPartijen,duren:toonDuren,oppot:toonOppot,ruimte:toonRuimte,gereed:toonGereed,kappen:toonKappen})[tab]();
+  ({start:toonStart,mkbesch:toonMeekijkBesch,beheer:toonBeheer,ruimtegraf:toonRuimteGraf,verkoop:toonVerkoop,soorten:toonSoorten,rassen:toonRassen,leveranciers:toonLeveranciers,mobiel:toonMobiel,registraties:toonRegistraties,bestel:toonBestel,oppotov:toonOppotOv,klanten:toonKlanten,aflever:toonAflever,werk:toonWerk,weeklijst:toonWeeklijst,proef:toonProef,plan:toonPlan,teelt:toonTeelt,partijen:toonPartijen,duren:toonDuren,oppot:toonOppot,ruimte:toonRuimte,gereed:toonGereed,kappen:toonKappen})[tab]();
 }
 const wkKop=l=>l.map((d,i)=>{const{w,y}=isoWeek(d),jw=i>0&&w===1;return`<th class="wk ${d.getTime()===dezeWeek()?"nu":""} ${jw?"jw":""}" title="wk ${w} (${y})">${jw?`<span class="jaartje">${y}</span>`:""}${w}</th>`}).join("");
 /* Kleuren in het vloerenplan: "zacht" (oppotten oranje, uitgezet groen, zwarte cijfers), "product" (pastel per product), "klassiek" */
@@ -4764,7 +4835,7 @@ function toonWelkom(){const st=(t,n,tab,uitleg)=>`<button type="button" class="w
     if(h){const b=$("#btnVerder");b.hidden=false;b.textContent="▶ Verder met "+h.name;
       b.onclick=async()=>{try{if(await h.requestPermission({mode:"readwrite"})==="granted")await koppel(h)}catch(e){alert("Bestand niet gevonden. Kies 'Open bestand'.")}};
       zetStatus("Klik op 'Verder met "+h.name+"'")}}
-  tab=!data.teeltduren.length?"soorten":window.innerWidth<700?"mobiel":"aflever"; /* bij openen: afleverplanning */
+  tab=startTab(); /* bij openen: Deze week (of de pagina uit het webadres) */
   laatsteKern=kernVan(data);render();zetTerugKnop();
 })();
 </script>
