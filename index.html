@@ -810,7 +810,7 @@ body.meekijk .ovlink,body.meekijk tr.wknot{display:none!important}
 
 <script>
 "use strict";
-const VERSIE="33.8";
+const VERSIE="34.0";
 const VERSIE_DATUM="03-11-2026";
 /* ---------- Basis ---------- */
 const PALET=["#2d6a4f","#1B5EBE","#E8007D","#c77d1a","#7a4fa0","#0f8b8d","#5b6b2f","#3d5a80","#a0522d","#7AB648"];
@@ -2613,11 +2613,19 @@ let xlsxLaden=null;
 function xlsxLib(){if(window.XLSX)return Promise.resolve(window.XLSX);
   return xlsxLaden=xlsxLaden||new Promise((ok,nee)=>{const sc=document.createElement("script");sc.src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js";
     sc.onload=()=>ok(window.XLSX);sc.onerror=()=>{xlsxLaden=null;nee(new Error("Excel-hulp kon niet laden (internet?)"))};document.head.appendChild(sc)})}
-async function xlsxDownload(rijen,naam,blad,filterTot){const X=await xlsxLib(),ws=X.utils.aoa_to_sheet(rijen);
+async function xlsxDownload(rijen,naam,blad,filterTot,vanKol){const X=await xlsxLib(),ws=X.utils.aoa_to_sheet(rijen);
+  /* getallen met duizendtal-punt (1.000), vanaf kolom vanKol (soortnummers niet) */
+  for(const adr in ws){if(adr[0]==="!")continue;const c=ws[adr],k=X.utils.decode_cell(adr).c;if(c.t==="n"&&k>=(vanKol||0))c.z="#,##0"}
   const nk=Math.max(...rijen.map(r=>r.length));
   ws["!cols"]=Array.from({length:nk},(_,c)=>({wch:Math.min(60,Math.max(4,...rijen.map(r=>{const v=r[c];return v==null?0:typeof v==="number"?v.toLocaleString("nl-NL").length:String(v).length}))+2)}));
   ws["!autofilter"]={ref:X.utils.encode_range({s:{r:0,c:0},e:{r:Math.max(1,(filterTot||rijen.length)-1),c:nk-1}})};
-  const wb=X.utils.book_new();X.utils.book_append_sheet(wb,ws,String(blad||"Blad1").slice(0,31));X.writeFile(wb,naam)}
+  const wb=X.utils.book_new();X.utils.book_append_sheet(wb,ws,String(blad||"Blad1").slice(0,31));
+  /* bovenste regel vastzetten (blijft staan bij scrollen) */
+  let uit=X.write(wb,{type:"array",bookType:"xlsx"});
+  try{const z=X.CFB.read(new Uint8Array(uit),{type:"array"}),i=z.FullPaths.findIndex(p=>/xl\/worksheets\/sheet1\.xml$/.test(p));
+    if(i>=0){const t=new TextDecoder().decode(z.FileIndex[i].content).replace('<sheetView workbookViewId="0"/>','<sheetView workbookViewId="0"><pane ySplit="1" topLeftCell="A2" activePane="bottomLeft" state="frozen"/><selection pane="bottomLeft" activeCell="A2" sqref="A2"/></sheetView>');
+      z.FileIndex[i].content=new TextEncoder().encode(t);z.FileIndex[i].size=z.FileIndex[i].content.length;uit=X.CFB.write(z,{fileType:"zip",type:"array"})}}catch(e){console.log("vastzetten",e)}
+  const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([uit],{type:"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"}));a.download=naam;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},1500)}
 /* Excel van de inkoop: alle teelten, per soort de aantallen per week. Werkt ook bij meekijken (= de order) */
 async function inkoopCsv(){const j=planJaar,NW=wekenIn(j),wk=Array.from({length:NW},(_,w)=>String(j).slice(2)+String(w+1).padStart(2,"0"));
   const rijen=[["Teelt","Soortnr","Soort","Fust",...wk,"Totaal"]],tot=Array(NW).fill(0);
@@ -2627,7 +2635,7 @@ async function inkoopCsv(){const j=planJaar,NW=wekenIn(j),wk=Array.from({length:
   if(rijen.length<2){melding("Er staat niets in de inkoop van "+j+".");return}
   const nData=rijen.length;rijen.push(["Totaal","","","",...tot.map(v=>v||null),tot.reduce((x,y)=>x+y,0)]);
   const naam=`inkoop ${KLANT.appNaam||""} ${j}`.replace(/\s+/g," ").trim();
-  try{melding("Excel-bestand maken…");await xlsxDownload(rijen,naam+".xlsx","Inkoop "+j,nData);melding("⬇ Inkoop "+j+" als Excel-bestand gedownload","#2d6a4f")}
+  try{melding("Excel-bestand maken…");await xlsxDownload(rijen,naam+".xlsx","Inkoop "+j,nData,4);melding("⬇ Inkoop "+j+" als Excel-bestand gedownload","#2d6a4f")}
   catch(e){/* geen internet: dan als CSV */const q=x=>`"${String(x??"").replace(/"/g,'""')}"`;
     const a=document.createElement("a");a.href=URL.createObjectURL(new Blob(["﻿"+rijen.map(r=>r.map(v=>typeof v==="number"?v:q(v)).join(";")).join("\n")],{type:"text/csv"}));
     a.download=naam+".csv";a.click();melding("⬇ Gedownload als CSV ("+esc(e.message)+")","#6a3d9a")}}
