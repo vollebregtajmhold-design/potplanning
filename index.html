@@ -673,6 +673,8 @@ input.ac.wzMeer{background:#c9f0d3!important;border-color:#2d8a4e!important;font
 #ovBalk .hulpknop{width:30px;height:30px;border-radius:50%;border:1px solid #2d6a4f;background:#fff;color:#1f4d39;font-weight:800;font-size:16px;cursor:pointer;flex:none;margin-left:6px}#ovBalk .hulpknop:hover{background:#dff0e6}
 
 .welhulp{display:flex;gap:10px;align-items:center;margin-top:10px;padding:8px 10px;background:#eef6f1;border:1px solid #cfe5d8;border-radius:10px;font-size:14px}.welvraag{flex:none;width:28px;height:28px;border-radius:50%;border:1px solid #2d6a4f;background:#fff;color:#1f4d39;font-weight:800;display:flex;align-items:center;justify-content:center;font-size:16px}
+
+.levlabel{font-size:12px;font-weight:700;background:#fde7e7;color:#8a2a1e;border-radius:10px;padding:2px 8px;margin-left:6px}
 </style>
 </head>
 <body>
@@ -835,7 +837,7 @@ input.ac.wzMeer{background:#c9f0d3!important;border-color:#2d8a4e!important;font
 
 <script>
 "use strict";
-const VERSIE="35.2";
+const VERSIE="35.3";
 const VERSIE_DATUM="03-11-2026";
 /* ---------- Basis ---------- */
 const PALET=["#2d6a4f","#1B5EBE","#E8007D","#c77d1a","#7a4fa0","#0f8b8d","#5b6b2f","#3d5a80","#a0522d","#7AB648"];
@@ -1166,24 +1168,25 @@ const BEHEER_MAIL=(KLANT.beheerMail||"vollebregt.a@gmail.com").toLowerCase();
 const DEEL_VAST=["param","inkoop","besch"]; /* ziet de beheerder altijd */
 const DEEL_OPT=[["param","Parameters","teelten, soorten, teeltduur"],["inkoop","Inkoop","aantallen per week"],["besch","Beschikbaar","nog beschikbaar per week"],
   ["opzet","Opzetplanning","wat wanneer opgezet wordt"],["afl","Afleverplanning","afleverplan per week"],["gereserveerd","Gereserveerd","totaal per week, zonder klantnamen"],
-  ["reserveringen","Reserveringen","met klantnamen"],["kosten","Kosten","kosten per week·m²"],["notities","Notities","post-its en weeknotities"],["wijzigen","Wijzigen","alles zien én veranderen (bijv. een voorzet geven)"]];
+  ["reserveringen","Reserveringen","met klantnamen"],["kosten","Kosten","kosten per week·m²"],["notities","Notities","post-its en weeknotities"],["andereLev","Andere leveranciers","teelten met jonge planten van een andere leverancier"],["wijzigen","Wijzigen","alles zien én veranderen (bijv. een voorzet geven)"]];
 /* lijst: [{mail, opt:{param:true,…}}] – de eerste is altijd de beheerder */
 /* toegang staat in Firebase: planning/toegang  {klant:[…], meekijken:[…], baas:"…"} – alleen de beheerder vult dit in (in de Firebase-console) */
 let toegang={klant:[],meekijken:[],baas:"",geladen:false};
 const lijstLaag=a=>(Array.isArray(a)?a:String(a||"").split(/[\s,;]+/)).map(x=>String(x).trim().toLowerCase()).filter(Boolean);
 function deelLijst(){const I=data.instellingen;let o=I.deelOpt;
   if(!o||typeof o!=="object"||Array.isArray(o)){o={};if(Array.isArray(I.delen))I.delen.forEach(x=>{if(x&&x.mail)o[String(x.mail).toLowerCase()]={...(x.opt||{})}})}I.deelOpt=o;
-  const alles=Object.fromEntries(DEEL_OPT.map(([k])=>[k,true])); /* nieuw: alles staat aan, tot de klant het uitvinkt */
+  const alles=Object.fromEntries(DEEL_OPT.map(([k])=>[k,k!=="andereLev"])); /* andere leveranciers: standaard NIET delen */ /* nieuw: alles staat aan, tot de klant het uitvinkt */
   return toegang.meekijken.map(m=>{const opt={...alles,...(o[m]||{})};DEEL_VAST.forEach(k=>opt[k]=true);return{mail:m,beheer:true,opt}})}
 function deelData(D){const o={delen:{...D}},I=data.instellingen,aant=!!(D.inkoop||D.opzet||D.afl);
-  if(D.param||aant){o.teeltduren=data.teeltduren.map(t=>({...t,aantallen:aant?t.aantallen:{},losAantallen:aant?t.losAantallen:undefined}));
-    o.rassen=data.rassen.map(r=>{const x={...r,aantallen:aant?r.aantallen:{}};delete x.prijs;return x});
+  const weg=D.andereLev?[]:data.teeltduren.filter(isAnders),wegId=new Set(weg.map(t=>t.id)),wegLab=new Set(weg.map(teeltLabel)),okT=t=>!wegId.has(t.id),okK=k=>!wegLab.has(String(k).split("|")[0]);
+  if(D.param||aant){o.teeltduren=data.teeltduren.filter(okT).map(t=>({...t,aantallen:aant?t.aantallen:{},losAantallen:aant?t.losAantallen:undefined}));
+    o.rassen=data.rassen.filter(r=>!wegId.has(r.teeltId)).map(r=>{const x={...r,aantallen:aant?r.aantallen:{}};delete x.prijs;return x});
     o.instellingen={seizoenStart:I.seizoenStart,levertijd:I.levertijd,eenvoudig:I.eenvoudig,...(aant?{brutoM2:I.brutoM2,vast:I.vast,vastB:I.vastB,vastL:I.vastL}:{}),...(D.kosten?{kosten:I.kosten,kostenJ:I.kostenJ}:{})}}
-  if(D.reserveringen){o.verkoop=data.verkoop;o.klanten=data.klanten}
-  else if(D.gereserveerd){o.verkoop={};for(const k in data.verkoop||{}){const n=(data.verkoop[k]||[]).reduce((a,x)=>a+(+x.n||0),0);if(n)o.verkoop[k]=[{klant:"—",n}]}}
+  if(D.reserveringen){o.verkoop=Object.fromEntries(Object.entries(data.verkoop||{}).filter(([k])=>okK(k)));o.klanten=data.klanten}
+  else if(D.gereserveerd){o.verkoop={};for(const k in data.verkoop||{}){if(!okK(k))continue;const n=(data.verkoop[k]||[]).reduce((a,x)=>a+(+x.n||0),0);if(n)o.verkoop[k]=[{klant:"—",n}]}}
   if(D.notities){o.notities=data.notities;o.weekNotitie=data.weekNotitie}
   if(D.besch){const nu=+dezeWeek(),tot=nu+371*864e5,per=new Map(),codes=new Set();
-    for(const r of afleverRegels()){if(!(r.aantal>0)||r.t<nu||r.t>=tot)continue;const k=r.product+"|"+r.soort,c=wkCode(r.t);codes.add(c);
+    for(const r of afleverRegels()){if(!(r.aantal>0)||r.t<nu||r.t>=tot||wegLab.has(r.product))continue;const k=r.product+"|"+r.soort,c=wkCode(r.t);codes.add(c);
       const m=per.get(k)||{};m[c]=(m[c]||0)+r.aantal;per.set(k,m)}
     const rijen=[];for(const[k,m]of per){const v={};for(const c in m){const t=+maandagIso(2000+ +c.slice(0,2),+c.slice(2));v[c]=m[c]-verkSom(k,t)}rijen.push({k,v})}
     o.besch={codes:[...codes].sort(),rijen:rijen.sort((a,b)=>a.k.localeCompare(b.k,"nl"))}}
@@ -1253,11 +1256,15 @@ function toonMeekijkBesch(){const B=meekijk&&meekijk.besch,ob=document.getElemen
 
 
 /* ================= Beheerder ↔ klant: bevestigen en wijzigingen zien ================= */
+/* teelt van een andere leverancier (t.lev==="anders"): niet bevestigen, alleen delen als de klant dat aanvinkt */
+const isAnders=t=>!!t&&t.lev==="anders";
+const teeltLabel=t=>(t.product||"")+(t.potmaat?" "+t.potmaat+" cm":"");
 let bevest={},bevLuistert=false;
 function bevLuister(db){bevLuistert=true;db.collection("planning").doc("bevestigd").onSnapshot(s=>{bevest=s.exists?(s.data().weken||{}):{};if(tab==="oppot")render()},()=>{})}
 const isBeheerHier=()=>!!KLANT.code&&(!!meekijk||toegang.meekijken.includes(String(wolkMail||"").toLowerCase()));
 /* rij 'Bevestigd' in de Inkoop: beheerder vinkt weken aan, klant ziet ✓ (of ⚠ als er daarna iets veranderd is) */
-function bevRij(t,NW){if(!KLANT.code)return"";const beh=isBeheerHier(),tot=aantalRij(t,planJaar);
+function bevRij(t,NW){if(!KLANT.code)return"";
+  if(isAnders(t))return`<tr class="bevrij"><td class="vast"><b>Bevestigd</b></td><td colspan="${NW+1}" class="status" style="text-align:left;padding-left:8px">– jonge planten van ${esc(t.levNaam||"een andere leverancier")}: niet te bevestigen door ${esc(KLANT.leverancier||"Vollebregt")}</td></tr>`;const beh=isBeheerHier(),tot=aantalRij(t,planJaar);
   return`<tr class="bevrij"><td class="vast" title="${beh?"Vink een week aan als u de order van die week bevestigt":"✓ = door de beheerder bevestigd. ⚠ = na de bevestiging veranderd"}"><b>Bevestigd</b>${beh?' <span class="status">(vinkje = order bevestigd)</span>':""}</td>${Array.from({length:NW},(_,w)=>{
     const k=planJaar+"|"+t.id+"|"+(w+1),b=bevest[k],nu=Math.round(+tot[w]||0),anders=b&&Math.round(+b.som||0)!==nu;
     const tip=b?`Bevestigd op ${new Date(b.t).toLocaleString("nl-NL")}${b.door?" door "+b.door:""} · ${getal(b.som||0)} planten${anders?" · NU "+getal(nu)+" (veranderd!)":""}`:"";
@@ -2510,13 +2517,14 @@ function toonSoorten(){
     const open=teeltOpen.has(t.id),ok=t.product&&t.dicht1&&t.dicht2&&n&&srt.length&&srt.every(r=>r.naam);
     h+=`<div class="teeltkaart ${open?"open":"dicht"}" data-teelt="${t.id}">
       <div class="tkopregel" onclick="teeltKlap('${t.id}')" title="${open?"Dichtklappen":"Openklappen"}">
-        <span class="pijl">${open?"▾":"▸"}</span><b>${esc(t.product||"(nieuwe teelt)")}</b>${t.potmaat!==""?` <span class="status">${esc(t.potmaat)} cm</span>`:""}
+        <span class="pijl">${open?"▾":"▸"}</span><b>${esc(t.product||"(nieuwe teelt)")}</b>${t.potmaat!==""?` <span class="status">${esc(t.potmaat)} cm</span>`:""}${KLANT.code&&isAnders(t)?` <span class="levlabel" title="Jonge planten van een andere leverancier">${esc(t.levNaam||"andere leverancier")}</span>`:""}
         <span class="status">· ${n?esc(duurKort(t)):'<span class="let">teeltduur leeg</span>'} · ${srt.length} soort${srt.length===1?"":"en"}${srt.length?": "+esc(srt.map(r=>r.naam+(eigenDuur(r)?"*":"")).filter(Boolean).join(", ")):""}</span>
         <span style="flex:1"></span>${isVast(t)?`<button type="button" class="ovk" style="margin-right:6px" onclick="event.stopPropagation();toonHistorie()" title="Versiegeschiedenis van Cyclamen">🕘 Geschiedenis</button>`:""}<button type="button" class="ovk ovlink" onclick="event.stopPropagation();naarOppot('${t.id}')" title="Naar de inkoop van deze teelt">Inkoop / opzetten ›</button>${ok?`<span style="color:var(--groen)" title="Alles ingevuld">✓</span>`:`<span class="let" title="Nog niet alles ingevuld">⚠</span>`}</div>`;
-    if(open)h+=`<table class="tkop"><tr><th style="width:34%">Teelt</th><th style="width:13%">Potmaat (cm)</th><th style="width:15%">Pl/m² oppotten</th><th style="width:15%">Pl/m² uitzetten</th><th>Wijderzetten</th><th style="width:44px"></th></tr>
+    if(open)h+=`<table class="tkop"><tr><th style="width:34%">Teelt</th><th style="width:13%">Potmaat (cm)</th><th style="width:15%">Pl/m² oppotten</th><th style="width:15%">Pl/m² uitzetten</th><th>Wijderzetten</th>${KLANT.code?`<th style="width:20%">Jonge planten van</th>`:""}<th style="width:44px"></th></tr>
       <tr><td>${isVast(t)?`<input value="${esc(t.product)}" readonly title="Deze naam ligt vast" style="width:calc(100% - 26px);background:#eee;color:#444;font-weight:700;cursor:not-allowed"> <span title="Naam ligt vast">🔒</span>`:veld(i,"product","100%","t","bijv. Cyclamen")}</td><td>${veld(i,"potmaat","100%","n","cm")}</td>
         <td>${veld(i,"dicht1","100%","n","pl/m²")}</td><td>${veld(i,"dicht2","100%","n","pl/m²")}</td>
         <td class="status" id="wz-${i}" style="white-space:nowrap">${t.dicht1&&t.dicht2?"1 m² → "+String(Math.round(t.dicht1/t.dicht2*10)/10).replace(".",",")+" m²":""}</td>
+        ${KLANT.code?`<td><select data-sv="${i}" data-sk="lev" title="Van wie komen de jonge planten? Alleen teelten van ${esc(KLANT.leverancier||"Vollebregt")} kunnen bevestigd worden."><option value="" ${isAnders(t)?"":"selected"}>${esc(KLANT.leverancier||"Vollebregt")}</option><option value="anders" ${isAnders(t)?"selected":""}>andere leverancier</option></select>${isAnders(t)?`<input data-sv="${i}" data-sk="levNaam" value="${esc(t.levNaam||"")}" placeholder="naam (mag leeg)" style="width:100%;margin-top:3px">`:""}</td>`:""}
         <td style="text-align:right">${isVast(t)?"":`<button class="btn rood klein" onclick="duurWeg(${i})" title="Teelt verwijderen">✕</button>`}</td></tr></table>
       <div class="tsoorten"><div class="rij" style="margin-bottom:4px"><b>Soorten</b><span class="status">${srt.length}</span>
         <span class="status">· standaard teeltduur: ${n?`<a href="#" onclick="openDuur('${t.id}');return false">${duurKort(t)} ›</a>`:`<a href="#" class="let" onclick="openDuur('${t.id}');return false">nog invullen ›</a>`}</span>
@@ -2556,6 +2564,7 @@ $("#inhoud").addEventListener("change",e=>{const el=e.target;if(el.dataset.sv===
   let v=el.value.trim();
   if(k==="dicht1"||k==="dicht2")v=+v.replace(",",".")||0;
   if(k==="uitval"){v=Math.max(0,Math.min(100,+v.replace(",",".")||0));el.value=v||"";t.uitval=v;opslaanLater();return}
+  if(k==="lev"||k==="levNaam"){if(v)t[k]=v;else delete t[k];houdOpen=true;opslaanLater();if(k==="lev")render();return}
   t[k]=v; if(k!=="potmaat")el.classList.toggle("mist",!v);
   const wz=document.getElementById("wz-"+el.dataset.sv);if(wz)wz.textContent=t.dicht1&&t.dicht2?"1 m² → "+String(Math.round(t.dicht1/t.dicht2*10)/10).replace(".",",")+" m²":"";
   zetVinkjes(); opslaanLater();
