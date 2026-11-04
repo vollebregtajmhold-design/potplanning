@@ -647,6 +647,8 @@ body.meekijk .ovlink,body.meekijk tr.wknot{display:none!important}
 
 .ovtabel th.vkwkkop{cursor:pointer}.ovtabel th.vkwkkop:hover{text-decoration:underline;background:#cfe0f3}
 .vkwkfilter{display:inline-flex;align-items:center;gap:6px;background:#dbe9f6;color:#16304d;font-weight:700;border-radius:14px;padding:3px 6px 3px 12px}.vkwkfilter button{border:0;background:#16304d;color:#fff;border-radius:50%;width:22px;height:22px;cursor:pointer}
+
+#ovBalk .ovk.inkcsv{background:#fff;border:1px solid #2d6a4f;color:#1f4d39;font-weight:700;padding:6px 12px;border-radius:6px}
 </style>
 </head>
 <body>
@@ -808,7 +810,7 @@ body.meekijk .ovlink,body.meekijk tr.wknot{display:none!important}
 
 <script>
 "use strict";
-const VERSIE="33.6";
+const VERSIE="33.7";
 const VERSIE_DATUM="03-11-2026";
 /* ---------- Basis ---------- */
 const PALET=["#2d6a4f","#1B5EBE","#E8007D","#c77d1a","#7a4fa0","#0f8b8d","#5b6b2f","#3d5a80","#a0522d","#7AB648"];
@@ -1139,14 +1141,15 @@ const BEHEER_MAIL=(KLANT.beheerMail||"vollebregt.a@gmail.com").toLowerCase();
 const DEEL_VAST=["param","inkoop","besch"]; /* ziet de beheerder altijd */
 const DEEL_OPT=[["param","Parameters","teelten, soorten, teeltduur"],["inkoop","Inkoop","aantallen per week"],["besch","Beschikbaar","nog beschikbaar per week"],
   ["opzet","Opzetplanning","wat wanneer opgezet wordt"],["afl","Afleverplanning","afleverplan per week"],["gereserveerd","Gereserveerd","totaal per week, zonder klantnamen"],
-  ["reserveringen","Reserveringen","met klantnamen"],["kosten","Kosten","kosten per week·m²"],["notities","Notities","post-its en weeknotities"]];
+  ["reserveringen","Reserveringen","met klantnamen"],["kosten","Kosten","kosten per week·m²"],["notities","Notities","post-its en weeknotities"],["wijzigen","Wijzigen","alles zien én veranderen (bijv. een voorzet geven)"]];
 /* lijst: [{mail, opt:{param:true,…}}] – de eerste is altijd de beheerder */
 /* toegang staat in Firebase: planning/toegang  {klant:[…], meekijken:[…], baas:"…"} – alleen de beheerder vult dit in (in de Firebase-console) */
 let toegang={klant:[],meekijken:[],baas:"",geladen:false};
 const lijstLaag=a=>(Array.isArray(a)?a:String(a||"").split(/[\s,;]+/)).map(x=>String(x).trim().toLowerCase()).filter(Boolean);
 function deelLijst(){const I=data.instellingen;let o=I.deelOpt;
   if(!o||typeof o!=="object"||Array.isArray(o)){o={};if(Array.isArray(I.delen))I.delen.forEach(x=>{if(x&&x.mail)o[String(x.mail).toLowerCase()]={...(x.opt||{})}})}I.deelOpt=o;
-  return toegang.meekijken.map(m=>{const opt={...(o[m]||{})};DEEL_VAST.forEach(k=>opt[k]=true);return{mail:m,beheer:true,opt}})}
+  const alles=Object.fromEntries(DEEL_OPT.map(([k])=>[k,true])); /* nieuw: alles staat aan, tot de klant het uitvinkt */
+  return toegang.meekijken.map(m=>{const opt={...alles,...(o[m]||{})};DEEL_VAST.forEach(k=>opt[k]=true);return{mail:m,beheer:true,opt}})}
 function deelData(D){const o={delen:{...D}},I=data.instellingen,aant=!!(D.inkoop||D.opzet||D.afl);
   if(D.param||aant){o.teeltduren=data.teeltduren.map(t=>({...t,aantallen:aant?t.aantallen:{},losAantallen:aant?t.losAantallen:undefined}));
     o.rassen=data.rassen.map(r=>{const x={...r,aantallen:aant?r.aantallen:{}};delete x.prijs;return x});
@@ -1161,7 +1164,10 @@ function deelData(D){const o={delen:{...D}},I=data.instellingen,aant=!!(D.inkoop
     o.besch={codes:[...codes].sort(),rijen:rijen.sort((a,b)=>a.k.localeCompare(b.k,"nl"))}}
   return o}
 /* per e-mailadres een eigen document planning/delen_<email>; alleen die persoon mag het lezen (zie regels) */
+let rechtenLaatst="";
 async function deelOpslaan(){if(!wolkDoc||meekijk||!KLANT.code||!toegang.geladen)return;const col=wolkDoc.parent,L=deelLijst();
+  if(toegang.klant.includes(String(wolkMail).toLowerCase())){const w=L.filter(x=>x.opt.wijzigen).map(x=>x.mail),j=JSON.stringify(w);
+    if(j!==rechtenLaatst){try{await col.doc("rechten").set({wijzigen:w,gemaakt:new Date().toISOString(),door:wolkMail});rechtenLaatst=j}catch(e){console.log("rechten",e)}}}
   for(const x of L){try{const j=JSON.stringify(deelData(x.opt));if(deelLaatst[x.mail]===j)continue;
     await col.doc("delen_"+x.mail).set({json:j,gemaakt:new Date().toISOString(),door:wolkMail});deelLaatst[x.mail]=j}catch(e){console.log("delen",x.mail,e)}}
   /* wie niet meer mag meekijken: gedeeld deel weghalen */
@@ -1175,7 +1181,7 @@ function toonDelen(){if(!deelTmp)deelTmp=JSON.parse(JSON.stringify(deelLijst()))
   const rijen=DEEL_OPT.map(([k,n,u])=>`<tr><td class="dnaam"><b>${n}</b><br><span class="status">${u}</span></td>${L.map((x,i)=>{const vast=DEEL_VAST.includes(k);
       return`<td class="dvak ${vast?"vast":""}" title="${vast?"Ziet de beheerder altijd":""}"><input type="checkbox" data-i="${i}" data-k="${k}" ${x.opt[k]||vast?"checked":""} ${vast||!mag?"disabled":""}>${vast?" 🔒":""}</td>`}).join("")}</tr>`).join("");
   toonPop("👥 Wie mag wat zien",`<div class="dbaas">Vinkjes zetten: <b>${esc(b||"iedereen van uw bedrijf")}</b>${mag?"":` <span class="let">(u kunt alleen kijken)</span>`}</div>
-    <p class="status" style="margin:6px 0 8px">Wie mag meekijken, bepaalt de beheerder. U kiest per persoon (kolom) wat die mag <b>bekijken</b>. Niemand kan iets veranderen. Parameters, inkoop en beschikbaar zijn altijd zichtbaar.</p>
+    <p class="status" style="margin:6px 0 8px">Wie mag meekijken, bepaalt de beheerder. U kiest per persoon (kolom) wat die mag <b>zien</b>. Veranderen kan alleen bij een vinkje bij <b>Wijzigen</b>. Parameters, inkoop en beschikbaar zijn altijd zichtbaar. Nieuwe meekijkers krijgen eerst alles; vink uit wat niet mag.</p>
     <div style="overflow-x:auto"><table class="deelTab"><tr><th class="dnaam">Onderdeel</th>${kop}</tr>${rijen}</table></div>
     ${mag?`<div class="rij" style="margin-top:10px"><button class="btn licht" onclick="deelTmp=null;sluitMobSoort()">Annuleren</button><span style="flex:1"></span><button class="btn" onclick="deelZet()">Opslaan</button></div>`:""}`);
   const m=document.querySelector("#mobPop .mpop");if(m){m.style.maxWidth="900px";m.style.width="auto"}}
@@ -2601,6 +2607,16 @@ $("#inhoud").addEventListener("change",e=>{const el=e.target;
     kostenSchrijf(planJaar)[el.dataset.kf][w]=n;el.value=n==null?"":String(n).replace(".",",");const t=document.getElementById("kt-"+w);if(t){const s=kostWeek(w+1);t.innerHTML=s?"<b>"+String(Math.round(s*100)/100).replace(".",",")+"</b>":""}opslaanLater()}
   if(el.classList.contains("kostnaam")){kostenData()["l"+el.dataset.kf]=el.value.trim();opslaanLater()}});
 let oppotToon=new Set(); /* soorten die u in de Inkoop net hebt gekozen */
+/* Excel (CSV) van de inkoop: alle teelten, per soort de aantallen per week. Werkt ook bij meekijken (= de order) */
+function inkoopCsv(){const j=planJaar,NW=wekenIn(j),q=x=>`"${String(x??"").replace(/"/g,'""')}"`,wk=Array.from({length:NW},(_,w)=>String(j).slice(2)+String(w+1).padStart(2,"0"));
+  const regels=[["Teelt","Soortnr","Soort","Fust",...wk,"Totaal"].map(q).join(";")],tot=Array(NW).fill(0);
+  for(const t of data.teeltduren)for(const r of oppotRegels(t)){const a=((r.a||{})[j]||[]).slice(0,NW).map(v=>+v||0);if(!a.some(v=>v))continue;
+    const ras=r.b.startsWith("r:")?data.rassen.find(x=>"r:"+x.id===r.b):null;a.forEach((v,i)=>tot[i]+=v);
+    regels.push([q(teeltNaam(t)),q(r.nr||""),q(r.naam),q(ras&&ras.fust||""),...a.map(v=>v||""),a.reduce((x,y)=>x+y,0)].join(";"))}
+  if(regels.length<2){melding("Er staat niets in de inkoop van "+j+".");return}
+  regels.push([q("Totaal"),"","","",...tot.map(v=>v||""),tot.reduce((x,y)=>x+y,0)].join(";"));
+  const a=document.createElement("a");a.href=URL.createObjectURL(new Blob(["\ufeff"+regels.join("\n")],{type:"text/csv"}));
+  a.download=`inkoop ${KLANT.appNaam||""} ${j}.csv`.replace(/\s+/g," ");a.click();melding("⬇ Inkoop "+j+" als Excel-bestand gedownload","#2d6a4f")}
 function oppotRegels(t){const soorten=data.rassen.filter(r=>r.teeltId===t.id);
   const r=soorten.map(x=>({b:"r:"+x.id,naam:x.naam||"(soort zonder naam)",nr:x.nr||"",a:x.aantallen}));
   const los=Object.values(t.losAantallen).some(a=>a.some(v=>v));
@@ -2614,7 +2630,7 @@ function toonOppot(){
   let h="";
   {const ob=document.getElementById("ovBalk");ob.hidden=false;ob.innerHTML=`<button class="ovk ovlink" onclick="if(oppotKeuze&&oppotKeuze!=='alle')naarTeeltId(oppotKeuze);else naar('soorten')" title="Parameters (instellen)">‹ Parameters</button><span class="ovtitel">Inkoop / opzetten</span>
     <span class="oppjaar"><button class="btn licht klein" onclick="planJaar--;render()" title="Jaar terug">◀</button><b>${planJaar}</b><button class="btn licht klein" onclick="planJaar++;render()" title="Jaar verder">▶</button></span>
-    <span style="flex:1"></span><button class="ovk ovlink" onclick="naar('oppotov')" title="Opzetplanning (overzicht)">Opzetplanning ›</button>`}
+    <span style="flex:1"></span><button class="ovk inkcsv" onclick="inkoopCsv()" title="Inkoop van ${planJaar} als Excel-bestand (CSV): alle teelten en soorten, per week">⬇ Excel</button><button class="ovk ovlink" onclick="naar('oppotov')" title="Opzetplanning (overzicht)">Opzetplanning ›</button>`}
   if(!data.teeltduren.length){$("#inhoud").innerHTML=h+`<div class="leeg">Nog geen teelten. Maak ze eerst aan bij <b>Stamdata → Teelt</b>, of <button class="btn" onclick="openPlak()">📋 Plak een bestellijst</button></div>`;return}
   if(!data.teeltduren.some(t=>t.id===oppotKeuze))oppotKeuze=data.teeltduren[0].id; /* "Alle teelten" is weg */
   h+=`<div class="tchips">${data.teeltduren.map(t=>{const n=som(aantalRij(t,planJaar));return`<button type="button" class="tchip ${t.id===oppotKeuze?"aan":""}" onclick="oppotKeuze='${t.id}';render()" oncontextmenu="naarTeeltId('${t.id}');return false" title="Klik: inkoop van deze teelt · Rechtermuisknop: teelt bewerken"><b>${esc(teeltNaamKort(t))}</b><small>${getal(n)}</small></button>`}).join("")}
@@ -4195,13 +4211,18 @@ service cloud.firestore {
     //   klant      = e-mailadressen van de klant (alles lezen en veranderen)
     //   meekijken  = e-mailadressen die mogen meekijken (alleen wat de klant deelt)
     //   baas       = e-mailadres van de klant dat de vinkjes mag zetten
+    // planning/rechten maakt de app van de klant zelf (wie mag wijzigen)
     match /planning/{doc} {
       function toegang() { return get(/databases/$(database)/documents/planning/toegang).data; }
       function mail() { return request.auth.token.email.lower(); }
       function isKlant() { return request.auth != null && mail() in toegang().klant; }
       function isKijker() { return request.auth != null && mail() in toegang().meekijken; }
-      allow read: if isKlant() || (isKijker() && doc == "delen_" + mail());
-      allow write: if isKlant() && doc != "toegang";
+      function rechten() { return /databases/$(database)/documents/planning/rechten; }
+      // meekijker mag ook veranderen zolang de klant 'Wijzigen' niet heeft uitgevinkt
+      function magWijzigen() { return isKijker() && (!exists(rechten()) || mail() in get(rechten()).data.wijzigen); }
+      allow read: if isKlant() || magWijzigen() || (isKijker() && doc == "delen_" + mail());
+      allow write: if (isKlant() && doc != "toegang")
+        || (magWijzigen() && doc != "toegang" && doc != "rechten");
     }
   }
 }`;toonPop("Regels Firebase · "+(k.naam||""),`<p class="status" style="margin:0 0 6px">Firebase → Firestore → tabblad <b>Rules</b> → alles vervangen door deze tekst → <b>Publish</b>.</p><textarea id="bhRegelTxt" readonly style="width:100%;height:240px;font-family:monospace;font-size:13px;box-sizing:border-box">${esc(t)}</textarea>
