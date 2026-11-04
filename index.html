@@ -825,7 +825,7 @@ tr.kostrij td.kostjaar,tr.groepkop td.kostjaar{font-size:11px;white-space:nowrap
 
 <script>
 "use strict";
-const VERSIE="34.9";
+const VERSIE="35.0";
 const VERSIE_DATUM="03-11-2026";
 /* ---------- Basis ---------- */
 const PALET=["#2d6a4f","#1B5EBE","#E8007D","#c77d1a","#7a4fa0","#0f8b8d","#5b6b2f","#3d5a80","#a0522d","#7AB648"];
@@ -1520,6 +1520,8 @@ function render(){document.body.classList.toggle("isBeheer",isBeheerder());if(ta
   if(tab==="soorten"&&vorigeTab!=="soorten"&&!houdOpen&&typeof teeltOpen!=="undefined")teeltOpen.clear();
   if(tab==="oppotov"&&vorigeTab!=="oppotov"&&vorigeTab!=="oppot")ovEenheid="planten";
   if(tab==="oppot"&&vorigeTab!=="oppot"&&typeof inkNul!=="undefined"){inkNul=null;inkVol=null;inkWijz.clear()} /* nieuw nulpunt bij openen Inkoop */ /* oppotoverzicht opent altijd met planten */
+  /* andere pagina: altijd bovenaan beginnen (anders kan de pagina half weggeschoven openen) */
+  if(tab!==vorigeTab){try{window.scrollTo(0,0);requestAnimationFrame(()=>{window.scrollTo(0,0);const v=document.querySelector("section.vlak");if(v)v.scrollTop=0})}catch(e){}}
   houdOpen=false;vorigeTab=tab;
   if(tab==="plan"||tab==="teelt")venster=maandagIso(planJaar,1);
   document.querySelectorAll("#balk [data-tab]").forEach(b=>b.classList.toggle("actief",b.dataset.tab===tab));
