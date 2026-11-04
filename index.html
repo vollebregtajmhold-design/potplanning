@@ -825,7 +825,7 @@ tr.kostrij td.kostjaar,tr.groepkop td.kostjaar{font-size:11px;white-space:nowrap
 
 <script>
 "use strict";
-const VERSIE="34.8";
+const VERSIE="34.9";
 const VERSIE_DATUM="03-11-2026";
 /* ---------- Basis ---------- */
 const PALET=["#2d6a4f","#1B5EBE","#E8007D","#c77d1a","#7a4fa0","#0f8b8d","#5b6b2f","#3d5a80","#a0522d","#7AB648"];
@@ -4312,6 +4312,38 @@ function ghAlles(){if(!ghToken()){alert("Eerst de GitHub-sleutel invullen (knop 
     const fout=Object.values(uit).some(x=>x.join().includes("❌"));melding(fout?"Klaar, maar niet alles is gelukt. Kijk in het venster.":"✅ Alle apps bijgewerkt naar versie "+esc(m[1]),fout?"#b3261e":"#2d6a4f");
     setTimeout(()=>{if(tab==="beheer")bhAlleVersies(true)},90000)};
   i.click()}
+
+/* ---------- Klant-wizard: GitHub-repository maken, bestanden erin, Pages aan ---------- */
+async function ghApi(methode,pad,body){const r=await fetch("https://api.github.com"+pad,{method:methode,cache:"no-store",headers:{Authorization:"Bearer "+ghToken(),Accept:"application/vnd.github+json","X-GitHub-Api-Version":"2022-11-28"},...(body?{body:JSON.stringify(body)}:{})});
+  let j={};try{j=await r.json()}catch(e){}return{ok:r.ok,status:r.status,j}}
+async function ghWizard(i){const k=beheerData().klanten[i];if(!k)return;
+  if(!ghToken()){alert("Eerst de GitHub-sleutel invullen (knop 🔑 GitHub-sleutel).");return}
+  const naam=String(k.appNaam||k.naam||"").trim().replace(/\s+/g,"-").replace(/[^A-Za-z0-9._-]/g,"");
+  if(!naam){alert("Vul eerst de 'Naam van de app' in, bijv. Jansen-plan.");return}
+  if(!confirm(`GitHub klaarzetten voor ${k.naam||naam}?\n\n• repository: ${naam}\n• index.html (versie ${VERSIE}) en klant.js erin\n• website (Pages) aanzetten`))return;
+  const stap=[],toon=()=>toonPop("🧙 GitHub klaarzetten · "+esc(k.naam||naam),stap.map(x=>`<div class="mrij"><span>${x[0]}</span><span>${x[1]}</span></div>`).join("")+
+      `<p class="status" style="margin:10px 0 0">Daarna duurt het 1 à 3 minuten voordat de website werkt.</p>`),
+    zet=(n,v)=>{const x=stap.find(s=>s[0]===n);if(x)x[1]=v;else stap.push([n,v]);toon()};
+  try{
+    zet("GitHub-account","…");const u=await ghApi("GET","/user");if(!u.ok)throw new Error(u.status===401?"de sleutel klopt niet":"GitHub "+u.status);const o=u.j.login;zet("GitHub-account","✅ "+esc(o));
+    zet("Repository "+esc(naam),"…");let rp={o,r:naam};const bestaat=await ghApi("GET",`/repos/${o}/${naam}`);
+    if(bestaat.ok)zet("Repository "+esc(naam),"✓ bestond al");
+    else{const c=await ghApi("POST","/user/repos",{name:naam,description:"Planning-app "+(k.naam||""),private:false,auto_init:true});
+      if(!c.ok)throw new Error(c.status===403?"de sleutel mag geen repositories maken (zet bij de sleutel 'Administration' op Read and write)":(c.j.message||"GitHub "+c.status));
+      zet("Repository "+esc(naam),"✅ gemaakt");await new Promise(r=>setTimeout(r,2500))}
+    k.repo=`https://github.com/${o}/${naam}`;k.appUrl=`https://${o.toLowerCase()}.github.io/${naam}/`;opslaanLater();
+    zet("index.html","…");const html=await (await fetch(new URL("index.html",location.href).href+"?v="+Date.now(),{cache:"no-store"})).text();
+    if(!/const VERSIE="/.test(html))throw new Error("kan het eigen index.html niet lezen");const v=(html.match(/const VERSIE="([^"]+)"/)||[])[1];
+    const a=await ghZet(rp,"index.html",html,"Versie "+v);zet("index.html",(a==="gelijk"?"✓ was al goed":"✅ versie "+esc(v)));
+    if(fbLees(k.firebase).apiKey){zet("klant.js","…");const b=await ghZet(rp,"klant.js",bhKlantJsTekst(k),"klant.js");zet("klant.js",b==="gelijk"?"✓ was al goed":"✅")}
+    else zet("klant.js","– nog niet (eerst firebaseConfig invullen, daarna ⬆ Alles bijwerken)");
+    zet("Website (Pages)","…");const pg=await ghApi("GET",`/repos/${o}/${naam}/pages`);
+    if(pg.ok)zet("Website (Pages)","✓ stond al aan");
+    else{const pp=await ghApi("POST",`/repos/${o}/${naam}/pages`,{source:{branch:"main",path:"/"}});
+      if(!pp.ok&&pp.status!==409)throw new Error(pp.status===403||pp.status===404?"de sleutel mag Pages niet aanzetten (zet bij de sleutel 'Pages' op Read and write)":(pp.j.message||"GitHub "+pp.status));zet("Website (Pages)","✅ aan")}
+    zet("Webadres",`<a href="${esc(k.appUrl)}" target="_blank" rel="noopener">${esc(k.appUrl)}</a>`);
+    melding("🧙 GitHub staat klaar voor "+esc(k.naam||naam),"#2d6a4f");setTimeout(()=>{if(tab==="beheer")bhVersie(i,true).then(()=>render())},120000)}
+  catch(e){zet("❌ Gestopt",esc(e.message))}}
 /* firebaseConfig uit geplakte tekst halen (ook "const firebaseConfig = {...}") */
 function fbLees(t){t=String(t||"");const o={};for(const k of["apiKey","authDomain","projectId","storageBucket","messagingSenderId","appId","measurementId"]){const m=t.match(new RegExp(k+'["\']?\\s*:\\s*["\']([^"\']+)["\']'));if(m)o[k]=m[1]}return o}
 
@@ -4345,7 +4377,7 @@ function toonBeheer(){const B=beheerData(),ob=document.getElementById("ovBalk");
       <div class="bhgrid">${veld("naam",i,"Klant","t","bijv. Kwekerij Jansen")}${veld("appNaam",i,"Naam van de app","t","bijv. Jansenplan")}${veld("code",i,"Code (kort woord)","t","bijv. jansen")}
         ${veld("appUrl",i,"Webadres app","t","https://….github.io/naam/")}${veld("repo",i,"GitHub","t","https://github.com/…/naam")}
         ${veld("firebase",i,"firebaseConfig","ta","plak hier het stukje firebaseConfig = { … } uit Firebase")}${veld("emails",i,"E-mailadressen klant (1 per regel)","ta","naam@gmail.com")}${veld("notitie",i,"Notitie","t","")}</div>
-      <div class="bhknop"><button class="ovk ovlink" onclick="bhOpen(${i},'repo')">GitHub ›</button><button class="ovk ovlink" onclick="bhOpen(${i},'fb')">Firebase ›</button>
+      <div class="bhknop">${i?`<button class="ovk ovlink bhgroot" onclick="ghWizard(${i})" title="Maakt de GitHub-repository, zet index.html en klant.js erin en zet de website (Pages) aan">🧙 GitHub klaarzetten</button>`:""}<button class="ovk ovlink" onclick="bhOpen(${i},'repo')">GitHub ›</button><button class="ovk ovlink" onclick="bhOpen(${i},'fb')">Firebase ›</button>
         <button class="ovk ovlink" onclick="bhVersie(${i})">↻ Versie</button>${i?`<button class="ovk ovlink" onclick="bhActief(${i})" title="Wanneer heeft deze klant voor het laatst in de app gewerkt? (eerste keer: inloggen bij deze klant)">🕒 Laatst actief</button>`:""}<button class="ovk ovlink" onclick="bhKlantJs(${i})">⬇ klant.js</button><button class="ovk ovlink" onclick="bhRegels(${i})">Regels Firebase</button></div></div>`}).join("")}
 $("#inhoud").addEventListener("change",e=>{const el=e.target;if(!el.dataset||el.dataset.bk==null||tab!=="beheer")return;const B=beheerData(),k=B.klanten[+el.dataset.bi];if(!k)return;
   k[el.dataset.bk]=el.value.trim();opslaanLater();if(["naam","firebase"].includes(el.dataset.bk))render()});
