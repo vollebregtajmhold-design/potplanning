@@ -808,7 +808,7 @@ body.meekijk .ovlink,body.meekijk tr.wknot{display:none!important}
 
 <script>
 "use strict";
-const VERSIE="33.5";
+const VERSIE="33.6";
 const VERSIE_DATUM="03-11-2026";
 /* ---------- Basis ---------- */
 const PALET=["#2d6a4f","#1B5EBE","#E8007D","#c77d1a","#7a4fa0","#0f8b8d","#5b6b2f","#3d5a80","#a0522d","#7AB648"];
@@ -3800,7 +3800,7 @@ function toonAflever(){syncSoorten();
         const sp=(pkS[kl]=pkS[kl]||{});sp[ks]=sp[ks]||{};sp[ks][p[2]]=(sp[ks][p[2]]||0)+n}}
     const kls=Object.keys(pk).sort((a,b)=>a.localeCompare(b,"nl"));
     h+=`<table class="ovtabel" data-st="afl" data-codes='${JSON.stringify(alleWk.map(code))}' onmouseover="ovKruis(event)" onmouseleave="ovKruis(event)">
-      <tr><th class="ovnaam">${kop}</th>${alleWk.map((t,c)=>`<th data-c="${c}"${vis(c)} class="${t===nu?"nu":""} vkwkkop" onclick="vkWeekOpen('${code(t)}')" title="Week ${isoWeek(new Date(t)).w} van ${isoWeek(new Date(t)).y} · klik: reserveringen van deze week">${code(t)}</th>`).join("")}</tr>`;
+      <tr><th class="ovnaam">${kop}</th>${alleWk.map((t,c)=>`<th data-c="${c}"${vis(c)} class="${t===nu?"nu":""} vkwkkop" onclick="vkPop()" title="Week ${isoWeek(new Date(t)).w} van ${isoWeek(new Date(t)).y} · klik: overzicht reserveringen">${code(t)}</th>`).join("")}</tr>`;
     if(!kls.length)h+=`<tr><td class="ovnaam" colspan="${alleWk.length+1}"><span class="status">Nog geen reserveringen in dit seizoen.</span></td></tr>`;
     const cl=(v,t)=>`${v?` class="ovmin" style="cursor:pointer" title="Klik: reservering bekijken of wijzigen" onclick="klantWeekPop(this.parentNode.dataset.kl,'${code(t)}')"`:""}>${v?getal(-v):'<span class="ovleeg">—</span>'}`;
     for(const kl of kls){
@@ -3809,7 +3809,7 @@ function toonAflever(){syncSoorten();
     h+=`<tr class="ovtot"><td class="ovnaam">Totaal gereserveerd</td>${alleWk.map((t,c)=>{const v=kls.reduce((a,kl)=>a+(pk[kl][code(t)]||0),0);return`<td data-c="${c}"${vis(c)}${v?' class="ovmin"':""}>${v?getal(-v):'<span class="ovleeg">—</span>'}</td>`}).join("")}</tr></table>`;
     $("#inhoud").innerHTML=h;ovSchuifLive();return}
   h+=`<table class="ovtabel" data-st="afl" data-codes='${JSON.stringify(alleWk.map(code))}' onmouseover="ovKruis(event)" onmouseleave="ovKruis(event)" onclick="ovKlik(event)">
-    <tr><th class="ovnaam">${kop}</th>${alleWk.map((t,c)=>`<th data-c="${c}"${vis(c)} class="${t===nu?"nu":""} vkwkkop" onclick="vkWeekOpen('${code(t)}')" title="Week ${isoWeek(new Date(t)).w} van ${isoWeek(new Date(t)).y} · klik: reserveringen van deze week">${code(t)}</th>`).join("")}</tr>`;
+    <tr><th class="ovnaam">${kop}</th>${alleWk.map((t,c)=>`<th data-c="${c}"${vis(c)} class="${t===nu?"nu":""} vkwkkop" onclick="vkPop()" title="Week ${isoWeek(new Date(t)).w} van ${isoWeek(new Date(t)).y} · klik: overzicht reserveringen">${code(t)}</th>`).join("")}</tr>`;
   for(const k of lijst){const[pr,so]=k.split("|");
     h+=`<tr><td class="ovnaam"><span class="ovtl" data-pr="${esc(pr)}" onclick="naarTeelt(this.dataset.pr)" oncontextmenu="naarTeelt(this.dataset.pr);return false" title="Klik: teelt openen">${esc(pr)}</span> · <span class="ovsl" data-k="${esc(pr+" · "+so)}" onclick="mobSoort(this.dataset.k,${+maandagIso(isoWeek(new Date()).y,isoWeek(new Date()).w)})" title="Klik: komende weken van deze soort">${esc(so)}</span></td>${alleWk.map((t,c)=>{const a=cel[k+"|"+t]||0,vk=verkSom(k,t),v=aflMod==="verk"?-vk:aflMod==="vers"?a-vk:a;
       return`<td data-c="${c}" data-v="${a||vk}" data-k="${esc(k)}" data-w="${t}"${vis(c)}${v<0?' class="ovmin"':""}>${v||(aflMod==="vers"&&(a||vk))?getal(v):'<span class="ovleeg">—</span>'}</td>`}).join("")}</tr>`}
@@ -3958,8 +3958,9 @@ function zvKlaar(){const bi=document.getElementById("brutoIn");if(bi&&document.a
   if(n<3&&tab==="ruimtegraf")tab="oppotov"}
 function zetNiveau(n){n=Math.max(2,n);try{localStorage.setItem("potplanning-niveau",String(n))}catch(e){}zvKlaar();render();melding("Module "+MODNR[n]+": "+NIV_UITLEG[n],"#2d6a4f")}
 /* ---------- Overzicht verkooporders + pakbon ---------- */
-let vkVanaf=true,vkKlant="",vkPlek=null,vkWeek="";
-function vkWeekOpen(c){vkWeek=c;vkKlant="";naar("verkoop")}
+let vkVanaf=true,vkKlant="",vkPlek=null,vkIsPop=false;
+/* overzicht reserveringen als popup (klik op een week in de Afleverplanning); klik ernaast = dicht */
+function vkPop(){vkIsPop=true;try{toonVerkoop()}finally{vkIsPop=false}}
 function verkoopLijst(){const l=[];for(const[key,arr]of Object.entries(data.verkoop||{})){const p=key.split("|");if(p.length<3)continue;
     const code=p[2],y=2000+ +code.slice(0,2),w=+code.slice(2),t=+maandagIso(y,w);
     (arr||[]).forEach((x,i)=>{if(!(+x.n))return;l.push({key,i,k:p[0]+"|"+p[1],gewas:p[0],soort:p[1],code,t,y,w,klant:x.klant||"(geen klant)",n:+x.n||0,prijs:x.prijs??null,opm:x.opmerking||"",datum:x.datum||""})})}
@@ -3973,15 +3974,16 @@ function maakPlekMap(){vkPlek=new Map();
 function plekVan(k,t){const l=(vkPlek.get(k+"|"+t)||[]),uniek=[...new Map(l.map(x=>[x.afd+"|"+x.vloer,x])).values()];
   return{afd:[...new Set(uniek.map(x=>x.afd).filter(Boolean))].join(", "),vloer:[...new Set(uniek.map(x=>x.vloer).filter(Boolean))].join(", ")}}
 const datNL=d=>d?d.split("-").reverse().join("-"):"";
-function toonVerkoop(){maakPlekMap();const nu=dezeWeek();let l=verkoopLijst();
+function toonVerkoop(){const pop=vkIsPop;maakPlekMap();const nu=dezeWeek();let l=verkoopLijst();
+  const zet=x=>{if(pop){toonPop("📦 Reserveringen",x);const m=document.querySelector("#mobPop .mpop");if(m){m.classList.add("breed");m.style.maxWidth="96vw";m.style.width="max-content"}}else $("#inhoud").innerHTML=x};
   const klanten=[...new Set(l.map(r=>r.klant))].sort((a,b)=>a.localeCompare(b,"nl"));
-  if(vkWeek)l=l.filter(r=>r.code===vkWeek);else if(vkVanaf)l=l.filter(r=>r.t>=nu);if(vkKlant)l=l.filter(r=>r.klant===vkKlant);
-  let h=`<div class="rij noprint" style="margin-bottom:10px"><h2 style="margin:0">📦 Reserveringen</h2>
-    ${vkWeek?`<span class="vkwkfilter">Week ${vkWeek} <button onclick="vkWeek='';render()" title="Alle weken tonen">✕</button></span><button class="btn licht klein" onclick="naar('aflever')">‹ Afleverplanning</button>`:`<label class="status"><input type="checkbox" ${vkVanaf?"checked":""} onchange="vkVanaf=this.checked;render()"> vanaf deze week</label>`}
-    <select onchange="vkKlant=this.value;render()"><option value="">Alle klanten</option>${klanten.map(k=>`<option value="${esc(k)}" ${k===vkKlant?"selected":""}>${esc(k)}</option>`).join("")}</select>
-    <span style="flex:1"></span><button class="btn" onclick="verkoopOrder()">+ Reservering</button><button class="btn licht klein" onclick="window.print()">Afdrukken</button></div>
-    <div class="printkop"><h2>Reserveringen${vkWeek?" · week "+vkWeek:""}${vkKlant?" · "+esc(vkKlant):""}</h2></div>`;
-  if(!l.length){$("#inhoud").innerHTML=h+`<div class="leeg">Geen reserveringen${vkWeek?" in week "+vkWeek:vkVanaf?" vanaf deze week":""}. Maak er een met <b>toets R</b>.</div>`;return}
+  if(vkVanaf)l=l.filter(r=>r.t>=nu);if(vkKlant)l=l.filter(r=>r.klant===vkKlant);
+  let h=`<div class="rij noprint" style="margin-bottom:10px">${pop?"":`<h2 style="margin:0">📦 Reserveringen</h2>`}
+    <label class="status"><input type="checkbox" ${vkVanaf?"checked":""} onchange="vkVanaf=this.checked;${pop?'vkPop()':'render()'}"> vanaf deze week</label>
+    <select onchange="vkKlant=this.value;${pop?'vkPop()':'render()'}"><option value="">Alle klanten</option>${klanten.map(k=>`<option value="${esc(k)}" ${k===vkKlant?"selected":""}>${esc(k)}</option>`).join("")}</select>
+    <span style="flex:1"></span><button class="btn" onclick="verkoopOrder()">+ Reservering</button>${pop?"":`<button class="btn licht klein" onclick="window.print()">Afdrukken</button>`}</div>
+    <div class="printkop"><h2>Reserveringen${vkKlant?" · "+esc(vkKlant):""}</h2></div>`;
+  if(!l.length){zet(h+`<div class="leeg">Geen reserveringen${vkVanaf?" vanaf deze week":""}. Maak er een met <b>toets R</b>.</div>`);return}
   h+=`<p class="status noprint" style="margin:0 0 6px">Klik op een regel voor de pakbon van die klant in die week.</p>
     <table class="vktab"><tr><th>Week</th><th>Datum</th><th>Klant</th><th>Gewas</th><th>Soort</th><th style="text-align:right">Aantal</th><th style="text-align:right">Prijs</th><th class="zvweg">Afd</th><th class="zvweg">Vloer</th><th>Opmerking</th><th class="noprint"></th></tr>`;
   let vorige=null;
@@ -3990,12 +3992,12 @@ function toonVerkoop(){maakPlekMap();const nu=dezeWeek();let l=verkoopLijst();
     const pl=plekVan(r.k,r.t);
     h+=`<tr class="vkrij" data-klant="${esc(r.klant)}" data-code="${r.code}" onclick="pakbonVan(this)"><td>${r.code}</td><td>${datNL(r.datum)}</td><td><b>${esc(r.klant)}</b></td><td>${esc(r.gewas)}</td><td>${esc(r.soort)}</td>
       <td style="text-align:right"><b>${getal(r.n)}</b></td><td style="text-align:right;white-space:nowrap">${prijsTxt(r.prijs)}</td><td class="zvweg">${esc(pl.afd)}</td><td class="zvweg"><b>${esc(pl.vloer)||'<span class="let">?</span>'}</b></td><td class="vkopm">${esc(r.opm)}</td>
-      <td class="noprint"><button class="btn rood klein" title="Order verwijderen" onclick="event.stopPropagation();vkWeg('${esc(r.key)}',${r.i})">✕</button></td></tr>`}
-  $("#inhoud").innerHTML=h+`</table>`;
+      <td class="noprint"><button class="btn rood klein" title="Order verwijderen" onclick="event.stopPropagation();vkWeg('${esc(r.key)}',${r.i},${pop})">✕</button></td></tr>`}
+  zet(h+`</table>`);if(pop)return;
   /* vlak net zo breed als de tabel */
   const tb=document.querySelector(".vktab");if(tb)document.body.style.setProperty("--aflW",Math.max(700,tb.offsetWidth+70)+"px")}
-function vkWeg(key,i){const l=(data.verkoop||{})[key];if(!l||!l[i])return;if(!confirm(`Order verwijderen?\n${l[i].klant}: ${getal(l[i].n)} planten`))return;
-  l.splice(i,1);if(!l.length)delete data.verkoop[key];opslaanLater();render()}
+function vkWeg(key,i,pop){const l=(data.verkoop||{})[key];if(!l||!l[i])return;if(!confirm(`Order verwijderen?\n${l[i].klant}: ${getal(l[i].n)} planten`))return;
+  l.splice(i,1);if(!l.length)delete data.verkoop[key];opslaanLater();render();if(pop)vkPop()}
 const DAGEN=["","maandag","dinsdag","woensdag","donderdag","vrijdag","zaterdag","zondag"];
 const DAGK=["","MA","DI","WO","DO","VR","ZA","ZO"];
 const datWeekDag=d=>{const x=leesDatum(d);return`${wkCode(+x)} / ${DAGK[x.getDay()||7]}`};
