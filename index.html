@@ -861,7 +861,7 @@ table.oppot th.jaarstart,table.oppot td.jaarstart{border-left:3px solid #4b2a6e!
 
 <script>
 "use strict";
-const VERSIE="36.7";
+const VERSIE="36.9";
 const VERSIE_DATUM="03-11-2026";
 /* ---------- Basis ---------- */
 const PALET=["#2d6a4f","#1B5EBE","#E8007D","#c77d1a","#7a4fa0","#0f8b8d","#5b6b2f","#3d5a80","#a0522d","#7AB648"];
@@ -1334,7 +1334,12 @@ let urlBezig=false;
 function urlZet(){if(urlBezig||!TAB_URL[tab])return;const h="#"+TAB_URL[tab];if(location.hash===h)return;
   try{if(!location.hash)history.replaceState({tab},"",h);else history.pushState({tab},"",h)}catch(e){}}
 window.addEventListener("popstate",()=>{const t=URL_TAB[location.hash.slice(1)]||(location.hash?"":"aflever");if(t&&t!==tab){urlBezig=true;try{tab=t;render()}finally{urlBezig=false}}});
-function startTab(){const t=URL_TAB[location.hash.slice(1)];if(t&&t!=="beheer"&&t!=="mkbesch")return t;return!data.teeltduren.length?"soorten":window.innerWidth<700?"mobiel":"aflever"}
+function startTab(){
+  /* eerste keer in deze sessie: altijd Afleverplanning, teelt · soort, nog beschikbaar, 2 weken terug t/m 15 vooruit */
+  let eerste=false;if(data.teeltduren.length)try{eerste=!sessionStorage.getItem("potplanning-sessie");sessionStorage.setItem("potplanning-sessie","1")}catch(e){}
+  if(eerste&&window.innerWidth>=700){aflRij="teelt";aflMod=niveau()>1?"vers":"afl";aflS=null;
+    try{const nu=+dezeWeek(),y=isoWeek(new Date()).y;planJaar=nu>=+seizoenVan(y)?y:y-1}catch(e){}return"aflever"}
+  const t=URL_TAB[location.hash.slice(1)];if(t&&t!=="beheer"&&t!=="mkbesch")return t;return!data.teeltduren.length?"soorten":window.innerWidth<700?"mobiel":"aflever"}
 /* toetsen 0–4 */
 document.addEventListener("keydown",e=>{if(e.ctrlKey||e.metaKey||e.altKey||e.repeat)return;const t={"1":"soorten","2":"oppot","3":"oppotov","4":"aflever"}[e.key];if(!t)return;
   const el=document.activeElement;if(el&&el.closest("input,textarea,select,[contenteditable]"))return;const m=document.getElementById("mobPop");if((m&&!m.hidden)||document.querySelector("dialog[open]"))return;
@@ -3794,7 +3799,8 @@ function ovSchuifLive(){const lo=document.getElementById("ovLo"),hi=document.get
   const max=+lo.max||1,f=document.getElementById("ovFill");
   if(f){f.style.left=(max?a/max*100:0)+"%";f.style.width=(max?(b-a)/max*100:100)+"%"}
   const tab=document.querySelector(".ovtabel");if(!tab)return;
-  tab.querySelectorAll("[data-c]").forEach(x=>{const c=+x.dataset.c;x.style.display=c>=a&&c<=b?"":"none"});
+  const leegK=new Set(String(tab.dataset.leeg||"").split(",").filter(Boolean).map(Number)); /* weken zonder reservering (bij Gereserveerd) */
+  tab.querySelectorAll("[data-c]").forEach(x=>{const c=+x.dataset.c;x.style.display=c>=a&&c<=b&&!leegK.has(c)?"":"none"});
   /* rijen zonder planten in de gekozen weken gaan uit beeld */
   let zicht=0;tab.querySelectorAll("tr").forEach((tr,i)=>{if(i===0||tr.classList.contains("ovtot"))return;let t=0;
     tr.querySelectorAll("[data-c]").forEach(x=>{const c=+x.dataset.c;if(c>=a&&c<=b)t+=+(x.dataset.v||0)});tr.style.display=t?"":"none";if(t)zicht++});
@@ -4077,7 +4083,7 @@ function toonAflever(){syncSoorten();
   const alleWk=[];for(let i=0,n=Math.round((totT-van)/6048e5);i<n;i++)alleWk.push(+plusWeken(new Date(van),i));
   const M=alleWk.length-1,code=t=>{const{w,y}=isoWeek(new Date(t));return String(y).slice(2)+String(w).padStart(2,"0")};
   /* huidig seizoen: 2 weken terug + 10 vooruit · ander seizoen: het hele seizoen */
-  if(!aflS||aflS.jaar!==jaar){const i=alleWk.indexOf(+plusWeken(new Date(nu),-2));aflS=i<0?{jaar,start:0,eind:M}:{jaar,start:i,eind:Math.min(M,i+12)}}
+  if(!aflS||aflS.jaar!==jaar){const i=alleWk.indexOf(+plusWeken(new Date(nu),-2));aflS=i<0?{jaar,start:0,eind:M}:{jaar,start:i,eind:Math.min(M,i+17)}} /* 2 weken terug t/m 15 weken vooruit */
   aflS.eind=Math.max(0,Math.min(M,aflS.eind));aflS.start=Math.max(0,Math.min(aflS.eind,aflS.start));
   const regels=afleverRegels().filter(r=>r.t>=van&&r.t<totT&&r.aantal>0&&(!teeltFilter||r.p.soortId===teeltFilter)),tlF=teeltLabelF();
   const eindWk=isoWeek(new Date(totT-6048e5)),pc=v=>M?v/M*100:0;
@@ -4121,12 +4127,13 @@ function toonAflever(){syncSoorten();
     const kT=kls.reduce((a,kl)=>a+Object.values(pk[kl]).reduce((x,y)=>x+y,0),0),kE=kls.reduce((a,kl)=>a+(pkE[kl]||0),0);
     h+=`<tr class="ovtot"><td class="ovnaam">Totaal gereserveerd</td>${alleWk.map((t,c)=>{const v=kls.reduce((a,kl)=>a+(pk[kl][code(t)]||0),0);return`<td data-c="${c}"${vis(c)}${v?' class="ovmin"':""}>${v?getal(-v):'<span class="ovleeg">—</span>'}</td>`}).join("")}<td class="kltot klT"><b>${getal(kT)}</b></td><td class="kltot klE"><b>${kE?euro(kE).replace(/,\d\d$/,""):"–"}</b></td></tr></table>`;
     $("#inhoud").innerHTML=h;ovSchuifLive();return}
-  h+=`<table class="ovtabel" data-st="afl" data-codes='${JSON.stringify(alleWk.map(code))}' onmouseover="ovKruis(event)" onmouseleave="ovKruis(event)" onclick="ovKlik(event)">
+  const leegC=aflMod==="verk"?alleWk.map((t,c)=>lijst.some(k=>verkSom(k,t))?-1:c).filter(c=>c>=0):[];
+  h+=`<table class="ovtabel" data-st="afl" data-leeg="${leegC.join(",")}" data-codes='${JSON.stringify(alleWk.map(code))}' onmouseover="ovKruis(event)" onmouseleave="ovKruis(event)" onclick="ovKlik(event)">
     <tr><th class="ovnaam">${kop}</th>${alleWk.map((t,c)=>`<th data-c="${c}"${vis(c)} class="${t===nu?"nu":""} vkwkkop" onclick="vkPop('${code(t)}')" title="Week ${isoWeek(new Date(t)).w} van ${isoWeek(new Date(t)).y} · klik: overzicht reserveringen">${code(t)}</th>`).join("")}</tr>`;
   for(const k of lijst){const[pr,so]=k.split("|");
     h+=`<tr><td class="ovnaam"><span class="ovtl" data-pr="${esc(pr)}" onclick="naarTeelt(this.dataset.pr)" oncontextmenu="naarTeelt(this.dataset.pr);return false" title="Klik: teelt openen">${esc(pr)}</span> · <span class="ovsl" data-k="${esc(pr+" · "+so)}" onclick="soortPop(this.dataset.k)" title="Klik: alle weken van deze soort (plan, gereserveerd, beschikbaar)">${esc(so)}</span></td>${alleWk.map((t,c)=>{const a=cel[k+"|"+t]||0,vk=verkSom(k,t),v=aflMod==="verk"?-vk:aflMod==="vers"?a-vk:a;
       const kl=a>0&&a-vk<0?"stover":a>0&&vk>0&&(a-vk)<a*0.1?"stkrap":"";
-      return`<td data-c="${c}" data-v="${a||vk}" data-k="${esc(k)}" data-w="${t}"${vis(c)} class="${v<0?"ovmin":""} ${kl}" ${kl?`title="${kl==="stover"?"Te veel gereserveerd: "+getal(vk-a)+" tekort":"Bijna uitverkocht: nog "+getal(a-vk)+" van "+getal(a)}"`:""}>${v||(aflMod==="vers"&&(a||vk))?getal(v):'<span class="ovleeg">—</span>'}</td>`}).join("")}</tr>`}
+      return`<td data-c="${c}" data-v="${aflMod==="verk"?vk:(a||vk)}" data-k="${esc(k)}" data-w="${t}"${vis(c)} class="${v<0?"ovmin":""} ${kl}" ${kl?`title="${kl==="stover"?"Te veel gereserveerd: "+getal(vk-a)+" tekort":"Bijna uitverkocht: nog "+getal(a-vk)+" van "+getal(a)}"`:""}>${v||(aflMod==="vers"&&(a||vk))?getal(v):'<span class="ovleeg">—</span>'}</td>`}).join("")}</tr>`}
   const totM=t=>{if(aflMod==="afl")return tot[t]||0;const vk=lijst.reduce((a,k)=>a+verkSom(k,t),0);return aflMod==="verk"?-vk:(tot[t]||0)-vk};
   h+=`<tr class="ovtot"><td class="ovnaam">Totaal ${{afl:"afleverplan",verk:"gereserveerd",vers:"nog beschikbaar"}[aflMod]}</td>${alleWk.map((t,c)=>{const v=totM(t);return`<td data-c="${c}" data-v="${tot[t]||0}" data-k="__tot" data-w="${t}"${vis(c)}${v<0?' class="ovmin"':""}>${v?getal(v):'<span class="ovleeg">—</span>'}</td>`}).join("")}</tr></table>`;
   $("#inhoud").innerHTML=h;ovSchuifLive()}
