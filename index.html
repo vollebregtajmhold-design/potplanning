@@ -693,6 +693,8 @@ table.oppot th.jaarstart,table.oppot td.jaarstart{border-left:3px solid #4b2a6e!
 .ovtabel td.stkrap,.kvtab tr.stkrap td{background:#ffe2b8!important}.ovtabel td.stover,.kvtab tr.stover td{background:#ffcfcf!important}
 .ovtabel .kltot{text-align:right;white-space:nowrap;background:#eef4fb;padding:0 10px}.ovtabel th.kltot{background:#b9b9b9}
 .kvtab tr.oud td{color:#999}
+
+.ovtabel .klE{position:sticky;right:0;z-index:2;min-width:96px;box-sizing:border-box;box-shadow:inset 1px 0 0 #c9c2b6}.ovtabel .klT{position:sticky;right:96px;z-index:2;min-width:90px;box-sizing:border-box;box-shadow:-2px 0 4px rgba(0,0,0,.08)}.ovtabel tr:first-child th.kltot{z-index:5}
 </style>
 </head>
 <body>
@@ -855,7 +857,7 @@ table.oppot th.jaarstart,table.oppot td.jaarstart{border-left:3px solid #4b2a6e!
 
 <script>
 "use strict";
-const VERSIE="36.0";
+const VERSIE="36.3";
 const VERSIE_DATUM="03-11-2026";
 /* ---------- Basis ---------- */
 const PALET=["#2d6a4f","#1B5EBE","#E8007D","#c77d1a","#7a4fa0","#0f8b8d","#5b6b2f","#3d5a80","#a0522d","#7AB648"];
@@ -4090,15 +4092,15 @@ function toonAflever(){syncSoorten();
         const sp=(pkS[kl]=pkS[kl]||{});sp[ks]=sp[ks]||{};sp[ks][p[2]]=(sp[ks][p[2]]||0)+n}}
     const kls=Object.keys(pk).sort((a,b)=>a.localeCompare(b,"nl"));
     h+=`<table class="ovtabel" data-st="afl" data-codes='${JSON.stringify(alleWk.map(code))}' onmouseover="ovKruis(event)" onmouseleave="ovKruis(event)">
-      <tr><th class="ovnaam">${kop}</th>${alleWk.map((t,c)=>`<th data-c="${c}"${vis(c)} class="${t===nu?"nu":""} vkwkkop" onclick="vkPop('${code(t)}')" title="Week ${isoWeek(new Date(t)).w} van ${isoWeek(new Date(t)).y} · klik: overzicht reserveringen">${code(t)}</th>`).join("")}<th class="kltot">Totaal</th><th class="kltot">€</th></tr>`;
+      <tr><th class="ovnaam">${kop}</th>${alleWk.map((t,c)=>`<th data-c="${c}"${vis(c)} class="${t===nu?"nu":""} vkwkkop" onclick="vkPop('${code(t)}')" title="Week ${isoWeek(new Date(t)).w} van ${isoWeek(new Date(t)).y} · klik: overzicht reserveringen">${code(t)}</th>`).join("")}<th class="kltot klT">Totaal</th><th class="kltot klE">€</th></tr>`;
     if(!kls.length)h+=`<tr><td class="ovnaam" colspan="${alleWk.length+1}"><span class="status">Nog geen reserveringen in dit seizoen.</span></td></tr>`;
-    const cl=(v,t)=>`${v?` class="ovmin" style="cursor:pointer" title="Klik: reservering bekijken of wijzigen" onclick="klantWeekPop(this.parentNode.dataset.kl,'${code(t)}')"`:""}>${v?getal(-v):'<span class="ovleeg">—</span>'}`;
+    const cl=(v,t)=>`${v?` class="ovmin" style="cursor:pointer" title="Klik: pakbon van deze klant in deze week" onclick="pakbonVan({dataset:{klant:this.parentNode.dataset.kl,code:'${code(t)}'}},true)"`:""}>${v?getal(-v):'<span class="ovleeg">—</span>'}`;
     for(const kl of kls){
       const kt=Object.values(pk[kl]).reduce((a,b)=>a+b,0);
-      h+=`<tr data-kl="${esc(kl)}" class="ovklrij"><td class="ovnaam"><b>${esc(kl)}</b></td>${alleWk.map((t,c)=>`<td data-c="${c}" data-v="${pk[kl][code(t)]||0}"${vis(c)}${cl(pk[kl][code(t)]||0,t)}</td>`).join("")}<td class="kltot"><b>${getal(kt)}</b></td><td class="kltot">${pkE[kl]?euro(pkE[kl]).replace(/,\d\d$/,""):"–"}</td></tr>`;
+      h+=`<tr data-kl="${esc(kl)}" class="ovklrij"><td class="ovnaam"><b>${esc(kl)}</b></td>${alleWk.map((t,c)=>`<td data-c="${c}" data-v="${pk[kl][code(t)]||0}"${vis(c)}${cl(pk[kl][code(t)]||0,t)}</td>`).join("")}<td class="kltot klT"><b>${getal(kt)}</b></td><td class="kltot klE">${pkE[kl]?euro(pkE[kl]).replace(/,\d\d$/,""):"–"}</td></tr>`;
 }
     const kT=kls.reduce((a,kl)=>a+Object.values(pk[kl]).reduce((x,y)=>x+y,0),0),kE=kls.reduce((a,kl)=>a+(pkE[kl]||0),0);
-    h+=`<tr class="ovtot"><td class="ovnaam">Totaal gereserveerd</td>${alleWk.map((t,c)=>{const v=kls.reduce((a,kl)=>a+(pk[kl][code(t)]||0),0);return`<td data-c="${c}"${vis(c)}${v?' class="ovmin"':""}>${v?getal(-v):'<span class="ovleeg">—</span>'}</td>`}).join("")}<td class="kltot"><b>${getal(kT)}</b></td><td class="kltot"><b>${kE?euro(kE).replace(/,\d\d$/,""):"–"}</b></td></tr></table>`;
+    h+=`<tr class="ovtot"><td class="ovnaam">Totaal gereserveerd</td>${alleWk.map((t,c)=>{const v=kls.reduce((a,kl)=>a+(pk[kl][code(t)]||0),0);return`<td data-c="${c}"${vis(c)}${v?' class="ovmin"':""}>${v?getal(-v):'<span class="ovleeg">—</span>'}</td>`}).join("")}<td class="kltot klT"><b>${getal(kT)}</b></td><td class="kltot klE"><b>${kE?euro(kE).replace(/,\d\d$/,""):"–"}</b></td></tr></table>`;
     $("#inhoud").innerHTML=h;ovSchuifLive();return}
   h+=`<table class="ovtabel" data-st="afl" data-codes='${JSON.stringify(alleWk.map(code))}' onmouseover="ovKruis(event)" onmouseleave="ovKruis(event)" onclick="ovKlik(event)">
     <tr><th class="ovnaam">${kop}</th>${alleWk.map((t,c)=>`<th data-c="${c}"${vis(c)} class="${t===nu?"nu":""} vkwkkop" onclick="vkPop('${code(t)}')" title="Week ${isoWeek(new Date(t)).w} van ${isoWeek(new Date(t)).y} · klik: overzicht reserveringen">${code(t)}</th>`).join("")}</tr>`;
@@ -4115,7 +4117,7 @@ function aflKlik(td){const k=td.dataset.k,t=+td.dataset.w;raapPop(k,t,aflDetail[
 function soortPop(ks){const[pr,so]=ks.split(" · "),k=pr+"|"+so,nu=+dezeWeek(),per=new Map();
   for(const r of afleverRegels()){if(r.product!==pr||r.soort!==so||!(r.aantal>0))continue;per.set(r.t,(per.get(r.t)||0)+r.aantal)}
   for(const key of Object.keys(data.verkoop||{})){if(!key.startsWith(k+"|"))continue;const cd=key.split("|").pop(),t=+maandagIso(2000+ +cd.slice(0,2),+cd.slice(2));if(!per.has(t))per.set(t,0)}
-  const rijen=[...per].filter(([t])=>t>=nu-7*6048e5).sort((a,b)=>a[0]-b[0]);let sP=0,sV=0;
+  const rijen=[...per].filter(([t])=>t>=nu-7*6048e5&&t<nu+364*864e5).sort((a,b)=>a[0]-b[0]);let sP=0,sV=0;
   const ras=data.rassen.find(r=>r.naam===so&&teeltLabel(data.teeltduren.find(t=>t.id===r.teeltId)||{})===pr);
   const h=rijen.length?`<table class="kvtab"><tr><th>Week</th><th>Afleverplan</th><th>Gereserveerd</th><th>Nog beschikbaar</th></tr>${rijen.map(([t,a])=>{const v=verkSom(k,t),b=a-v;sP+=a;sV+=v;
       return`<tr class="${t<nu?"oud":""} ${b<0?"stover":a>0&&v>0&&b<a*0.1?"stkrap":""}" style="cursor:pointer" onclick="sluitMobSoort();aflKlik({dataset:{k:'${esc(k).replace(/'/g,"\\'")}',w:${t}}})" title="Klik: reserveren in deze week"><td>${wkCode(t)}</td><td>${a?getal(a):"–"}</td><td>${v?getal(v):"–"}</td><td><b>${getal(b)}</b></td></tr>`}).join("")}
@@ -4333,8 +4335,8 @@ function pakbonDatum(inp){const klant=inp.dataset.klant,code=inp.dataset.code,d=
   if(wkCode(+leesDatum(d))!==code){alert("Kies een dag in week "+code+".");return}
   for(const r of verkoopLijst())if(r.klant===klant&&r.code===code)data.verkoop[r.key][r.i].datum=d;
   opslaanLater();pakbonVan({dataset:{klant,code}});if(tab==="verkoop"){const m=document.getElementById("mobPop");const keep=m.innerHTML;render();m.innerHTML=keep;m.hidden=false}}
-function pakbonVan(tr){const klant=tr.dataset.klant,code=tr.dataset.code;
-  toonPop("📦 Pakbon · "+klant+" · week "+code,pakbonInhoud(klant,code,true)+`<div class="rij" style="margin-top:14px"><span style="flex:1"></span><button class="btn" onclick="pakbonPrint(this)" data-klant="${esc(klant)}" data-code="${code}">🖨️ Pakbon afdrukken</button></div>`);
+function pakbonVan(tr,wijzig){const klant=tr.dataset.klant,code=tr.dataset.code;
+  toonPop("📦 Pakbon · "+esc(klant)+" · week "+code,pakbonInhoud(klant,code,true)+`<div class="rij" style="margin-top:14px">${wijzig?`<button class="btn licht" onclick="vkKlant=this.dataset.klant;vkPop('${code}')" data-klant="${esc(klant)}" title="Naar de reserveringen van deze klant in deze week (verplaatsen, weghalen)">✎ Reserveringen van deze week</button>`:""}<span style="flex:1"></span><button class="btn" onclick="pakbonPrint(this)" data-klant="${esc(klant)}" data-code="${code}">🖨️ Pakbon afdrukken</button></div>`);
   const m=document.querySelector("#mobPop .mpop");if(m)m.classList.add("breed")}
 function pakbonPrint(b){let d=document.getElementById("pakbonPrint");if(!d){d=document.createElement("div");d.id="pakbonPrint";document.body.appendChild(d)}
   d.innerHTML=pakbonInhoud(b.dataset.klant,b.dataset.code);document.body.classList.add("pbprint");
