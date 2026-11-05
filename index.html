@@ -726,6 +726,8 @@ table.oppot th.jaarstart,table.oppot td.jaarstart{border-left:3px solid #4b2a6e!
 @media print{body.pbprint .catgrid{grid-template-columns:repeat(4,1fr)}}
 
 .blvink{width:18px;height:18px;vertical-align:middle;margin:0 8px 0 0;cursor:pointer;accent-color:#2d6a4f}.bltab tr.bluit td{opacity:.35}.catkaart{position:relative}.catkaart .blvink{position:absolute;top:6px;left:6px;margin:0;z-index:1;width:22px;height:22px}.catkaart.bluit{opacity:.35}
+
+.bltab td.blprcel{width:90px}.blprijs{width:80px;text-align:right;padding:3px 6px;border:1px solid #cfc6b4;border-radius:6px;font:inherit}.catprijs{font-weight:800;color:#b5179e;font-size:15px}
 </style>
 </head>
 <body>
@@ -888,7 +890,7 @@ table.oppot th.jaarstart,table.oppot td.jaarstart{border-left:3px solid #4b2a6e!
 
 <script>
 "use strict";
-const VERSIE="38.2";
+const VERSIE="38.3";
 const VERSIE_DATUM="03-11-2026";
 /* ---------- Basis ---------- */
 const PALET=["#2d6a4f","#1B5EBE","#E8007D","#c77d1a","#7a4fa0","#0f8b8d","#5b6b2f","#3d5a80","#a0522d","#7AB648"];
@@ -1233,7 +1235,7 @@ function deelData(D){const o={delen:{...D}},I=data.instellingen,aant=!!(D.inkoop
   if(D.param||aant){o.teeltduren=data.teeltduren.filter(okT).map(t=>({...t,aantallen:aant?t.aantallen:{},losAantallen:aant?t.losAantallen:undefined}));
     o.rassen=data.rassen.filter(r=>!wegId.has(r.teeltId)).map(r=>{const x={...r,aantallen:aant?r.aantallen:{}};delete x.prijs;return x});
     o.instellingen={seizoenStart:I.seizoenStart,levertijd:I.levertijd,eenvoudig:I.eenvoudig,...(aant?{brutoM2:I.brutoM2,vast:I.vast,vastB:I.vastB,vastL:I.vastL}:{}),...(D.kosten?{kosten:I.kosten,kostenJ:I.kostenJ}:{})}}
-  if(D.reserveringen){o.verkoop=Object.fromEntries(Object.entries(data.verkoop||{}).filter(([k])=>okK(k)));o.klanten=data.klanten}
+  if(D.reserveringen){o.vkPrijzen=data.vkPrijzen;o.verkoop=Object.fromEntries(Object.entries(data.verkoop||{}).filter(([k])=>okK(k)));o.klanten=data.klanten}
   else if(D.gereserveerd){o.verkoop={};for(const k in data.verkoop||{}){if(!okK(k))continue;const n=(data.verkoop[k]||[]).reduce((a,x)=>a+(+x.n||0),0);if(n)o.verkoop[k]=[{klant:"—",n}]}}
   if(D.notities){o.notities=data.notities;o.weekNotitie=data.weekNotitie}
   if(D.besch){const nu=+dezeWeek(),tot=nu+371*864e5,per=new Map(),codes=new Set();
@@ -4198,6 +4200,13 @@ function pakbonnenPrint(){const paren=[...new Map(vkLaatsteLijst.map(r=>[r.klant
   const uit=()=>{document.body.classList.remove("pbprint");window.removeEventListener("afterprint",uit)};window.addEventListener("afterprint",uit);window.print();setTimeout(uit,1500)}
 /* ---------- Beschikbaarheidslijst: nog beschikbaar per soort, komende weken ---------- */
 let blWeken=4,blVanaf=1,blFust=false,blPct=80,blFoto=false,blWeerg="lijst",blUit=new Set();try{blUit=new Set(JSON.parse(localStorage.getItem("potplanning-bluit")||"[]"))}catch(e){}
+/* verkoopprijzen: data.vkPrijzen = { std:{soortId:prijs}, <klantId>:{soortId:prijs} }. Klantprijs gaat voor, anders standaard */
+let blPrVan="";try{blPrVan=localStorage.getItem("potplanning-blprijs")||""}catch(e){}
+const pF=v=>(+v).toLocaleString("nl-NL",{minimumFractionDigits:2,maximumFractionDigits:3,useGrouping:false});
+const vkPrijs=(kid,id)=>{const P=data.vkPrijzen||{};return kid&&kid!=="std"&&P[kid]&&P[kid][id]!=null?P[kid][id]:(P.std||{})[id]??null};
+function blPrijsZet(el){const id=el.dataset.id,kid=blPrVan,P=data.vkPrijzen=data.vkPrijzen||{},o=P[kid]=P[kid]||{},v=prijsLees(el.value);
+  if(v==null)delete o[id];else o[id]=v;el.value=v==null?"":pF(v);opslaanLater()}
+function blPrKlant(){return blPrVan&&blPrVan!=="std"?data.klanten.find(k=>k.id===blPrVan):null}
 /* soorten die u heeft uitgevinkt gaan niet mee bij afdrukken, delen en kopiëren */
 function blVink(k,aan){aan?blUit.delete(k):blUit.add(k);try{localStorage.setItem("potplanning-bluit",JSON.stringify([...blUit]))}catch(e){}const el=document.getElementById("blLijst");if(el){const y=el.scrollTop;el.innerHTML=beschHtml();fotoVul();el.scrollTop=y}}
 function blAlles(aan){const{rijen}=beschData();rijen.forEach(r=>aan?blUit.delete(r.pr+"|"+r.so):blUit.add(r.pr+"|"+r.so));blVink("",true)}
@@ -4215,17 +4224,20 @@ function beschHtml(uitvoer){let{wk,rijen}=beschData();const wc=t=>{const x=isoWe
   if(uitvoer&&!rijen.length&&beschData().rijen.length)return`<p class="status">Er is geen soort aangevinkt.</p>`;
   if(!rijen.length)return`<p class="status">Er is in deze weken niets meer beschikbaar.</p>`;
   if(blWeerg==="cat")return catHtml(wk,rijen,wc,vk);
-  let h=`<div class="blkop"><div><div class="bltitel">Beschikbaar</div><div class="blsub">${esc(KLANT.appNaam||"")} · ${new Date().toLocaleDateString("nl-NL",{day:"numeric",month:"long",year:"numeric"})}</div></div><div class="blsub" style="text-align:right">week ${wkCode(wk[0])} t/m ${wkCode(wk[wk.length-1])}${blFust?"<br>aantallen in fust":""}</div></div>
-    <table class="bltab"><tr><th>Soort</th>${wk.map(t=>`<th>${wc(t)}</th>`).join("")}</tr>`;let vor="";
-  for(const r of rijen){if(r.pr!==vor){h+=`<tr class="blgroep"><td colspan="${wk.length+1}">${esc(r.pr)}</td></tr>`;vor=r.pr}
-    const uit=blUit.has(r.pr+"|"+r.so);h+=`<tr class="${uit?"bluit":""}"><td>${vk(r,uit)}${blFoto?`<span class="blfoto" ${r.id&&(data.fotos||{})[r.id]?`data-foto="${r.id}"`:""}></span>`:""}${esc(r.so)}</td>${wk.map(t=>{const b=r.v[t];if(!b)return"<td></td>";
+  const pk=blPrVan,kl=blPrKlant(),prC=r=>{if(!uitvoer){const eigen=pk!=="std"?((data.vkPrijzen||{})[pk]||{})[r.id]:vkPrijs("",r.id),std=vkPrijs("",r.id);
+      return`<td class="blprcel">${r.id?`<input class="blprijs" data-id="${r.id}" value="${eigen!=null?pF(eigen):""}" placeholder="${pk!=="std"&&std!=null?pF(std):"€"}" inputmode="decimal" onchange="blPrijsZet(this)" title="Prijs per plant${kl?" voor "+esc(kl.naam)+" (leeg = standaardprijs)":""}">`:""}</td>`}
+    const v=r.id?vkPrijs(pk,r.id):null;return`<td>${v!=null?prijsTxt(v):""}</td>`};
+  let h=`<div class="blkop"><div><div class="bltitel">Beschikbaar${kl?` <span style="font-size:18px">voor ${esc(kl.naam)}</span>`:""}</div><div class="blsub">${esc(KLANT.appNaam||"")} · ${new Date().toLocaleDateString("nl-NL",{day:"numeric",month:"long",year:"numeric"})}</div></div><div class="blsub" style="text-align:right">week ${wkCode(wk[0])} t/m ${wkCode(wk[wk.length-1])}${blFust?"<br>aantallen in fust":""}</div></div>
+    <table class="bltab"><tr><th>Soort</th>${pk?"<th>Prijs</th>":""}${wk.map(t=>`<th>${wc(t)}</th>`).join("")}</tr>`;let vor="";
+  for(const r of rijen){if(r.pr!==vor){h+=`<tr class="blgroep"><td colspan="${wk.length+1+(pk?1:0)}">${esc(r.pr)}</td></tr>`;vor=r.pr}
+    const uit=blUit.has(r.pr+"|"+r.so);h+=`<tr class="${uit?"bluit":""}"><td>${vk(r,uit)}${blFoto?`<span class="blfoto" ${r.id&&(data.fotos||{})[r.id]?`data-foto="${r.id}"`:""}></span>`:""}${esc(r.so)}</td>${pk?prC(r):""}${wk.map(t=>{const b=r.v[t];if(!b)return"<td></td>";
       return`<td>${getal(b)}</td>`}).join("")}</tr>`}
   return h+`</table><div class="blvoet">Onder voorbehoud van tussentijdse verkoop.</div>`}
 /* fotocatalogus: per soort een kaart met grote foto en de aantallen per week */
 function catHtml(wk,rijen,wc,vk){const een=wk.length===1,datum=new Date().toLocaleDateString("nl-NL",{day:"numeric",month:"long",year:"numeric"});
-  let h=`<div class="blkop"><div><div class="bltitel">${een?"Beschikbaar week "+isoWeek(new Date(wk[0])).w:"Beschikbaar"}</div><div class="blsub">${esc(KLANT.appNaam||"")} · ${datum}</div></div><div class="blsub" style="text-align:right">${een?"":`week ${wkCode(wk[0])} t/m ${wkCode(wk[wk.length-1])}`}${blFust?(een?"":"<br>")+"aantallen in fust":""}</div></div><div class="catgrid">`;
+  const kl=blPrKlant();let h=`<div class="blkop"><div><div class="bltitel">${een?"Beschikbaar week "+isoWeek(new Date(wk[0])).w:"Beschikbaar"}${kl?` <span style="font-size:18px">voor ${esc(kl.naam)}</span>`:""}</div><div class="blsub">${esc(KLANT.appNaam||"")} · ${datum}</div></div><div class="blsub" style="text-align:right">${een?"":`week ${wkCode(wk[0])} t/m ${wkCode(wk[wk.length-1])}`}${blFust?(een?"":"<br>")+"aantallen in fust":""}</div></div><div class="catgrid">`;
   for(const r of rijen){const heeft=r.id&&(data.fotos||{})[r.id];
-    const uit=blUit.has(r.pr+"|"+r.so);h+=`<div class="catkaart ${uit?"bluit":""}">${vk(r,uit)}<div class="catfoto" ${heeft?`data-foto="${r.id}"`:""}>${heeft?"":"🌸"}</div><div class="catin"><div class="catnaam">${esc(r.so)}</div><div class="catpr">${esc(r.pr)}</div>
+    const uit=blUit.has(r.pr+"|"+r.so);h+=`<div class="catkaart ${uit?"bluit":""}">${vk(r,uit)}<div class="catfoto" ${heeft?`data-foto="${r.id}"`:""}>${heeft?"":"🌸"}</div><div class="catin"><div class="catnaam">${esc(r.so)}</div><div class="catpr">${esc(r.pr)}</div>${blPrVan&&r.id&&vkPrijs(blPrVan,r.id)!=null?`<div class="catprijs">${prijsTxt(vkPrijs(blPrVan,r.id))}</div>`:""}
       ${een?`<div class="catgetal">${getal(r.v[wk[0]])}</div>`:`<table class="cattab">${wk.filter(t=>r.v[t]).map(t=>`<tr><td>${wc(t)}</td><td>${getal(r.v[t])}</td></tr>`).join("")}</table>`}</div></div>`}
   return h+`</div><div class="blvoet">Onder voorbehoud van tussentijdse verkoop.</div>`}
 /* één week delen als catalogus (vanaf de mobiele weekkop) */
@@ -4238,6 +4250,7 @@ function beschLijst(){const sel=(id,opt,v,f)=>`<select id="${id}" onchange="${f}
       ${sel("blF",[[0,"in planten"],[1,"in fust (trays)"]],blFust?1:0,"blFust=this.value==='1';beschLijst()")}
       ${blWeerg==="cat"?"":`<label class="status"><input type="checkbox" ${blFoto?"checked":""} onchange="blFoto=this.checked;beschLijst()"> met foto's</label>`}
       <label class="status" title="Welk deel van wat echt beschikbaar is op de lijst komt (de rest houdt u achter de hand). Planten worden naar beneden afgerond op 100-tallen.">tonen: ${sel("blP",[[100,"100%"],[90,"90%"],[80,"80%"],[70,"70%"],[60,"60%"],[50,"50%"]],blPct,"blPct=+this.value;try{localStorage.setItem('potplanning-blpct',blPct)}catch(e){}beschLijst()")}</label>
+      ${sel("blPr",[["","zonder prijs"],["std","💶 standaardprijs"],...[...data.klanten].filter(k=>k.naam).sort((a,b)=>a.naam.localeCompare(b.naam,"nl")).map(k=>[k.id,"💶 prijs voor "+k.naam])],blPrVan,"blPrVan=this.value;try{localStorage.setItem('potplanning-blprijs',blPrVan)}catch(e){}beschLijst()")}
       <span class="status">vink: <a href="#" onclick="blAlles(true);return false">alles aan</a> · <a href="#" onclick="blAlles(false);return false">alles uit</a></span>
       <span class="status">${teeltFilter?"teelt: "+esc(teeltNaam(data.teeltduren.find(t=>t.id===teeltFilter)||{})):"alle teelten"}</span></div>
     <div id="blLijst" class="bllijst">${beschHtml()}</div>
@@ -4247,17 +4260,19 @@ function beschLijst(){const sel=(id,opt,v,f)=>`<select id="${id}" onchange="${f}
 /* lijst als tekst (alleen aangevinkte soorten) en een nieuwe Gmail openen */
 function beschTekst(){const{wk,rijen}=beschData(),l=rijen.filter(r=>!blUit.has(r.pr+"|"+r.so)),wn=t=>isoWeek(new Date(t)).w;
   let t=`Beschikbaar week ${wn(wk[0])}${wk.length>1?" t/m "+wn(wk[wk.length-1]):""}${blFust?" (aantallen in fust)":""}\n`,vor="";
-  for(const r of l){if(r.pr!==vor){t+=`\n${r.pr}\n`;vor=r.pr}t+=`- ${r.so}: ${wk.filter(x=>r.v[x]).map(x=>(wk.length>1?"wk "+wn(x)+" ":"")+getal(r.v[x])).join(" · ")}\n`}
+  const kl=blPrKlant();if(kl)t=t.replace("\n",` – voor ${kl.naam}\n`);
+  for(const r of l){if(r.pr!==vor){t+=`\n${r.pr}\n`;vor=r.pr}const pv=blPrVan&&r.id?vkPrijs(blPrVan,r.id):null;t+=`- ${r.so}${pv!=null?" ("+prijsTxt(pv)+")":""}: ${wk.filter(x=>r.v[x]).map(x=>(wk.length>1?"wk "+wn(x)+" ":"")+getal(r.v[x])).join(" · ")}\n`}
   return{onderwerp:`Beschikbaar week ${wn(wk[0])}${wk.length>1?"-"+wn(wk[wk.length-1]):""}${KLANT.appNaam?" – "+KLANT.appNaam:""}`,tekst:t+"\nOnder voorbehoud van tussentijdse verkoop.\n",leeg:!l.length}}
 /* de lijst als opgemaakte mail (tabel zoals de PDF, met foto's eronder); alleen inline-opmaak, dat werkt in Gmail */
 async function beschMailHtml(){const{wk,rijen}=beschData(),l=rijen.filter(r=>!blUit.has(r.pr+"|"+r.so)),wn=t=>isoWeek(new Date(t)).w,G="#2d6a4f",F="font-family:Arial,Helvetica,sans-serif;";
   const td="padding:4px 10px;border-bottom:1px solid #e6e0d4;font-size:14px;";
-  let h=`<div style="${F}color:#222;max-width:720px"><div style="font-size:24px;font-weight:bold;color:${G}">Beschikbaar</div>
+  const pk=blPrVan,kl=blPrKlant();
+  let h=`<div style="${F}color:#222;max-width:720px"><div style="font-size:24px;font-weight:bold;color:${G}">Beschikbaar${kl?` <span style="font-size:18px">voor ${esc(kl.naam)}</span>`:""}</div>
     <table style="width:100%;border-collapse:collapse;${F}"><tr><td style="font-size:13px;color:#555;padding:0">${esc(KLANT.appNaam||"")} · ${new Date().toLocaleDateString("nl-NL",{day:"numeric",month:"long",year:"numeric"})}</td><td style="font-size:13px;color:#555;text-align:right;padding:0">week ${wn(wk[0])}${wk.length>1?" t/m "+wn(wk[wk.length-1]):""}${blFust?" · aantallen in fust":""}</td></tr></table>
     <div style="border-bottom:3px solid ${G};margin:6px 0 8px"></div>
-    <table style="width:100%;border-collapse:collapse;${F}"><tr><th style="background:${G};color:#fff;padding:5px 10px;text-align:left;font-size:14px">Soort</th>${wk.map(t=>`<th style="background:${G};color:#fff;padding:5px 10px;text-align:right;font-size:14px">wk ${wn(t)}</th>`).join("")}</tr>`;let vor="";
-  for(const r of l){if(r.pr!==vor){h+=`<tr><td colspan="${wk.length+1}" style="${td}background:#eef6f1;font-weight:bold;color:#1f4d39;padding-top:8px">${esc(r.pr)}</td></tr>`;vor=r.pr}
-    h+=`<tr><td style="${td}">${esc(r.so)}</td>${wk.map(t=>`<td style="${td}text-align:right">${r.v[t]?getal(r.v[t]):""}</td>`).join("")}</tr>`}
+    <table style="width:100%;border-collapse:collapse;${F}"><tr><th style="background:${G};color:#fff;padding:5px 10px;text-align:left;font-size:14px">Soort</th>${pk?`<th style="background:${G};color:#fff;padding:5px 10px;text-align:right;font-size:14px">Prijs</th>`:""}${wk.map(t=>`<th style="background:${G};color:#fff;padding:5px 10px;text-align:right;font-size:14px">wk ${wn(t)}</th>`).join("")}</tr>`;let vor="";
+  for(const r of l){if(r.pr!==vor){h+=`<tr><td colspan="${wk.length+1+(pk?1:0)}" style="${td}background:#eef6f1;font-weight:bold;color:#1f4d39;padding-top:8px">${esc(r.pr)}</td></tr>`;vor=r.pr}
+    h+=`<tr><td style="${td}">${esc(r.so)}</td>${pk?`<td style="${td}text-align:right">${r.id&&vkPrijs(pk,r.id)!=null?prijsTxt(vkPrijs(pk,r.id)):""}</td>`:""}${wk.map(t=>`<td style="${td}text-align:right">${r.v[t]?getal(r.v[t]):""}</td>`).join("")}</tr>`}
   h+=`</table><div style="font-size:12px;color:#555;margin-top:8px">Onder voorbehoud van tussentijdse verkoop.</div>`;
   const met=[];for(const r of l)if(r.id&&(data.fotos||{})[r.id]){const img=await fotoLaad(r.id);if(img)met.push([r,img])}
   if(met.length){h+=`<div style="font-size:18px;font-weight:bold;color:${G};margin:18px 0 6px">Foto's</div><table style="border-collapse:collapse;${F}">`;
@@ -4381,7 +4396,9 @@ function voRender(){
   $i("voKlant").addEventListener("change",()=>{vo.fustZelf=false;voFustVan();voRond()});$i("voNieuw").addEventListener("change",()=>{voFustVan();voRond()});
   $i("voFust").oninput=e=>{vo.fust=e.target.value;vo.fustZelf=true};$i("voPer").oninput=e=>{vo.perFust=e.target.value;vo.fustZelf=true};$i("voPer").onchange=voRond;
   $i("voN").addEventListener("change",voRond);if(!vo.fust&&!vo.perFust)voFustVan();
-  $i("voP").oninput=e=>{vo.prijs=e.target.value};$i("voP").onkeydown=e=>{if(e.key==="Enter")voOpslaan()};
+  const voPrijsVan=()=>{if(vo.prijsZelf)return;const ras=data.rassen.find(r=>r.teeltId===vo.teelt&&r.naam===vo.soort),kk=klantVan(vo.klant),pv=ras?vkPrijs(kk&&kk.id,ras.id):null;vo.prijs=pv!=null?pF(pv):"";$i("voP").value=vo.prijs};
+  $i("voKlant").addEventListener("change",voPrijsVan);$i("voSoort").addEventListener("change",voPrijsVan);if(!vo.prijs){vo.prijsZelf=false;voPrijsVan()}
+  $i("voP").oninput=e=>{vo.prijs=e.target.value;vo.prijsZelf=!!e.target.value};$i("voP").onkeydown=e=>{if(e.key==="Enter")voOpslaan()};
   $i("voOpm").oninput=e=>{vo.opm=e.target.value};$i("voOpm").onkeydown=e=>{if(e.key==="Enter")voOpslaan()};
   $i("voOk").onclick=voOpslaan;
   voUpd();($i(vo.klant?"voN":"voKlant")).focus()}
