@@ -691,7 +691,7 @@ table.oppot th.jaarstart,table.oppot td.jaarstart{border-left:3px solid #4b2a6e!
 /* 36.0 reserveringen en afleverplanning */
 .btn.vkpijl{padding:2px 6px;min-width:0}.verkrij .vkpijl{flex:none}
 .ovtabel td.stkrap,.kvtab tr.stkrap td{background:#ffe2b8!important}.ovtabel td.stover,.kvtab tr.stover td{background:#ffcfcf!important}
-.ovtabel .kltot{text-align:right;white-space:nowrap;background:#eef4fb;padding:0 10px}.ovtabel th.kltot{background:#b9b9b9}
+.ovtabel .kltot{text-align:right;white-space:nowrap;background:#f4efe6;padding:0 10px}.ovtabel th.kltot{background:#b9b9b9}
 .kvtab tr.oud td{color:#999}
 
 .ovtabel .klE{position:sticky;right:0;z-index:2;min-width:96px;box-sizing:border-box;box-shadow:inset 1px 0 0 #c9c2b6}.ovtabel .klT{position:sticky;right:96px;z-index:2;min-width:90px;box-sizing:border-box;box-shadow:-2px 0 4px rgba(0,0,0,.08)}.ovtabel tr:first-child th.kltot{z-index:5}
@@ -861,7 +861,7 @@ table.oppot th.jaarstart,table.oppot td.jaarstart{border-left:3px solid #4b2a6e!
 
 <script>
 "use strict";
-const VERSIE="37.0";
+const VERSIE="37.1";
 const VERSIE_DATUM="03-11-2026";
 /* ---------- Basis ---------- */
 const PALET=["#2d6a4f","#1B5EBE","#E8007D","#c77d1a","#7a4fa0","#0f8b8d","#5b6b2f","#3d5a80","#a0522d","#7AB648"];
@@ -4123,7 +4123,7 @@ function toonAflever(){syncSoorten();
     const cl=(v,t)=>`${v?` class="ovmin" style="cursor:pointer" title="Klik: pakbon van deze klant in deze week" onclick="pakbonVan({dataset:{klant:this.parentNode.dataset.kl,code:'${code(t)}'}},true)"`:""}>${v?getal(-v):'<span class="ovleeg">—</span>'}`;
     for(const kl of kls){
       const kt=Object.values(pk[kl]).reduce((a,b)=>a+b,0);
-      h+=`<tr data-kl="${esc(kl)}" class="ovklrij"><td class="ovnaam"><b>${esc(kl)}</b></td>${alleWk.map((t,c)=>`<td data-c="${c}" data-v="${pk[kl][code(t)]||0}"${vis(c)}${cl(pk[kl][code(t)]||0,t)}</td>`).join("")}<td class="kltot klT"><b>${getal(kt)}</b></td><td class="kltot klE">${pkE[kl]?euro(pkE[kl]).replace(/,\d\d$/,""):"–"}</td></tr>`;
+      h+=`<tr data-kl="${esc(kl)}" class="ovklant"><td class="ovnaam"><span class="ovsl">${esc(kl)}</span></td>${alleWk.map((t,c)=>`<td data-c="${c}" data-v="${pk[kl][code(t)]||0}"${vis(c)}${cl(pk[kl][code(t)]||0,t)}</td>`).join("")}<td class="kltot klT"><b>${getal(kt)}</b></td><td class="kltot klE">${pkE[kl]?euro(pkE[kl]).replace(/,\d\d$/,""):"–"}</td></tr>`;
 }
     const kT=kls.reduce((a,kl)=>a+Object.values(pk[kl]).reduce((x,y)=>x+y,0),0),kE=kls.reduce((a,kl)=>a+(pkE[kl]||0),0);
     h+=`<tr class="ovtot"><td class="ovnaam">Totaal gereserveerd</td>${alleWk.map((t,c)=>{const v=kls.reduce((a,kl)=>a+(pk[kl][code(t)]||0),0);return`<td data-c="${c}"${vis(c)}${v?' class="ovmin"':""}>${v?getal(-v):'<span class="ovleeg">—</span>'}</td>`}).join("")}<td class="kltot klT"><b>${getal(kT)}</b></td><td class="kltot klE"><b>${kE?euro(kE).replace(/,\d\d$/,""):"–"}</b></td></tr></table>`;
