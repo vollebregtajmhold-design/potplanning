@@ -870,7 +870,7 @@ table.oppot th.jaarstart,table.oppot td.jaarstart{border-left:3px solid #4b2a6e!
 
 <script>
 "use strict";
-const VERSIE="37.3";
+const VERSIE="37.4";
 const VERSIE_DATUM="03-11-2026";
 /* ---------- Basis ---------- */
 const PALET=["#2d6a4f","#1B5EBE","#E8007D","#c77d1a","#7a4fa0","#0f8b8d","#5b6b2f","#3d5a80","#a0522d","#7AB648"];
@@ -4168,7 +4168,7 @@ function pakbonnenPrint(){const paren=[...new Map(vkLaatsteLijst.map(r=>[r.klant
   d.innerHTML=paren.map(x=>`<div class="pbpagina">${pakbonInhoud(x.klant,x.code)}</div>`).join("");document.body.classList.add("pbprint");
   const uit=()=>{document.body.classList.remove("pbprint");window.removeEventListener("afterprint",uit)};window.addEventListener("afterprint",uit);window.print();setTimeout(uit,1500)}
 /* ---------- Beschikbaarheidslijst: nog beschikbaar per soort, komende weken ---------- */
-let blWeken=6,blVanaf=0,blFust=false,blPct=80;try{const v=+localStorage.getItem("potplanning-blpct");if(v>0&&v<=100)blPct=v}catch(e){}
+let blWeken=4,blVanaf=1,blFust=false,blPct=80;try{const v=+localStorage.getItem("potplanning-blpct");if(v>0&&v<=100)blPct=v}catch(e){}
 /* aantal op de lijst: % van wat echt beschikbaar is, naar beneden afgerond (planten op 100-tallen, fust op hele fusten) */
 const blWaarde=(b,fn)=>{const x=b*blPct/100;return blFust&&fn>1?Math.floor(x/fn):Math.floor(x/100)*100};
 function beschData(){const nu=+dezeWeek(),start=+plusWeken(new Date(nu),blVanaf),wk=Array.from({length:blWeken},(_,i)=>+plusWeken(new Date(start),i)),set=new Set(wk),per=new Map();
