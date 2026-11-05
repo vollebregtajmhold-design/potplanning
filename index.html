@@ -870,7 +870,7 @@ table.oppot th.jaarstart,table.oppot td.jaarstart{border-left:3px solid #4b2a6e!
 
 <script>
 "use strict";
-const VERSIE="37.2";
+const VERSIE="37.3";
 const VERSIE_DATUM="03-11-2026";
 /* ---------- Basis ---------- */
 const PALET=["#2d6a4f","#1B5EBE","#E8007D","#c77d1a","#7a4fa0","#0f8b8d","#5b6b2f","#3d5a80","#a0522d","#7AB648"];
@@ -4168,11 +4168,14 @@ function pakbonnenPrint(){const paren=[...new Map(vkLaatsteLijst.map(r=>[r.klant
   d.innerHTML=paren.map(x=>`<div class="pbpagina">${pakbonInhoud(x.klant,x.code)}</div>`).join("");document.body.classList.add("pbprint");
   const uit=()=>{document.body.classList.remove("pbprint");window.removeEventListener("afterprint",uit)};window.addEventListener("afterprint",uit);window.print();setTimeout(uit,1500)}
 /* ---------- Beschikbaarheidslijst: nog beschikbaar per soort, komende weken ---------- */
-let blWeken=6,blVanaf=0,blFust=false;
+let blWeken=6,blVanaf=0,blFust=false,blPct=80;try{const v=+localStorage.getItem("potplanning-blpct");if(v>0&&v<=100)blPct=v}catch(e){}
+/* aantal op de lijst: % van wat echt beschikbaar is, naar beneden afgerond (planten op 100-tallen, fust op hele fusten) */
+const blWaarde=(b,fn)=>{const x=b*blPct/100;return blFust&&fn>1?Math.floor(x/fn):Math.floor(x/100)*100};
 function beschData(){const nu=+dezeWeek(),start=+plusWeken(new Date(nu),blVanaf),wk=Array.from({length:blWeken},(_,i)=>+plusWeken(new Date(start),i)),set=new Set(wk),per=new Map();
   for(const r of afleverRegels()){if(!set.has(r.t)||!(r.aantal>0)||(teeltFilter&&r.p.soortId!==teeltFilter))continue;const k=r.product+"|"+r.soort;const m=per.get(k)||{};m[r.t]=(m[r.t]||0)+r.aantal;per.set(k,m)}
-  const rijen=[];for(const[k,m]of per){const v={};let iets=false;for(const t of wk){const b=(m[t]||0)-verkSom(k,t);if(b>0){v[t]=b;iets=true}}if(iets){const[pr,so]=k.split("|");
-    const ras=data.rassen.find(r=>r.naam===so&&teeltLabel(data.teeltduren.find(t=>t.id===r.teeltId)||{})===pr);rijen.push({pr,so,v,fn:ras?fustAantal(ras.fust):0,fust:ras&&ras.fust||""})}}
+  const rijen=[];for(const[k,m]of per){const[pr,so]=k.split("|"),ras=data.rassen.find(r=>r.naam===so&&teeltLabel(data.teeltduren.find(t=>t.id===r.teeltId)||{})===pr),fn=ras?fustAantal(ras.fust):0;
+    const v={};let iets=false;for(const t of wk){const b=blWaarde((m[t]||0)-verkSom(k,t),fn);if(b>0){v[t]=b;iets=true}}
+    if(iets)rijen.push({pr,so,v,fn,fust:ras&&ras.fust||""})}
   rijen.sort((a,b)=>a.pr.localeCompare(b.pr,"nl")||a.so.localeCompare(b.so,"nl"));return{wk,rijen}}
 function beschHtml(){const{wk,rijen}=beschData(),wc=t=>{const x=isoWeek(new Date(t));return"wk "+x.w};
   if(!rijen.length)return`<p class="status">Er is in deze weken niets meer beschikbaar.</p>`;
@@ -4180,13 +4183,14 @@ function beschHtml(){const{wk,rijen}=beschData(),wc=t=>{const x=isoWeek(new Date
     <table class="bltab"><tr><th>Soort</th>${wk.map(t=>`<th>${wc(t)}</th>`).join("")}</tr>`;let vor="";
   for(const r of rijen){if(r.pr!==vor){h+=`<tr class="blgroep"><td colspan="${wk.length+1}">${esc(r.pr)}</td></tr>`;vor=r.pr}
     h+=`<tr><td>${esc(r.so)}${blFust&&r.fust?` <span class="blf">(${esc(r.fust)})</span>`:""}</td>${wk.map(t=>{const b=r.v[t];if(!b)return"<td></td>";
-      return`<td>${blFust&&r.fn>1?getal(Math.floor(b/r.fn)):getal(b)}</td>`}).join("")}</tr>`}
+      return`<td>${getal(b)}</td>`}).join("")}</tr>`}
   return h+`</table><div class="blvoet">Onder voorbehoud van tussentijdse verkoop.</div>`}
 function beschLijst(){const sel=(id,opt,v,f)=>`<select id="${id}" onchange="${f}">${opt.map(([a,b])=>`<option value="${a}" ${String(a)===String(v)?"selected":""}>${b}</option>`).join("")}</select>`;
   toonPop("📄 Beschikbaarheidslijst",`<div class="rij" style="gap:8px;flex-wrap:wrap;margin-bottom:10px">
       ${sel("blVan",[[0,"vanaf deze week"],[1,"vanaf volgende week"],[2,"vanaf over 2 weken"]],blVanaf,"blVanaf=+this.value;beschLijst()")}
       ${sel("blWk",[[4,"4 weken"],[6,"6 weken"],[8,"8 weken"],[10,"10 weken"],[13,"13 weken"]],blWeken,"blWeken=+this.value;beschLijst()")}
       ${sel("blF",[[0,"in planten"],[1,"in fust (trays)"]],blFust?1:0,"blFust=this.value==='1';beschLijst()")}
+      <label class="status" title="Welk deel van wat echt beschikbaar is op de lijst komt (de rest houdt u achter de hand). Planten worden naar beneden afgerond op 100-tallen.">tonen: ${sel("blP",[[100,"100%"],[90,"90%"],[80,"80%"],[70,"70%"],[60,"60%"],[50,"50%"]],blPct,"blPct=+this.value;try{localStorage.setItem('potplanning-blpct',blPct)}catch(e){}beschLijst()")}</label>
       <span class="status">${teeltFilter?"teelt: "+esc(teeltNaam(data.teeltduren.find(t=>t.id===teeltFilter)||{})):"alle teelten"}</span></div>
     <div id="blLijst" class="bllijst">${beschHtml()}</div>
     <div class="rij" style="margin-top:12px;gap:8px;flex-wrap:wrap"><span class="status">PDF: kies bij afdrukken "Opslaan als PDF".</span><span style="flex:1"></span>
