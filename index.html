@@ -708,6 +708,13 @@ table.oppot th.jaarstart,table.oppot td.jaarstart{border-left:3px solid #4b2a6e!
 .bltab td{padding:4px 8px;border-bottom:1px solid #e6e0d4;text-align:right}.bltab td:first-child{text-align:left}.bltab tr.blgroep td{background:#eef6f1;font-weight:800;color:#1f4d39;text-align:left;padding-top:8px;-webkit-print-color-adjust:exact;print-color-adjust:exact}
 .blf{color:#888;font-size:12px}.blvoet{margin-top:8px;font-size:11px;color:#777}
 @media print{body.pbprint .bllijst{padding:0}body.pbprint .bltab{font-size:10pt}body.pbprint .bltitel{font-size:16pt}}
+
+/* 37.5 foto's */
+.naamfoto{display:flex;gap:6px;align-items:center}.naamfoto input{flex:1;min-width:0}
+.fotocel{flex:none;width:34px;height:34px;border-radius:6px;border:1px dashed #c9c2b6;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:15px;opacity:.55;overflow:hidden;background:#fff}
+.fotocel.heeft{opacity:1;border-style:solid}.fotocel:hover{opacity:1;border-color:#2d6a4f}.fotocel img{width:100%;height:100%;object-fit:cover}
+.fotogroot{text-align:center}.fotogroot img{max-width:100%;max-height:60vh;border-radius:10px}
+.blfoto{display:inline-block;width:44px;height:44px;vertical-align:middle;margin-right:8px;border-radius:6px;overflow:hidden;background:#f3efe6}.blfoto img{width:100%;height:100%;object-fit:cover}.blfoto:not([data-foto]){background:transparent}
 </style>
 </head>
 <body>
@@ -870,7 +877,7 @@ table.oppot th.jaarstart,table.oppot td.jaarstart{border-left:3px solid #4b2a6e!
 
 <script>
 "use strict";
-const VERSIE="37.4";
+const VERSIE="37.5";
 const VERSIE_DATUM="03-11-2026";
 /* ---------- Basis ---------- */
 const PALET=["#2d6a4f","#1B5EBE","#E8007D","#c77d1a","#7a4fa0","#0f8b8d","#5b6b2f","#3d5a80","#a0522d","#7AB648"];
@@ -1175,7 +1182,7 @@ function zetKijker(v){kijker=!!v;document.body.classList.toggle("kijker",kijker)
   if(!b){b=document.createElement("span");b.id="kijkLabel";b.textContent="👁 Alleen kijken";b.title="Met dit account kunt u alles bekijken, maar niets veranderen.";const t=document.querySelector("#balk .titel");if(t)t.after(b)}
   b.hidden=!kijker}
 /* Notitie per week: data.weekNotitie["JJWW"] = tekst */
-setTimeout(()=>{const r0=render;render=function(){try{keuzeSync()}catch(e){}const x=r0.apply(this,arguments);try{weekNotRijen()}catch(e){console.log(e)}try{hulpKnop()}catch(e){console.log(e)}try{urlZet()}catch(e){}return x};try{weekNotRijen()}catch(e){}},0);
+setTimeout(()=>{const r0=render;render=function(){try{keuzeSync()}catch(e){}const x=r0.apply(this,arguments);try{weekNotRijen()}catch(e){console.log(e)}try{hulpKnop()}catch(e){console.log(e)}try{urlZet()}catch(e){}try{fotoVul()}catch(e){}return x};try{weekNotRijen()}catch(e){}},0);
 const wkNot=c=>((data.weekNotitie||{})[c]||"");
 function weekNotPop(c){const y=2000+ +c.slice(0,2),w=+c.slice(2);
   toonPop("📝 Notitie week "+w+(y!==isoWeek(new Date()).y?" ("+y+")":""),`<textarea id="wkNotTxt" ${kijker?"readonly":""} style="width:100%;height:120px;font-size:15px;box-sizing:border-box;padding:8px" placeholder="bijv. kas 3 eerder leeg">${esc(wkNot(c))}</textarea>
@@ -2604,7 +2611,7 @@ function toonSoorten(){
           <td style="width:110px;white-space:nowrap;font-size:12px"><span class="status">uitval</span> <input type="number" min="0" max="100" step="0.5" style="width:48px" data-alle="uitval" data-teelt="${t.id}" placeholder="–"> <span class="status">%</span></td>
           <td style="width:118px;white-space:nowrap;font-size:12px"><span class="status">levertijd</span> <input type="number" min="0" max="52" style="width:46px" data-alle="levertijd" data-teelt="${t.id}" placeholder="–"> <span class="status">wk</span></td>
           <td style="font-size:12px"><select data-alle="duur" data-teelt="${t.id}" style="max-width:150px"><option value="">— kies teeltduur —</option><option value="__std">Standaard duur</option>${srt.filter(eigenDuur).map(r=>`<option value="${r.id}">Zoals ${esc(r.naam)}</option>`).join("")}</select></td>
-          <td></td><td></td></tr>`:""}${srt.map(r=>`<tr><td style="width:32%"><input data-ras="${r.id}" data-rk="naam" value="${esc(r.naam)}" placeholder="bijv. Wit" class="${r.naam?"":"mist"}"></td>
+          <td></td><td></td></tr>`:""}${srt.map(r=>`<tr><td style="width:32%"><div class="naamfoto"><span class="fotocel ${(data.fotos||{})[r.id]?"heeft":""}" data-foto="${r.id}" onclick="fotoPop('${r.id}')" title="Foto van deze soort">📷</span><input data-ras="${r.id}" data-rk="naam" value="${esc(r.naam)}" placeholder="bijv. Wit" class="${r.naam?"":"mist"}"></div></td>
           <td class="uitgebreid"><select data-ras="${r.id}" data-rk="leverancierId" style="width:100%">${levOpties(r.leverancierId)}</select></td>
           <td style="width:70px"><input data-ras="${r.id}" data-rk="nr" value="${esc(r.nr||"")}" placeholder="nr." title="Soortnummer (bijv. artikelnummer van de leverancier)" style="width:100%;font-size:12px"></td>
           <td style="width:84px"><input data-ras="${r.id}" data-rk="fust" value="${esc(r.fust)}" placeholder="fust" title="Fust, bijv. Tray 260" style="width:100%;font-size:12px"></td>
@@ -4168,21 +4175,21 @@ function pakbonnenPrint(){const paren=[...new Map(vkLaatsteLijst.map(r=>[r.klant
   d.innerHTML=paren.map(x=>`<div class="pbpagina">${pakbonInhoud(x.klant,x.code)}</div>`).join("");document.body.classList.add("pbprint");
   const uit=()=>{document.body.classList.remove("pbprint");window.removeEventListener("afterprint",uit)};window.addEventListener("afterprint",uit);window.print();setTimeout(uit,1500)}
 /* ---------- Beschikbaarheidslijst: nog beschikbaar per soort, komende weken ---------- */
-let blWeken=4,blVanaf=1,blFust=false,blPct=80;try{const v=+localStorage.getItem("potplanning-blpct");if(v>0&&v<=100)blPct=v}catch(e){}
+let blWeken=4,blVanaf=1,blFust=false,blPct=80,blFoto=false;try{const v=+localStorage.getItem("potplanning-blpct");if(v>0&&v<=100)blPct=v}catch(e){}
 /* aantal op de lijst: % van wat echt beschikbaar is, naar beneden afgerond (planten op 100-tallen, fust op hele fusten) */
 const blWaarde=(b,fn)=>{const x=b*blPct/100;return blFust&&fn>1?Math.floor(x/fn):Math.floor(x/100)*100};
 function beschData(){const nu=+dezeWeek(),start=+plusWeken(new Date(nu),blVanaf),wk=Array.from({length:blWeken},(_,i)=>+plusWeken(new Date(start),i)),set=new Set(wk),per=new Map();
   for(const r of afleverRegels()){if(!set.has(r.t)||!(r.aantal>0)||(teeltFilter&&r.p.soortId!==teeltFilter))continue;const k=r.product+"|"+r.soort;const m=per.get(k)||{};m[r.t]=(m[r.t]||0)+r.aantal;per.set(k,m)}
   const rijen=[];for(const[k,m]of per){const[pr,so]=k.split("|"),ras=data.rassen.find(r=>r.naam===so&&teeltLabel(data.teeltduren.find(t=>t.id===r.teeltId)||{})===pr),fn=ras?fustAantal(ras.fust):0;
     const v={};let iets=false;for(const t of wk){const b=blWaarde((m[t]||0)-verkSom(k,t),fn);if(b>0){v[t]=b;iets=true}}
-    if(iets)rijen.push({pr,so,v,fn,fust:ras&&ras.fust||""})}
+    if(iets)rijen.push({pr,so,v,fn,fust:ras&&ras.fust||"",id:ras&&ras.id})}
   rijen.sort((a,b)=>a.pr.localeCompare(b.pr,"nl")||a.so.localeCompare(b.so,"nl"));return{wk,rijen}}
 function beschHtml(){const{wk,rijen}=beschData(),wc=t=>{const x=isoWeek(new Date(t));return"wk "+x.w};
   if(!rijen.length)return`<p class="status">Er is in deze weken niets meer beschikbaar.</p>`;
   let h=`<div class="blkop"><div><div class="bltitel">Beschikbaar</div><div class="blsub">${esc(KLANT.appNaam||"")} · ${new Date().toLocaleDateString("nl-NL",{day:"numeric",month:"long",year:"numeric"})}</div></div><div class="blsub" style="text-align:right">week ${wkCode(wk[0])} t/m ${wkCode(wk[wk.length-1])}${blFust?"<br>aantallen in fust":""}</div></div>
     <table class="bltab"><tr><th>Soort</th>${wk.map(t=>`<th>${wc(t)}</th>`).join("")}</tr>`;let vor="";
   for(const r of rijen){if(r.pr!==vor){h+=`<tr class="blgroep"><td colspan="${wk.length+1}">${esc(r.pr)}</td></tr>`;vor=r.pr}
-    h+=`<tr><td>${esc(r.so)}${blFust&&r.fust?` <span class="blf">(${esc(r.fust)})</span>`:""}</td>${wk.map(t=>{const b=r.v[t];if(!b)return"<td></td>";
+    h+=`<tr><td>${blFoto?`<span class="blfoto" ${r.id&&(data.fotos||{})[r.id]?`data-foto="${r.id}"`:""}></span>`:""}${esc(r.so)}${blFust&&r.fust?` <span class="blf">(${esc(r.fust)})</span>`:""}</td>${wk.map(t=>{const b=r.v[t];if(!b)return"<td></td>";
       return`<td>${getal(b)}</td>`}).join("")}</tr>`}
   return h+`</table><div class="blvoet">Onder voorbehoud van tussentijdse verkoop.</div>`}
 function beschLijst(){const sel=(id,opt,v,f)=>`<select id="${id}" onchange="${f}">${opt.map(([a,b])=>`<option value="${a}" ${String(a)===String(v)?"selected":""}>${b}</option>`).join("")}</select>`;
@@ -4190,24 +4197,46 @@ function beschLijst(){const sel=(id,opt,v,f)=>`<select id="${id}" onchange="${f}
       ${sel("blVan",[[0,"vanaf deze week"],[1,"vanaf volgende week"],[2,"vanaf over 2 weken"]],blVanaf,"blVanaf=+this.value;beschLijst()")}
       ${sel("blWk",[[4,"4 weken"],[6,"6 weken"],[8,"8 weken"],[10,"10 weken"],[13,"13 weken"]],blWeken,"blWeken=+this.value;beschLijst()")}
       ${sel("blF",[[0,"in planten"],[1,"in fust (trays)"]],blFust?1:0,"blFust=this.value==='1';beschLijst()")}
+      <label class="status"><input type="checkbox" ${blFoto?"checked":""} onchange="blFoto=this.checked;beschLijst()"> met foto's</label>
       <label class="status" title="Welk deel van wat echt beschikbaar is op de lijst komt (de rest houdt u achter de hand). Planten worden naar beneden afgerond op 100-tallen.">tonen: ${sel("blP",[[100,"100%"],[90,"90%"],[80,"80%"],[70,"70%"],[60,"60%"],[50,"50%"]],blPct,"blPct=+this.value;try{localStorage.setItem('potplanning-blpct',blPct)}catch(e){}beschLijst()")}</label>
       <span class="status">${teeltFilter?"teelt: "+esc(teeltNaam(data.teeltduren.find(t=>t.id===teeltFilter)||{})):"alle teelten"}</span></div>
     <div id="blLijst" class="bllijst">${beschHtml()}</div>
     <div class="rij" style="margin-top:12px;gap:8px;flex-wrap:wrap"><span class="status">PDF: kies bij afdrukken "Opslaan als PDF".</span><span style="flex:1"></span>
       <button class="btn licht" onclick="beschPlaatje(false)">⬇ Plaatje</button><button class="btn licht" onclick="beschPlaatje(true)" title="Kopiëren en daarna plakken in WhatsApp of mail">📋 Kopieer plaatje</button><button class="btn" onclick="beschPrint()">🖨️ Afdrukken / PDF</button></div>`);
-  const m=document.querySelector("#mobPop .mpop");if(m){m.style.maxWidth="900px";m.style.width="auto"}}
-function beschPrint(){let d=document.getElementById("pakbonPrint");if(!d){d=document.createElement("div");d.id="pakbonPrint";document.body.appendChild(d)}
-  d.innerHTML=`<div class="bllijst">${beschHtml()}</div>`;document.body.classList.add("pbprint");
+  const m=document.querySelector("#mobPop .mpop");if(m){m.style.maxWidth="900px";m.style.width="auto"}if(blFoto)blFotosKlaar()}
+async function blFotosKlaar(){if(!blFoto)return;await Promise.all(Object.keys(data.fotos||{}).map(fotoLaad));fotoVul();await new Promise(r=>setTimeout(r,150))}
+async function beschPrint(){await blFotosKlaar();let d=document.getElementById("pakbonPrint");if(!d){d=document.createElement("div");d.id="pakbonPrint";document.body.appendChild(d)}
+  d.innerHTML=`<div class="bllijst">${beschHtml()}</div>`;fotoVul();await new Promise(r=>setTimeout(r,200));document.body.classList.add("pbprint");
   const uit=()=>{document.body.classList.remove("pbprint");window.removeEventListener("afterprint",uit)};window.addEventListener("afterprint",uit);window.print();setTimeout(uit,1500)}
 let h2cLaden=null;
 function h2cLib(){if(window.html2canvas)return Promise.resolve(window.html2canvas);return h2cLaden=h2cLaden||new Promise((ok,nee)=>{const sc=document.createElement("script");
   sc.src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js";sc.onload=()=>ok(window.html2canvas);sc.onerror=()=>{h2cLaden=null;nee(new Error("hulp voor plaatje kon niet laden (internet?)"))};document.head.appendChild(sc)})}
-async function beschPlaatje(kopie){const el=document.getElementById("blLijst");if(!el)return;
+async function beschPlaatje(kopie){const el=document.getElementById("blLijst");if(!el)return;await blFotosKlaar();
   try{melding("Plaatje maken…");const h2c=await h2cLib(),cv=await h2c(el,{backgroundColor:"#ffffff",scale:2});
     const blob=await new Promise(r=>cv.toBlob(r,"image/png"));
     if(kopie&&navigator.clipboard&&window.ClipboardItem){try{await navigator.clipboard.write([new ClipboardItem({"image/png":blob})]);melding("📋 Plaatje gekopieerd – plak het in WhatsApp of mail (Ctrl + V)","#2d6a4f");return}catch(e){}}
     const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=`beschikbaar ${wkCode(+dezeWeek())}.png`;a.click();melding("⬇ Plaatje gedownload","#2d6a4f")}
   catch(e){alert("Plaatje maken lukt niet: "+e.message)}}
+
+/* ================= Foto per soort =================
+   Elke foto staat als klein plaatje (± 30 kB) in een eigen document planning/foto_<soort-id>.
+   In de planning zelf staat alleen welke soorten een foto hebben (data.fotos). */
+const fotoCache={};
+async function fotoLaad(id){if(id in fotoCache)return fotoCache[id];if(!(data.fotos||{})[id]||!wolkDoc)return null;
+  try{const d=await wolkDoc.parent.doc("foto_"+id).get();fotoCache[id]=d.exists?d.data().img:null}catch(e){return null}return fotoCache[id]}
+function fotoVul(){document.querySelectorAll("[data-foto]").forEach(async el=>{const id=el.dataset.foto;if(!(data.fotos||{})[id])return;const img=await fotoLaad(id);
+  if(img&&el.isConnected&&!el.querySelector("img"))el.innerHTML=`<img src="${img}" alt="">`})}
+async function fotoPop(id){const r=data.rassen.find(x=>x.id===id);if(!r)return;const img=await fotoLaad(id),mag=!kijker&&!!wolkDoc;
+  toonPop("📷 "+esc(r.naam||"soort"),`<div class="fotogroot">${img?`<img src="${img}" alt="">`:`<div class="status" style="padding:30px;text-align:center">Nog geen foto.</div>`}</div>
+    ${mag?`<div class="rij" style="margin-top:10px;gap:8px">${img?`<button class="btn rood" onclick="fotoWeg('${id}')">Foto weghalen</button>`:""}<span style="flex:1"></span>
+      <label class="btn" style="cursor:pointer">${img?"Andere foto kiezen":"Foto kiezen"}<input type="file" accept="image/*" hidden onchange="fotoZet('${id}',this.files[0])"></label></div>
+      <p class="status" style="margin:6px 0 0;font-size:12px">Op de telefoon kunt u ook meteen een foto maken. De foto wordt verkleind bewaard.</p>`:wolkDoc?"":`<p class="status">Foto's werken alleen als u online bent ingelogd.</p>`}`)}
+function fotoKlein(file,max=480){return new Promise((ok,nee)=>{const u=URL.createObjectURL(file),im=new Image();im.onload=()=>{const f=Math.min(1,max/Math.max(im.width,im.height)),c=document.createElement("canvas");
+    c.width=Math.round(im.width*f);c.height=Math.round(im.height*f);c.getContext("2d").drawImage(im,0,0,c.width,c.height);URL.revokeObjectURL(u);ok(c.toDataURL("image/jpeg",0.72))};im.onerror=()=>nee(new Error("Dit is geen foto"));im.src=u})}
+async function fotoZet(id,file){if(!file)return;try{melding("Foto bewaren…");let img=await fotoKlein(file);if(img.length>700000)img=await fotoKlein(file,320);
+    await wolkDoc.parent.doc("foto_"+id).set({img,t:new Date().toISOString(),door:wolkMail});fotoCache[id]=img;(data.fotos=data.fotos||{})[id]=Date.now();opslaanLater();
+    melding("📷 Foto bewaard","#2d6a4f");fotoPop(id);render()}catch(e){alert("Foto bewaren lukt niet: "+e.message)}}
+async function fotoWeg(id){if(!confirm("Foto weghalen?"))return;try{await wolkDoc.parent.doc("foto_"+id).delete()}catch(e){}delete fotoCache[id];if(data.fotos)delete data.fotos[id];opslaanLater();sluitMobSoort();render()}
 /* Mobiel: tik op een aantal → op welke vloer staan ze */
 function mobRaap(e,k,t){e.stopPropagation();const l=afleverRegels().filter(r=>r.t===t&&r.aantal>0&&r.product+" · "+r.soort===k);
   if(!l.length)return;raapPop(l[0].product+"|"+l[0].soort,t,l,true)}
