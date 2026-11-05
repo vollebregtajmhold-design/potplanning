@@ -728,6 +728,8 @@ table.oppot th.jaarstart,table.oppot td.jaarstart{border-left:3px solid #4b2a6e!
 .blvink{width:18px;height:18px;vertical-align:middle;margin:0 8px 0 0;cursor:pointer;accent-color:#2d6a4f}.bltab tr.bluit td{opacity:.35}.catkaart{position:relative}.catkaart .blvink{position:absolute;top:6px;left:6px;margin:0;z-index:1;width:22px;height:22px}.catkaart.bluit{opacity:.35}
 
 .bltab td.blprcel{width:90px}.blprijs{width:80px;text-align:right;padding:3px 6px;border:1px solid #cfc6b4;border-radius:6px;font:inherit}.catprijs{font-weight:800;color:#b5179e;font-size:15px}
+
+.minfos{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:0 0 10px}.minfo{background:#f6f2ea;border-radius:10px;padding:7px 10px;display:flex;flex-direction:column;gap:2px;cursor:pointer}.minfo .status{font-size:12px}.minfo b{font-size:17px;color:#1f4d39}
 </style>
 </head>
 <body>
@@ -890,7 +892,7 @@ table.oppot th.jaarstart,table.oppot td.jaarstart{border-left:3px solid #4b2a6e!
 
 <script>
 "use strict";
-const VERSIE="38.3";
+const VERSIE="38.4";
 const VERSIE_DATUM="03-11-2026";
 /* ---------- Basis ---------- */
 const PALET=["#2d6a4f","#1B5EBE","#E8007D","#c77d1a","#7a4fa0","#0f8b8d","#5b6b2f","#3d5a80","#a0522d","#7AB648"];
@@ -981,7 +983,7 @@ function normaliseer(d){
   /* Soorten (rassen) per teelt: later te kiezen in een keuzelijst */
   d.registraties=(Array.isArray(d.registraties)?d.registraties:[]).filter(r=>r&&r.id);
   d.leveranciers=(Array.isArray(d.leveranciers)?d.leveranciers:[]).map(l=>({id:l.id||uid(),naam:String(l.naam||""),contact:String(l.contact||""),telefoon:String(l.telefoon||""),email:String(l.email||""),opmerking:String(l.opmerking||""),levertijd:Math.max(0,Math.round(+l.levertijd||0))}));
-  d.rassen=(Array.isArray(d.rassen)?d.rassen:[]).map(r=>({id:r.id||uid(),teeltId:String(r.teeltId||""),naam:String(r.naam||""),nr:String(r.nr||""),klopt:String(r.klopt||""),levertijd:r.levertijd==null||r.levertijd===""||isNaN(+r.levertijd)?null:Math.max(0,Math.round(+r.levertijd)),leverancierId:String(r.leverancierId||""),aantallen:r.aantallen||{},raaptijd:Math.max(1,Math.min(26,Math.round(+r.raaptijd||1))),gewas:String(r.gewas||""),fust:String(r.fust||""),prijs:r.prijs===""||r.prijs==null||isNaN(+r.prijs)?null:+r.prijs,uitval:r.uitval===undefined?undefined:Math.max(0,Math.min(100,+r.uitval||0)),
+  d.rassen=(Array.isArray(d.rassen)?d.rassen:[]).map(r=>({id:r.id||uid(),teeltId:String(r.teeltId||""),naam:String(r.naam||""),nr:String(r.nr||""),klopt:String(r.klopt||""),levertijd:r.levertijd==null||r.levertijd===""||isNaN(+r.levertijd)?null:Math.max(0,Math.round(+r.levertijd)),leverancierId:String(r.leverancierId||""),aantallen:r.aantallen||{},raaptijd:Math.max(1,Math.min(26,Math.round(+r.raaptijd||1))),gewas:String(r.gewas||""),fust:String(r.fust||""),...(r.kar?{kar:String(r.kar)}:{}),prijs:r.prijs===""||r.prijs==null||isNaN(+r.prijs)?null:+r.prijs,uitval:r.uitval===undefined?undefined:Math.max(0,Math.min(100,+r.uitval||0)),
     ...(Array.isArray(r.perioden)&&r.perioden.length?{perioden:r.perioden}:{}),
     ...(r.vloeren&&typeof r.vloeren==="object"?{vloeren:r.vloeren}:{}),
     ...(Array.isArray(r.raapPct)&&r.raapPct.length===Math.max(1,Math.min(26,Math.round(+r.raaptijd||1)))-1?{raapPct:r.raapPct.map(x=>Math.max(0,Math.min(100,+x||0)))}:{})}));
@@ -3537,13 +3539,22 @@ function mobSoort(k,start){const t=start||+mobWeekStart(),l=afleverRegels().filt
   const per=new Map();l.forEach(r=>per.set(r.t,(per.get(r.t)||0)+r.aantal));
   /* per week: nog beschikbaar (afleverplan min gereserveerd), klein eronder het plan en de reserveringen */
   const vk=l.length?l[0].product+"|"+l[0].soort:"";
-  const j0=isoWeek(new Date(t)).y,rij=[...per].filter(([tt])=>tt<t+364*864e5).sort((a,b)=>a[0]-b[0]).slice(0,12).map(([tt,n])=>{const{w,y}=isoWeek(new Date(tt)),r=vk?verkSom(vk,tt):0,b=n-r;
-    return`<div class="mrij"><span>wk ${w}${y!==j0?" ("+y+")":""}${r?`<br><span class="status" style="font-size:12px">plan ${getal(n)} · gereserveerd ${getal(r)}</span>`:""}</span><b class="${b<0?"let":""}">${getal(b)}</b></div>`}).join("");
+  const j0=isoWeek(new Date(t)).y,rij=[...per].filter(([tt])=>tt<t+364*864e5).sort((a,b)=>a[0]-b[0]).slice(0,5).map(([tt,n])=>{const{w,y}=isoWeek(new Date(tt)),r=vk?verkSom(vk,tt):0,b=n-r;
+    return`<div class="mrij"><span>wk ${w}${y!==j0?" ("+y+")":""}${r?`<br><span class="status noshot" style="font-size:12px">plan ${getal(n)} · gereserveerd ${getal(r)}</span>`:""}</span><b class="${b<0?"let":""}">${getal(b)}</b></div>`}).join("");
   const[kp,ks]=k.split(" · "),ras=data.rassen.find(r=>r.naam===ks&&teeltLabel(data.teeltduren.find(t=>t.id===r.teeltId)||{})===kp),fid=ras&&(data.fotos||{})[ras.id]?ras.id:"";
-  const h=`<div id="mobDeel"><div class="mpopKop"><b>${esc(k)}</b><button class="noshot" onclick="sluitMobSoort()">✕</button></div><div class="mpopIn">${fid?`<div class="mfoto" data-foto="${fid}"></div>`:""}${rij?`<div class="status" style="font-size:12px;text-align:right;margin-bottom:2px">nog beschikbaar</div>`+rij:""}${rij?"":'<div class="status" style="padding:8px 0">Niets gepland.</div>'}</div></div>
+  const h=`<div id="mobDeel"><div class="mpopKop"><b>${esc(k)}</b><button class="noshot" onclick="sluitMobSoort()">✕</button></div><div class="mpopIn">${fid?`<div class="mfoto" data-foto="${fid}"></div>`:""}${ras?mobInfo(ras,k):""}${rij?`<div class="status" style="font-size:12px;text-align:right;margin-bottom:2px">nog beschikbaar</div>`+rij:""}${rij?"":'<div class="status" style="padding:8px 0">Niets gepland.</div>'}</div></div>
     ${rij?`<div class="mpopIn" style="padding-top:0"><button class="btn" style="width:100%;margin-top:6px" onclick="mobDelen(this.dataset.k)" data-k="${esc(k)}">📤 Delen (WhatsApp)</button></div>`:""}`;
   let m=document.getElementById("mobPop");if(!m){m=document.createElement("div");m.id="mobPop";m.onclick=e=>{if(e.target===m)sluitMobSoort()};document.body.appendChild(m)}
   m.className=start?"midden":"";m.innerHTML=`<div class="mpop">${h}</div>`;m.hidden=false;if(fid)fotoVul()}
+/* prijs en max op kar bij de soort (mobiel). Tik om te veranderen. Lege vakjes komen niet op het plaatje */
+function mobInfo(ras,k){const pv=vkPrijs("",ras.id),mag=!kijker&&niveau()>1,K=esc(k).replace(/'/g,"&#39;");
+  const vak=(ic,naam,waarde,f)=>`<div class="minfo ${waarde?"":"noshot"}" ${mag?`onclick="${f}('${ras.id}',this.closest('#mobPop').dataset.k)"`:""}><span class="status">${ic} ${naam}</span><b>${waarde?esc(waarde):`<span class="status">+ invullen</span>`}</b></div>`;
+  setTimeout(()=>{const m=document.getElementById("mobPop");if(m)m.dataset.k=k});
+  return`<div class="minfos">${vak("💶","Prijs",pv!=null?prijsTxt(pv):"","mobPrijs")}${vak("🛒","Max op kar",ras.kar||"","mobKar")}</div>`}
+function mobPrijs(id,k){const P=data.vkPrijzen=data.vkPrijzen||{},o=P.std=P.std||{},v=prompt("Prijs per plant (standaard), bijv. 0,85 — leeg = weghalen:",o[id]!=null?pF(o[id]):"");if(v===null)return;
+  const pr=prijsLees(v);if(pr==null)delete o[id];else o[id]=pr;opslaanLater();mobSoort(k)}
+function mobKar(id,k){const r=data.rassen.find(x=>x.id===id);if(!r)return;const v=prompt("Max op kar (bijv. 24 trays / 720 st) — leeg = weghalen:",r.kar||"");if(v===null)return;
+  const t=v.trim();if(t)r.kar=t;else delete r.kar;opslaanLater();mobSoort(k)}
 /* plaatje van de popup maken en delen via WhatsApp (of kopiëren / downloaden) */
 async function mobDelen(k){const el=document.getElementById("mobDeel");if(!el)return;
   try{melding("Plaatje maken…");if(document.querySelector("#mobDeel [data-foto]"))await new Promise(r=>setTimeout(r,300));
