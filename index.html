@@ -699,6 +699,15 @@ table.oppot th.jaarstart,table.oppot td.jaarstart{border-left:3px solid #4b2a6e!
 .vkfust{font-size:12px;color:#5a4a00;margin:1px 0 4px 4px;cursor:pointer}.vkfust u{color:#4b2a6e}
 
 .vkopmklik{cursor:pointer}.vkopmklik:hover{background:#fff7c2}.vkopmrij{font-size:12px;color:#555;margin:1px 0 4px 4px;cursor:pointer}.vkopmrij u{color:#4b2a6e}
+
+/* 37.2 beschikbaarheidslijst en pakbonnen */
+@media print{body.pbprint .pbpagina{page-break-after:always;break-after:page}body.pbprint .pbpagina:last-child{page-break-after:auto;break-after:auto}}
+.bllijst{background:#fff;padding:16px 18px;color:#222;font-family:Arial,Helvetica,sans-serif;letter-spacing:normal;word-spacing:normal;font-variant-ligatures:none}.bllijst th{position:static!important;top:auto!important}.bllijst td{background:#fff}.blkop{display:flex;justify-content:space-between;align-items:flex-end;border-bottom:3px solid #2d6a4f;padding-bottom:6px;margin-bottom:8px}
+.bltitel{font-size:24px;font-weight:800;color:#2d6a4f}.blsub{font-size:13px;color:#555}.bltab{border-collapse:collapse;width:100%;font-size:14px}
+.bltab th{background:#2d6a4f;color:#fff;padding:5px 8px;text-align:right;-webkit-print-color-adjust:exact;print-color-adjust:exact}.bltab th:first-child{text-align:left}
+.bltab td{padding:4px 8px;border-bottom:1px solid #e6e0d4;text-align:right}.bltab td:first-child{text-align:left}.bltab tr.blgroep td{background:#eef6f1;font-weight:800;color:#1f4d39;text-align:left;padding-top:8px;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+.blf{color:#888;font-size:12px}.blvoet{margin-top:8px;font-size:11px;color:#777}
+@media print{body.pbprint .bllijst{padding:0}body.pbprint .bltab{font-size:10pt}body.pbprint .bltitel{font-size:16pt}}
 </style>
 </head>
 <body>
@@ -861,7 +870,7 @@ table.oppot th.jaarstart,table.oppot td.jaarstart{border-left:3px solid #4b2a6e!
 
 <script>
 "use strict";
-const VERSIE="37.1";
+const VERSIE="37.2";
 const VERSIE_DATUM="03-11-2026";
 /* ---------- Basis ---------- */
 const PALET=["#2d6a4f","#1B5EBE","#E8007D","#c77d1a","#7a4fa0","#0f8b8d","#5b6b2f","#3d5a80","#a0522d","#7AB648"];
@@ -4096,7 +4105,7 @@ function toonAflever(){syncSoorten();
         <input type="range" id="ovLo" min="0" max="${M}" value="${aflS.start}" oninput="ovSchuifLive()" onchange="ovSchuifLive()">
         <input type="range" id="ovHi" min="0" max="${M}" value="${aflS.eind}" oninput="ovSchuifLive()" onchange="ovSchuifLive()"></div>
       <span id="ovSchuifTxt" class="ovinfo"></span></div>
-    ${[["afl","Afleverplan"],["verk","Gereserveerd"],["vers","Nog beschikbaar"]].map(([v,n])=>`<button class="ovk ${aflMod===v?"aan":""} ${v!=="afl"?"nivVerk":""}" onclick="aflMod='${v}';if(aflMod!=='verk')aflRij='teelt';render()">${n}</button>`).join("")}
+    ${[["afl","Afleverplan"],["verk","Gereserveerd"],["vers","Nog beschikbaar"]].map(([v,n])=>`<button class="ovk ${aflMod===v?"aan":""} ${v!=="afl"?"nivVerk":""}" onclick="aflMod='${v}';if(aflMod!=='verk')aflRij='teelt';render()">${n}</button>`).join("")}${niveau()>1?`<button class="ovk inkcsv" onclick="beschLijst()" title="Lijst 'nog beschikbaar' om te printen, als PDF te bewaren of als plaatje te versturen">📄 Beschikbaarheidslijst</button>`:""}
 
 `;
   const mistAfl=ruimteBerekening().fouten;
@@ -4151,6 +4160,50 @@ function soortPop(ks){const[pr,so]=ks.split(" · "),k=pr+"|"+so,nu=+dezeWeek(),p
       <tr class="tot"><td>Totaal</td><td>${getal(sP)}</td><td>${getal(sV)}</td><td>${getal(sP-sV)}</td></tr></table>`:`<p class="status">Geen afleveringen of reserveringen gevonden.</p>`;
   toonPop(esc(pr)+" · "+esc(so),`${h}<div class="rij" style="margin-top:10px"><span class="status">Klik op een week om te reserveren.</span><span style="flex:1"></span>${ras?`<button class="btn licht klein" onclick="sluitMobSoort();naarSoort('${ras.id}')">Naar parameters ›</button>`:""}</div>`);
   const m=document.querySelector("#mobPop .mpop");if(m){m.style.maxWidth="620px";m.style.width="auto"}}
+
+/* ---------- Alle pakbonnen in één keer afdrukken ---------- */
+function pakbonnenPrint(){const paren=[...new Map(vkLaatsteLijst.map(r=>[r.klant+"|"+r.code,{klant:r.klant,code:r.code,t:r.t}])).values()].sort((a,b)=>a.t-b.t||a.klant.localeCompare(b.klant,"nl"));
+  if(!paren.length)return;if(paren.length>40&&!confirm(paren.length+" pakbonnen afdrukken?"))return;
+  let d=document.getElementById("pakbonPrint");if(!d){d=document.createElement("div");d.id="pakbonPrint";document.body.appendChild(d)}
+  d.innerHTML=paren.map(x=>`<div class="pbpagina">${pakbonInhoud(x.klant,x.code)}</div>`).join("");document.body.classList.add("pbprint");
+  const uit=()=>{document.body.classList.remove("pbprint");window.removeEventListener("afterprint",uit)};window.addEventListener("afterprint",uit);window.print();setTimeout(uit,1500)}
+/* ---------- Beschikbaarheidslijst: nog beschikbaar per soort, komende weken ---------- */
+let blWeken=6,blVanaf=0,blFust=false;
+function beschData(){const nu=+dezeWeek(),start=+plusWeken(new Date(nu),blVanaf),wk=Array.from({length:blWeken},(_,i)=>+plusWeken(new Date(start),i)),set=new Set(wk),per=new Map();
+  for(const r of afleverRegels()){if(!set.has(r.t)||!(r.aantal>0)||(teeltFilter&&r.p.soortId!==teeltFilter))continue;const k=r.product+"|"+r.soort;const m=per.get(k)||{};m[r.t]=(m[r.t]||0)+r.aantal;per.set(k,m)}
+  const rijen=[];for(const[k,m]of per){const v={};let iets=false;for(const t of wk){const b=(m[t]||0)-verkSom(k,t);if(b>0){v[t]=b;iets=true}}if(iets){const[pr,so]=k.split("|");
+    const ras=data.rassen.find(r=>r.naam===so&&teeltLabel(data.teeltduren.find(t=>t.id===r.teeltId)||{})===pr);rijen.push({pr,so,v,fn:ras?fustAantal(ras.fust):0,fust:ras&&ras.fust||""})}}
+  rijen.sort((a,b)=>a.pr.localeCompare(b.pr,"nl")||a.so.localeCompare(b.so,"nl"));return{wk,rijen}}
+function beschHtml(){const{wk,rijen}=beschData(),wc=t=>{const x=isoWeek(new Date(t));return"wk "+x.w};
+  if(!rijen.length)return`<p class="status">Er is in deze weken niets meer beschikbaar.</p>`;
+  let h=`<div class="blkop"><div><div class="bltitel">Beschikbaar</div><div class="blsub">${esc(KLANT.appNaam||"")} · ${new Date().toLocaleDateString("nl-NL",{day:"numeric",month:"long",year:"numeric"})}</div></div><div class="blsub" style="text-align:right">week ${wkCode(wk[0])} t/m ${wkCode(wk[wk.length-1])}${blFust?"<br>aantallen in fust":""}</div></div>
+    <table class="bltab"><tr><th>Soort</th>${wk.map(t=>`<th>${wc(t)}</th>`).join("")}</tr>`;let vor="";
+  for(const r of rijen){if(r.pr!==vor){h+=`<tr class="blgroep"><td colspan="${wk.length+1}">${esc(r.pr)}</td></tr>`;vor=r.pr}
+    h+=`<tr><td>${esc(r.so)}${blFust&&r.fust?` <span class="blf">(${esc(r.fust)})</span>`:""}</td>${wk.map(t=>{const b=r.v[t];if(!b)return"<td></td>";
+      return`<td>${blFust&&r.fn>1?getal(Math.floor(b/r.fn)):getal(b)}</td>`}).join("")}</tr>`}
+  return h+`</table><div class="blvoet">Onder voorbehoud van tussentijdse verkoop.</div>`}
+function beschLijst(){const sel=(id,opt,v,f)=>`<select id="${id}" onchange="${f}">${opt.map(([a,b])=>`<option value="${a}" ${String(a)===String(v)?"selected":""}>${b}</option>`).join("")}</select>`;
+  toonPop("📄 Beschikbaarheidslijst",`<div class="rij" style="gap:8px;flex-wrap:wrap;margin-bottom:10px">
+      ${sel("blVan",[[0,"vanaf deze week"],[1,"vanaf volgende week"],[2,"vanaf over 2 weken"]],blVanaf,"blVanaf=+this.value;beschLijst()")}
+      ${sel("blWk",[[4,"4 weken"],[6,"6 weken"],[8,"8 weken"],[10,"10 weken"],[13,"13 weken"]],blWeken,"blWeken=+this.value;beschLijst()")}
+      ${sel("blF",[[0,"in planten"],[1,"in fust (trays)"]],blFust?1:0,"blFust=this.value==='1';beschLijst()")}
+      <span class="status">${teeltFilter?"teelt: "+esc(teeltNaam(data.teeltduren.find(t=>t.id===teeltFilter)||{})):"alle teelten"}</span></div>
+    <div id="blLijst" class="bllijst">${beschHtml()}</div>
+    <div class="rij" style="margin-top:12px;gap:8px;flex-wrap:wrap"><span class="status">PDF: kies bij afdrukken "Opslaan als PDF".</span><span style="flex:1"></span>
+      <button class="btn licht" onclick="beschPlaatje(false)">⬇ Plaatje</button><button class="btn licht" onclick="beschPlaatje(true)" title="Kopiëren en daarna plakken in WhatsApp of mail">📋 Kopieer plaatje</button><button class="btn" onclick="beschPrint()">🖨️ Afdrukken / PDF</button></div>`);
+  const m=document.querySelector("#mobPop .mpop");if(m){m.style.maxWidth="900px";m.style.width="auto"}}
+function beschPrint(){let d=document.getElementById("pakbonPrint");if(!d){d=document.createElement("div");d.id="pakbonPrint";document.body.appendChild(d)}
+  d.innerHTML=`<div class="bllijst">${beschHtml()}</div>`;document.body.classList.add("pbprint");
+  const uit=()=>{document.body.classList.remove("pbprint");window.removeEventListener("afterprint",uit)};window.addEventListener("afterprint",uit);window.print();setTimeout(uit,1500)}
+let h2cLaden=null;
+function h2cLib(){if(window.html2canvas)return Promise.resolve(window.html2canvas);return h2cLaden=h2cLaden||new Promise((ok,nee)=>{const sc=document.createElement("script");
+  sc.src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js";sc.onload=()=>ok(window.html2canvas);sc.onerror=()=>{h2cLaden=null;nee(new Error("hulp voor plaatje kon niet laden (internet?)"))};document.head.appendChild(sc)})}
+async function beschPlaatje(kopie){const el=document.getElementById("blLijst");if(!el)return;
+  try{melding("Plaatje maken…");const h2c=await h2cLib(),cv=await h2c(el,{backgroundColor:"#ffffff",scale:2});
+    const blob=await new Promise(r=>cv.toBlob(r,"image/png"));
+    if(kopie&&navigator.clipboard&&window.ClipboardItem){try{await navigator.clipboard.write([new ClipboardItem({"image/png":blob})]);melding("📋 Plaatje gekopieerd – plak het in WhatsApp of mail (Ctrl + V)","#2d6a4f");return}catch(e){}}
+    const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=`beschikbaar ${wkCode(+dezeWeek())}.png`;a.click();melding("⬇ Plaatje gedownload","#2d6a4f")}
+  catch(e){alert("Plaatje maken lukt niet: "+e.message)}}
 /* Mobiel: tik op een aantal → op welke vloer staan ze */
 function mobRaap(e,k,t){e.stopPropagation();const l=afleverRegels().filter(r=>r.t===t&&r.aantal>0&&r.product+" · "+r.soort===k);
   if(!l.length)return;raapPop(l[0].product+"|"+l[0].soort,t,l,true)}
@@ -4325,14 +4378,15 @@ function maakPlekMap(){vkPlek=new Map();
 function plekVan(k,t){const l=(vkPlek.get(k+"|"+t)||[]),uniek=[...new Map(l.map(x=>[x.afd+"|"+x.vloer,x])).values()];
   return{afd:[...new Set(uniek.map(x=>x.afd).filter(Boolean))].join(", "),vloer:[...new Set(uniek.map(x=>x.vloer).filter(Boolean))].join(", ")}}
 const datNL=d=>d?d.split("-").reverse().join("-"):"";
+let vkLaatsteLijst=[];
 function toonVerkoop(){const pop=vkIsPop;maakPlekMap();const nu=dezeWeek();let l=verkoopLijst();
   const zet=x=>{if(pop){toonPop("📦 Reserveringen",x);const m=document.querySelector("#mobPop .mpop");if(m){m.classList.add("breed");m.style.maxWidth="96vw";m.style.width="max-content"}}else $("#inhoud").innerHTML=x};
   const klanten=[...new Set(l.map(r=>r.klant))].sort((a,b)=>a.localeCompare(b,"nl"));
-  if(pop&&vkWeekKeuze)l=l.filter(r=>r.code===vkWeekKeuze);else if(vkVanaf)l=l.filter(r=>r.t>=nu);if(vkKlant)l=l.filter(r=>r.klant===vkKlant);
+  if(pop&&vkWeekKeuze)l=l.filter(r=>r.code===vkWeekKeuze);else if(vkVanaf)l=l.filter(r=>r.t>=nu);if(vkKlant)l=l.filter(r=>r.klant===vkKlant);vkLaatsteLijst=l;
   let h=`<div class="rij noprint" style="margin-bottom:10px">${pop?"":`<h2 style="margin:0">📦 Reserveringen</h2>`}
     <label class="status"><input type="checkbox" ${vkVanaf?"checked":""} onchange="vkVanaf=this.checked;${pop?'vkPop()':'render()'}"> vanaf deze week</label>
     ${pop&&vkPopWeek?`<select onchange="vkWeekKeuze=this.value;vkPop()" title="Alle weken, of alleen de week waarop u klikte"><option value="${vkPopWeek}" ${vkWeekKeuze?"selected":""}>Week ${vkPopWeek}</option><option value="" ${vkWeekKeuze?"":"selected"}>Alle weken</option></select>`:""}<select onchange="vkKlant=this.value;${pop?'vkPop()':'render()'}"><option value="">Alle klanten</option>${klanten.map(k=>`<option value="${esc(k)}" ${k===vkKlant?"selected":""}>${esc(k)}</option>`).join("")}</select>
-    <span style="flex:1"></span><button class="btn" onclick="verkoopOrder()">+ Reservering</button>${pop?"":`<button class="btn licht klein" onclick="window.print()">Afdrukken</button>`}</div>
+    <span style="flex:1"></span>${l.length?`<button class="btn licht" onclick="pakbonnenPrint(${pop})" title="Alle pakbonnen van deze lijst in één keer afdrukken (elke klant per week op een eigen blad)">🖨️ Alle pakbonnen (${new Set(l.map(r=>r.klant+"|"+r.code)).size})</button>`:""}<button class="btn" onclick="verkoopOrder()">+ Reservering</button>${pop?"":`<button class="btn licht klein" onclick="window.print()">Afdrukken</button>`}</div>
     <div class="printkop"><h2>Reserveringen${vkKlant?" · "+esc(vkKlant):""}</h2></div>`;
   if(!l.length){zet(h+`<div class="leeg">Geen reserveringen${pop&&vkWeekKeuze?" in week "+vkWeekKeuze:vkVanaf?" vanaf deze week":""}. Maak er een met <b>toets R</b>.</div>`);return}
   h+=`<p class="status noprint" style="margin:0 0 6px">Klik op een regel voor de pakbon van die klant in die week.</p>
