@@ -715,6 +715,8 @@ table.oppot th.jaarstart,table.oppot td.jaarstart{border-left:3px solid #4b2a6e!
 .fotocel.heeft{opacity:1;border-style:solid}.fotocel:hover{opacity:1;border-color:#2d6a4f}.fotocel img{width:100%;height:100%;object-fit:cover}
 .fotogroot{text-align:center}.fotogroot img{max-width:100%;max-height:60vh;border-radius:10px}
 .blfoto{display:inline-block;width:44px;height:44px;vertical-align:middle;margin-right:8px;border-radius:6px;overflow:hidden;background:#f3efe6}.blfoto img{width:100%;height:100%;object-fit:cover}.blfoto:not([data-foto]){background:transparent}
+
+.mfoto{margin:0 0 8px;border-radius:10px;overflow:hidden;background:#f3efe6;min-height:60px}.mfoto img{display:block;width:100%;max-height:260px;object-fit:cover}
 </style>
 </head>
 <body>
@@ -877,7 +879,7 @@ table.oppot th.jaarstart,table.oppot td.jaarstart{border-left:3px solid #4b2a6e!
 
 <script>
 "use strict";
-const VERSIE="37.5";
+const VERSIE="37.6";
 const VERSIE_DATUM="03-11-2026";
 /* ---------- Basis ---------- */
 const PALET=["#2d6a4f","#1B5EBE","#E8007D","#c77d1a","#7a4fa0","#0f8b8d","#5b6b2f","#3d5a80","#a0522d","#7AB648"];
@@ -3526,9 +3528,20 @@ function mobSoort(k,start){const t=start||+mobWeekStart(),l=afleverRegels().filt
   const vk=l.length?l[0].product+"|"+l[0].soort:"";
   const j0=isoWeek(new Date(t)).y,rij=[...per].filter(([tt])=>tt<t+364*864e5).sort((a,b)=>a[0]-b[0]).slice(0,12).map(([tt,n])=>{const{w,y}=isoWeek(new Date(tt)),r=vk?verkSom(vk,tt):0,b=n-r;
     return`<div class="mrij"><span>wk ${w}${y!==j0?" ("+y+")":""}${r?`<br><span class="status" style="font-size:12px">plan ${getal(n)} · gereserveerd ${getal(r)}</span>`:""}</span><b class="${b<0?"let":""}">${getal(b)}</b></div>`}).join("");
-  const h=`<div class="mpopKop"><b>${esc(k)}</b><button onclick="sluitMobSoort()">✕</button></div><div class="mpopIn">${rij?`<div class="status" style="font-size:12px;text-align:right;margin-bottom:2px">nog beschikbaar</div>`+rij:""}${rij?"":'<div class="status" style="padding:8px 0">Niets gepland.</div>'}`;
+  const[kp,ks]=k.split(" · "),ras=data.rassen.find(r=>r.naam===ks&&teeltLabel(data.teeltduren.find(t=>t.id===r.teeltId)||{})===kp),fid=ras&&(data.fotos||{})[ras.id]?ras.id:"";
+  const h=`<div id="mobDeel"><div class="mpopKop"><b>${esc(k)}</b><button class="noshot" onclick="sluitMobSoort()">✕</button></div><div class="mpopIn">${fid?`<div class="mfoto" data-foto="${fid}"></div>`:""}${rij?`<div class="status" style="font-size:12px;text-align:right;margin-bottom:2px">nog beschikbaar</div>`+rij:""}${rij?"":'<div class="status" style="padding:8px 0">Niets gepland.</div>'}</div></div>
+    ${rij?`<div class="mpopIn" style="padding-top:0"><button class="btn" style="width:100%;margin-top:6px" onclick="mobDelen(this.dataset.k)" data-k="${esc(k)}">📤 Delen (WhatsApp)</button></div>`:""}`;
   let m=document.getElementById("mobPop");if(!m){m=document.createElement("div");m.id="mobPop";m.onclick=e=>{if(e.target===m)sluitMobSoort()};document.body.appendChild(m)}
-  m.className=start?"midden":"";m.innerHTML=`<div class="mpop">${h}</div></div>`;m.hidden=false}
+  m.className=start?"midden":"";m.innerHTML=`<div class="mpop">${h}</div>`;m.hidden=false;if(fid)fotoVul()}
+/* plaatje van de popup maken en delen via WhatsApp (of kopiëren / downloaden) */
+async function mobDelen(k){const el=document.getElementById("mobDeel");if(!el)return;
+  try{melding("Plaatje maken…");if(document.querySelector("#mobDeel [data-foto]"))await new Promise(r=>setTimeout(r,300));
+    const h2c=await h2cLib(),cv=await h2c(el,{backgroundColor:"#ffffff",scale:2,ignoreElements:e=>e.classList&&e.classList.contains("noshot")});
+    const blob=await new Promise(r=>cv.toBlob(r,"image/png")),naam=("beschikbaar "+k).replace(/[^\w .-]+/g," ").trim()+".png",file=new File([blob],naam,{type:"image/png"});
+    if(navigator.canShare&&navigator.canShare({files:[file]})){try{await navigator.share({files:[file],title:k});return}catch(e){if(e.name==="AbortError")return}}
+    if(navigator.clipboard&&window.ClipboardItem){try{await navigator.clipboard.write([new ClipboardItem({"image/png":blob})]);melding("📋 Plaatje gekopieerd – plak het in WhatsApp","#2d6a4f");return}catch(e){}}
+    const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=naam;a.click();melding("⬇ Plaatje gedownload","#2d6a4f")}
+  catch(e){alert("Delen lukt niet: "+e.message)}}
 function aflSoort(k){const n=isoWeek(new Date());mobSoort(k.replace("|"," · "),+maandagIso(n.y,n.w))}
 function sluitMobSoort(){const m=document.getElementById("mobPop");if(m)m.hidden=true;if(tab==="oppotov"||tab==="aflever"||tab==="mobiel")render()}
 function mobWeek(d){const t=plusWeken(mobWeekStart(),d),n=isoWeek(t);mob.week=n.w;mob.jaar=n.y;mob.partijId="";render()}
