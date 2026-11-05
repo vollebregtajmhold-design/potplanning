@@ -888,7 +888,7 @@ table.oppot th.jaarstart,table.oppot td.jaarstart{border-left:3px solid #4b2a6e!
 
 <script>
 "use strict";
-const VERSIE="38.0";
+const VERSIE="38.1";
 const VERSIE_DATUM="03-11-2026";
 /* ---------- Basis ---------- */
 const PALET=["#2d6a4f","#1B5EBE","#E8007D","#c77d1a","#7a4fa0","#0f8b8d","#5b6b2f","#3d5a80","#a0522d","#7AB648"];
@@ -4242,8 +4242,17 @@ function beschLijst(){const sel=(id,opt,v,f)=>`<select id="${id}" onchange="${f}
       <span class="status">${teeltFilter?"teelt: "+esc(teeltNaam(data.teeltduren.find(t=>t.id===teeltFilter)||{})):"alle teelten"}</span></div>
     <div id="blLijst" class="bllijst">${beschHtml()}</div>
     <div class="rij" style="margin-top:12px;gap:8px;flex-wrap:wrap"><span class="status">PDF: kies bij afdrukken "Opslaan als PDF".</span><span style="flex:1"></span>
-      <button class="btn licht" onclick="beschPlaatje(false)">⬇ Plaatje</button><button class="btn licht" onclick="beschPlaatje(true)" title="Kopiëren en daarna plakken in WhatsApp of mail">📋 Kopieer plaatje</button>${navigator.share?`<button class="btn licht" onclick="beschPlaatje('deel')">📤 Delen</button>`:""}<button class="btn" onclick="beschPrint()">🖨️ Afdrukken / PDF</button></div>`);
+      <button class="btn licht" onclick="beschPlaatje(false)">⬇ Plaatje</button><button class="btn licht" onclick="beschPlaatje(true)" title="Kopiëren en daarna plakken in WhatsApp of mail">📋 Kopieer plaatje</button>${navigator.share?`<button class="btn licht" onclick="beschPlaatje('deel')">📤 Delen</button>`:""}<button class="btn licht" onclick="beschMail()" title="Opent een nieuwe Gmail met de lijst als tekst. Het plaatje staat dan klaar om te plakken (Ctrl + V).">✉ Gmail</button><button class="btn" onclick="beschPrint()">🖨️ Afdrukken / PDF</button></div>`);
   const m=document.querySelector("#mobPop .mpop");if(m){m.style.maxWidth="900px";m.style.width="auto"}if(blFoto||blWeerg==="cat")blFotosKlaar()}
+/* lijst als tekst (alleen aangevinkte soorten) en een nieuwe Gmail openen */
+function beschTekst(){const{wk,rijen}=beschData(),l=rijen.filter(r=>!blUit.has(r.pr+"|"+r.so)),wn=t=>isoWeek(new Date(t)).w;
+  let t=`Beschikbaar week ${wn(wk[0])}${wk.length>1?" t/m "+wn(wk[wk.length-1]):""}${blFust?" (aantallen in fust)":""}\n`,vor="";
+  for(const r of l){if(r.pr!==vor){t+=`\n${r.pr}\n`;vor=r.pr}t+=`- ${r.so}: ${wk.filter(x=>r.v[x]).map(x=>(wk.length>1?"wk "+wn(x)+" ":"")+getal(r.v[x])).join(" · ")}\n`}
+  return{onderwerp:`Beschikbaar week ${wn(wk[0])}${wk.length>1?"-"+wn(wk[wk.length-1]):""}${KLANT.appNaam?" – "+KLANT.appNaam:""}`,tekst:t+"\nOnder voorbehoud van tussentijdse verkoop.\n",leeg:!l.length}}
+async function beschMail(){const{onderwerp,tekst,leeg}=beschTekst();if(leeg){alert("Er is geen soort aangevinkt.");return}
+  const mobiel=/Android|iPhone|iPad/i.test(navigator.userAgent),u=mobiel?`mailto:?subject=${encodeURIComponent(onderwerp)}&body=${encodeURIComponent(tekst)}`:`https://mail.google.com/mail/?view=cm&fs=1&su=${encodeURIComponent(onderwerp)}&body=${encodeURIComponent(tekst)}`;
+  const w=mobiel?null:window.open(u,"_blank");if(mobiel)location.href=u;else if(!w){location.href=u}
+  if(!mobiel)try{await beschPlaatje("stil")}catch(e){}}
 async function blFotosKlaar(){if(!blFoto&&blWeerg!=="cat")return;await Promise.all(Object.keys(data.fotos||{}).map(fotoLaad));fotoVul();await new Promise(r=>setTimeout(r,150))}
 async function beschPrint(){await blFotosKlaar();let d=document.getElementById("pakbonPrint");if(!d){d=document.createElement("div");d.id="pakbonPrint";document.body.appendChild(d)}
   d.innerHTML=`<div class="bllijst">${beschHtml(true)}</div>`;fotoVul();await new Promise(r=>setTimeout(r,200));document.body.classList.add("pbprint");
@@ -4256,7 +4265,8 @@ async function beschPlaatje(kopie){const bron=document.getElementById("blLijst")
   try{melding("Plaatje maken…");const h2c=await h2cLib(),cv=await h2c(el,{backgroundColor:"#ffffff",scale:2});
     const blob=await new Promise(r=>cv.toBlob(r,"image/png"));
     if(kopie==="deel"){const f=new File([blob],`beschikbaar ${wkCode(+dezeWeek())}.png`,{type:"image/png"});if(navigator.canShare&&navigator.canShare({files:[f]})){try{await navigator.share({files:[f]});return}catch(e){if(e.name==="AbortError")return}}}
-    if(kopie&&navigator.clipboard&&window.ClipboardItem){try{await navigator.clipboard.write([new ClipboardItem({"image/png":blob})]);melding("📋 Plaatje gekopieerd – plak het in WhatsApp of mail (Ctrl + V)","#2d6a4f");return}catch(e){}}
+    if(kopie&&navigator.clipboard&&window.ClipboardItem){try{await navigator.clipboard.write([new ClipboardItem({"image/png":blob})]);melding(kopie==="stil"?"✉ Gmail is open · het plaatje staat klaar: plak het in de mail met Ctrl + V":"📋 Plaatje gekopieerd – plak het in WhatsApp of mail (Ctrl + V)","#2d6a4f");return}catch(e){}}
+    if(kopie==="stil")return;
     const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=`beschikbaar ${wkCode(+dezeWeek())}.png`;a.click();melding("⬇ Plaatje gedownload","#2d6a4f")}
   catch(e){alert("Plaatje maken lukt niet: "+e.message)}finally{el.remove()}}
 
