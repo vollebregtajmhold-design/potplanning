@@ -861,7 +861,7 @@ table.oppot th.jaarstart,table.oppot td.jaarstart{border-left:3px solid #4b2a6e!
 
 <script>
 "use strict";
-const VERSIE="36.9";
+const VERSIE="37.0";
 const VERSIE_DATUM="03-11-2026";
 /* ---------- Basis ---------- */
 const PALET=["#2d6a4f","#1B5EBE","#E8007D","#c77d1a","#7a4fa0","#0f8b8d","#5b6b2f","#3d5a80","#a0522d","#7AB648"];
@@ -4116,7 +4116,8 @@ function toonAflever(){syncSoorten();
       for(const x of arr||[]){const n=+x.n||0;if(!n)continue;const kl=x.klant||"(geen klant)",ks=p[0]+"|"+p[1];pk[kl]=pk[kl]||{};pk[kl][p[2]]=(pk[kl][p[2]]||0)+n;if(x.prijs!=null)pkE[kl]=(pkE[kl]||0)+x.prijs*n;
         const sp=(pkS[kl]=pkS[kl]||{});sp[ks]=sp[ks]||{};sp[ks][p[2]]=(sp[ks][p[2]]||0)+n}}
     const kls=Object.keys(pk).sort((a,b)=>a.localeCompare(b,"nl"));
-    h+=`<table class="ovtabel" data-st="afl" data-codes='${JSON.stringify(alleWk.map(code))}' onmouseover="ovKruis(event)" onmouseleave="ovKruis(event)">
+    const leegK=alleWk.map((t,c)=>kls.some(kl=>pk[kl][code(t)])?-1:c).filter(c=>c>=0); /* weken zonder reservering uit beeld */
+    h+=`<table class="ovtabel" data-st="afl" data-leeg="${leegK.join(",")}" data-codes='${JSON.stringify(alleWk.map(code))}' onmouseover="ovKruis(event)" onmouseleave="ovKruis(event)">
       <tr><th class="ovnaam">${kop}</th>${alleWk.map((t,c)=>`<th data-c="${c}"${vis(c)} class="${t===nu?"nu":""} vkwkkop" onclick="vkPop('${code(t)}')" title="Week ${isoWeek(new Date(t)).w} van ${isoWeek(new Date(t)).y} · klik: overzicht reserveringen">${code(t)}</th>`).join("")}<th class="kltot klT">Totaal</th><th class="kltot klE">€</th></tr>`;
     if(!kls.length)h+=`<tr><td class="ovnaam" colspan="${alleWk.length+1}"><span class="status">Nog geen reserveringen in dit seizoen.</span></td></tr>`;
     const cl=(v,t)=>`${v?` class="ovmin" style="cursor:pointer" title="Klik: pakbon van deze klant in deze week" onclick="pakbonVan({dataset:{klant:this.parentNode.dataset.kl,code:'${code(t)}'}},true)"`:""}>${v?getal(-v):'<span class="ovleeg">—</span>'}`;
