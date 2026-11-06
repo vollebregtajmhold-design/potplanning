@@ -906,7 +906,7 @@ body.mobiel #aanbodKnop{display:block}@media (max-width:900px),(pointer:coarse){
 
 <script>
 "use strict";
-const VERSIE="39.9";
+const VERSIE="40.0";
 const VERSIE_DATUM="03-11-2026";
 /* ---------- Basis ---------- */
 const PALET=["#2d6a4f","#1B5EBE","#E8007D","#c77d1a","#7a4fa0","#0f8b8d","#5b6b2f","#3d5a80","#a0522d","#7AB648"];
@@ -3610,11 +3610,16 @@ async function mobDelen(k){const zonder=!mobAantDelen(),pi=document.getElementBy
   if(!zonder)document.querySelectorAll("#mobDeel .mweken b[data-n]").forEach(b=>{const v=Math.floor(Math.max(0,+b.dataset.n)*pct/100/100)*100,rij=b.closest(".mrij");terug.push([b,b.textContent,rij]);
     if(v>0)b.textContent=getal(v);else rij.classList.add("noshot")});
   try{await mobDelenIn(k,zonder)}finally{terug.forEach(([b,t,rij])=>{b.textContent=t;rij.classList.remove("noshot")})}}
+/* html2canvas kent geen object-fit:cover en rekt foto's uit. Daarom: elke foto vooraf zelf bijsnijden op de maat van het vak */
+function fotoBijsnijd(el){return[...el.querySelectorAll("img")].map(img=>{try{const w=img.clientWidth,h=img.clientHeight,nw=img.naturalWidth,nh=img.naturalHeight;if(!w||!h||!nw||!nh)return null;
+  const fit=getComputedStyle(img).objectFit;if(fit!=="cover")return null;const sc=Math.max(w/nw,h/nh),sw=w/sc,sh=h/sc,c=document.createElement("canvas");c.width=Math.round(w*2);c.height=Math.round(h*2);
+  c.getContext("2d").drawImage(img,(nw-sw)/2,(nh-sh)/2,sw,sh,0,0,c.width,c.height);return{src:c.toDataURL("image/jpeg",.9),w,h}}catch(e){return null}})}
+function fotoZetKloon(lijst,doelEl){if(!doelEl)return;[...doelEl.querySelectorAll("img")].forEach((img,i)=>{const x=lijst[i];if(!x)return;img.src=x.src;img.style.objectFit="fill";img.style.width=x.w+"px";img.style.height=x.h+"px";img.style.maxHeight="none"})}
 async function mobDelenIn(k,zonder,tekst){const el=document.getElementById("mobDeel");if(!el)return;const sc=el.closest(".mpop"),y0=sc?sc.scrollTop:0,wy=window.scrollY;if(sc)sc.scrollTop=0;window.scrollTo(0,0);
   try{return await mobDelenIn2(k,zonder,tekst,el)}finally{if(sc)sc.scrollTop=y0;window.scrollTo(0,wy)}}
 async function mobDelenIn2(k,zonder,tekst,el){
   try{melding("Plaatje maken…");if(document.querySelector("#mobDeel [data-foto], #mobDeel img"))await new Promise(r=>setTimeout(r,300));
-    const h2c=await h2cLib(),cv=await h2c(el,{backgroundColor:"#ffffff",scale:2,ignoreElements:e=>e.classList&&(e.classList.contains("noshot")||zonder&&e.classList.contains("mweken")),onclone:doc=>{const m=doc.querySelector("#mobDeel .mpopIn");if(m){const v=doc.createElement("div");v.textContent="Onder voorbehoud van tussentijdse verkoop.";v.style.cssText="font-size:12px;color:#555;margin-top:8px";m.appendChild(v)}}});
+    const fotos=fotoBijsnijd(el),h2c=await h2cLib(),cv=await h2c(el,{backgroundColor:"#ffffff",scale:2,ignoreElements:e=>e.classList&&(e.classList.contains("noshot")||zonder&&e.classList.contains("mweken")),onclone:doc=>{fotoZetKloon(fotos,doc.getElementById("mobDeel"));const m=doc.querySelector("#mobDeel .mpopIn");if(m){const v=doc.createElement("div");v.textContent="Onder voorbehoud van tussentijdse verkoop.";v.style.cssText="font-size:12px;color:#555;margin-top:8px";m.appendChild(v)}}});
     const blob=await new Promise(r=>cv.toBlob(r,"image/png")),naam=("beschikbaar "+k).replace(/[^\w .-]+/g," ").trim()+".png",file=new File([blob],naam,{type:"image/png"});
     if(navigator.canShare&&navigator.canShare({files:[file]})){try{const tx=tekst!=null?tekst:"";await navigator.share(tx.trim()?{files:[file],title:k,text:k+"\n"+tx.trim()}:{files:[file],title:k});return}catch(e){if(e.name==="AbortError")return}}
     if(navigator.clipboard&&window.ClipboardItem){try{await navigator.clipboard.write([new ClipboardItem({"image/png":blob})]);melding("📋 Plaatje gekopieerd – plak het in WhatsApp","#2d6a4f");return}catch(e){}}
@@ -4372,8 +4377,8 @@ let h2cLaden=null;
 function h2cLib(){if(window.html2canvas)return Promise.resolve(window.html2canvas);return h2cLaden=h2cLaden||new Promise((ok,nee)=>{const sc=document.createElement("script");
   sc.src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js";sc.onload=()=>ok(window.html2canvas);sc.onerror=()=>{h2cLaden=null;nee(new Error("hulp voor plaatje kon niet laden (internet?)"))};document.head.appendChild(sc)})}
 async function beschPlaatje(kopie){const bron=document.getElementById("blLijst");if(!bron)return;await blFotosKlaar();
-  const el=document.createElement("div");el.className="bllijst";el.style.cssText=`position:fixed;left:-20000px;top:0;width:${bron.clientWidth}px`;el.innerHTML=beschHtml(true);document.body.appendChild(el);fotoVul();await new Promise(r=>setTimeout(r,300));
-  try{melding("Plaatje maken…");const h2c=await h2cLib(),cv=await h2c(el,{backgroundColor:"#ffffff",scale:2});
+  const el=document.createElement("div");el.className="bllijst";el.id="blShot";el.style.cssText=`position:fixed;left:-20000px;top:0;width:${bron.clientWidth}px`;el.innerHTML=beschHtml(true);document.body.appendChild(el);fotoVul();await new Promise(r=>setTimeout(r,300));
+  try{melding("Plaatje maken…");const fotos=fotoBijsnijd(el),h2c=await h2cLib(),cv=await h2c(el,{backgroundColor:"#ffffff",scale:2,onclone:doc=>fotoZetKloon(fotos,doc.getElementById("blShot"))});
     const blob=await new Promise(r=>cv.toBlob(r,"image/png"));
     if(kopie==="deel"){const f=new File([blob],`beschikbaar ${wkCode(+dezeWeek())}.png`,{type:"image/png"});if(navigator.canShare&&navigator.canShare({files:[f]})){try{await navigator.share({files:[f]});return}catch(e){if(e.name==="AbortError")return}}}
     if(kopie&&navigator.clipboard&&window.ClipboardItem){try{await navigator.clipboard.write([new ClipboardItem({"image/png":blob})]);melding(kopie==="stil"?"✉ Gmail is open · het plaatje staat klaar: plak het in de mail met Ctrl + V":"📋 Plaatje gekopieerd – plak het in WhatsApp of mail (Ctrl + V)","#2d6a4f");return}catch(e){}}
