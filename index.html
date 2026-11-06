@@ -736,6 +736,8 @@ table.oppot th.jaarstart,table.oppot td.jaarstart{border-left:3px solid #4b2a6e!
 #aanbodKnop{display:none;position:fixed;right:16px;bottom:18px;z-index:60;width:58px;height:58px;border-radius:50%;border:0;background:#2d6a4f;color:#fff;font-size:26px;box-shadow:0 4px 14px rgba(0,0,0,.3);cursor:pointer}
 body.mobiel #aanbodKnop{display:block}@media (max-width:900px),(pointer:coarse){#aanbodKnop{display:block}}body:not(.niv4) #aanbodKnop{display:none!important}body.mobiel{padding-bottom:84px}
 .abveld{width:100%;box-sizing:border-box;font:inherit;font-size:16px;padding:7px 9px;border:1px solid #cfc6b4;border-radius:8px}
+
+@media (max-width:600px){.verkrij{flex-wrap:wrap}.verkrij input:first-child{flex:1 1 100%}.verkrij input.verkn{flex:1 1 0;width:auto}}
 </style>
 </head>
 <body>
@@ -898,7 +900,7 @@ body.mobiel #aanbodKnop{display:block}@media (max-width:900px),(pointer:coarse){
 
 <script>
 "use strict";
-const VERSIE="39.1";
+const VERSIE="39.3";
 const VERSIE_DATUM="03-11-2026";
 /* ---------- Basis ---------- */
 const PALET=["#2d6a4f","#1B5EBE","#E8007D","#c77d1a","#7a4fa0","#0f8b8d","#5b6b2f","#3d5a80","#a0522d","#7AB648"];
@@ -3606,7 +3608,7 @@ async function mobDelenIn(k,zonder,tekst){const el=document.getElementById("mobD
   try{return await mobDelenIn2(k,zonder,tekst,el)}finally{if(sc)sc.scrollTop=y0;window.scrollTo(0,wy)}}
 async function mobDelenIn2(k,zonder,tekst,el){
   try{melding("Plaatje maken…");if(document.querySelector("#mobDeel [data-foto], #mobDeel img"))await new Promise(r=>setTimeout(r,300));
-    const h2c=await h2cLib(),cv=await h2c(el,{backgroundColor:"#ffffff",scale:2,ignoreElements:e=>e.classList&&(e.classList.contains("noshot")||zonder&&e.classList.contains("mweken"))});
+    const h2c=await h2cLib(),cv=await h2c(el,{backgroundColor:"#ffffff",scale:2,ignoreElements:e=>e.classList&&(e.classList.contains("noshot")||zonder&&e.classList.contains("mweken")),onclone:doc=>{const m=doc.querySelector("#mobDeel .mpopIn");if(m){const v=doc.createElement("div");v.textContent="Onder voorbehoud van tussentijdse verkoop.";v.style.cssText="font-size:12px;color:#555;margin-top:8px";m.appendChild(v)}}});
     const blob=await new Promise(r=>cv.toBlob(r,"image/png")),naam=("beschikbaar "+k).replace(/[^\w .-]+/g," ").trim()+".png",file=new File([blob],naam,{type:"image/png"});
     if(navigator.canShare&&navigator.canShare({files:[file]})){try{const tx=tekst!=null?tekst:"";await navigator.share(tx.trim()?{files:[file],title:k,text:k+"\n"+tx.trim()}:{files:[file],title:k});return}catch(e){if(e.name==="AbortError")return}}
     if(navigator.clipboard&&window.ClipboardItem){try{await navigator.clipboard.write([new ClipboardItem({"image/png":blob})]);melding("📋 Plaatje gekopieerd – plak het in WhatsApp","#2d6a4f");return}catch(e){}}
