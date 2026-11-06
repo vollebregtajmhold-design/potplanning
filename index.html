@@ -751,6 +751,10 @@ body.mobiel #aanbodKnop{display:block}@media (max-width:900px),(pointer:coarse){
 
 .oftab input{width:80px;padding:4px 6px;text-align:right;font:inherit;font-size:15px;border:1px solid #cfc6b4;border-radius:6px;box-sizing:border-box}.oftab .ofp{width:70px}.oftab td.let{color:#b00020}
 @media (max-width:600px){.kktab.oftab th:nth-child(4),.kktab.oftab tr:not(.kkweek) td:nth-child(4){display:table-cell}.oftab th:nth-child(3),.oftab td:nth-child(3){display:none}.oftab input{width:64px}.oftab .ofp{width:56px}}
+
+.pbbew .pbin{width:76px;padding:4px 6px;text-align:right;font:inherit;border:1px solid #cfc6b4;border-radius:6px;box-sizing:border-box}.pbbew .pbpr{width:64px}.pbklik{cursor:pointer;text-decoration:underline dotted #aaa}.pbbew tr.pbtot td{border-top:2px solid #2d6a4f;padding-top:6px}
+.pberbij{display:flex;gap:6px;margin-top:10px;flex-wrap:wrap}.pberbij select{flex:1;min-width:180px;padding:5px;font:inherit}.pberbij .pbin{width:80px;padding:5px;text-align:right;font:inherit;border:1px solid #cfc6b4;border-radius:6px}
+@media (max-width:600px){.kktab.pbbew th,.kktab.pbbew tr:not(.kkweek) td{display:table-cell!important}.kktab.pbbew th:nth-child(5),.kktab.pbbew tr:not(.kkweek) td:nth-child(5){display:none!important}.pbbew .pbin{width:56px}.pbbew .pbpr{width:50px}.kktab.pbbew{font-size:12px}}
 </style>
 </head>
 <body>
@@ -913,7 +917,7 @@ body.mobiel #aanbodKnop{display:block}@media (max-width:900px),(pointer:coarse){
 
 <script>
 "use strict";
-const VERSIE="40.3";
+const VERSIE="40.4";
 const VERSIE_DATUM="03-11-2026";
 /* ---------- Basis ---------- */
 const PALET=["#2d6a4f","#1B5EBE","#E8007D","#c77d1a","#7a4fa0","#0f8b8d","#5b6b2f","#3d5a80","#a0522d","#7AB648"];
@@ -4627,7 +4631,9 @@ const DAGK=["","MA","DI","WO","DO","VR","ZA","ZO"];
 const datWeekDag=d=>{const x=leesDatum(d);return`${wkCode(+x)} / ${DAGK[x.getDay()||7]}`};
 function pakbonInhoud(klant,code,metInvoer){if(!vkPlek)maakPlekMap();const l=verkoopLijst().filter(r=>r.klant===klant&&r.code===code),k=data.klanten.find(x=>x.naam===klant)||{};
   const y=2000+ +code.slice(0,2),w=+code.slice(2),dat=[...new Set(l.map(r=>r.datum).filter(Boolean))].sort();
-  let tp=0;const mF=l.some(r=>r.fust||r.perFust>1);const rijen=l.map(r=>{const pl=plekVan(r.k,r.t);tp+=r.n;
+  let tp=0;const mF=l.some(r=>r.fust||r.perFust>1);
+  if(metInvoer==="bewerk")return pakbonBewerk(klant,code,l,k,dat,y,w);
+  const rijen=l.map(r=>{const pl=plekVan(r.k,r.t);tp+=r.n;
     return`<tr><td>${esc(r.gewas)}</td><td>${esc(r.soort)}</td><td class="n">${getal(r.n)}</td>${mF?`<td>${fustTxt(r)}</td>`:""}${ZV()?"":`<td>${esc(pl.afd)}</td><td class="vl">${esc(pl.vloer)||"?"}</td>`}<td>☐</td></tr>${r.opm?`<tr><td colspan="${(ZV()?4:6)+(mF?1:0)}" style="font-size:12px;color:#555">💬 ${esc(r.opm)}</td></tr>`:""}`}).join("");
   const toonDat=dat.length?dat:[datumTekst(maandagIso(y,w))],datTxt=toonDat.map(d=>`<b>${datNL(d)}</b> &nbsp; <b>${datWeekDag(d)}</b>`).join("<br>");
   return`<div class="pbkop"><div><h2>Pakbon</h2><div><b>${esc(KLANT.appNaam)}</b></div></div>
@@ -4711,8 +4717,38 @@ function klantMail(naam){const k=klantVan(naam)||{naam},nu=wkCode(+dezeWeek()),p
     const u=`https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(k.email||"")}&su=${encodeURIComponent(su)}${ok?"":"&body="+encodeURIComponent(t)}`;
     if(w)w.location.href=u;else window.open(u,"_blank");
     melding(ok?"✉ Gmail gaat open · klik in de mail en druk op Ctrl + V: het overzicht komt erin":"✉ Gmail gaat open met het overzicht als tekst","#2d6a4f")})()}
-function pakbonVan(tr,wijzig){const klant=tr.dataset.klant,code=tr.dataset.code;
-  toonPop("📦 Pakbon · "+esc(klant)+" · week "+code,pakbonInhoud(klant,code,true)+`<div class="rij" style="margin-top:14px">${wijzig?`<button class="btn licht" onclick="vkKlant=this.dataset.klant;vkPop('${code}')" data-klant="${esc(klant)}" title="Naar de reserveringen van deze klant in deze week (verplaatsen, weghalen)">✎ Reserveringen van deze week</button>`:""}<span style="flex:1"></span><button class="btn" onclick="pakbonPrint(this)" data-klant="${esc(klant)}" data-code="${code}">🖨️ Pakbon afdrukken</button></div>`);
+/* pakbon in het scherm: meteen te wijzigen (aantal, fust, prijs, opmerking, weghalen, soort erbij). Afdrukken blijft de nette versie */
+function pakbonBewerk(klant,code,l,k,dat,y,w){const K=`data-klant="${esc(klant)}" data-code="${code}"`;let tp=0,te=0;
+  const rijen=l.map(r=>{const pl=plekVan(r.k,r.t);tp+=r.n;if(r.prijs!=null)te+=r.prijs*r.n;const D=`data-key="${esc(r.key)}" data-i="${r.i}" ${K}`;
+    return`<tr><td>${esc(r.soort)}<div class="status" style="font-size:11px">${esc(r.gewas)}${ZV()?"":` · afd ${esc(pl.afd)||"–"} · vloer ${esc(pl.vloer)||"?"}`}</div></td>
+      <td><input class="pbin" inputmode="numeric" value="${r.n}" ${D} onchange="pbZet(this,'n')"></td>
+      <td class="pbklik" ${D} onclick="pbFust(this)" title="Klik: fust veranderen">${fustTxt(r)||'<span class="status">+ fust</span>'}</td>
+      <td><input class="pbin pbpr" inputmode="decimal" value="${r.prijs!=null?pF(r.prijs):""}" placeholder="€" ${D} onchange="pbZet(this,'prijs')"></td>
+      <td class="pbklik" ${D} onclick="pbOpm(this)" title="Klik: opmerking veranderen">${r.opm?esc(r.opm):'<span class="status">+</span>'}</td>
+      <td><button class="btn rood klein" ${D} onclick="pbWeg(this)" title="Weghalen">✕</button></td></tr>`}).join("");
+  const nu=new Set(l.map(r=>r.k)),t=+maandagIso(y,w),per=new Map();for(const r of afleverRegels())if(r.aantal>0&&r.t===t){const kk=r.product+"|"+r.soort;if(!nu.has(kk))per.set(kk,(per.get(kk)||0)+r.aantal)}
+  const opties=[...per.keys()].sort((a,b)=>a.localeCompare(b,"nl")).map(kk=>{const[pr,so]=kk.split("|");return`<option value="${esc(kk)}">${esc(so)} · ${esc(pr)} (vrij ${getal(per.get(kk)-verkSom(kk,t))})</option>`}).join("");
+  return`<div class="pbkop" style="margin-bottom:6px"><div><b>Klant:</b> ${esc(klant)}${k.plaats?" · "+esc(k.plaats):""}${k.telefoon?" · ☎ "+esc(k.telefoon):""}</div>
+      <div class="noprint" style="display:flex;gap:6px;align-items:center"><span class="status">Afleverdatum</span><input type="date" value="${dat[0]||datumTekst(maandagIso(y,w))}" min="${datumTekst(maandagIso(y,w))}" max="${datumTekst(new Date(plusWeken(maandagIso(y,w),1)-864e5))}" onchange="pakbonDatum(this)" ${K} style="font-size:14px;padding:3px 6px"></div></div>
+    <table class="kktab pbbew"><tr><th>Soort</th><th>Aantal</th><th>Fust</th><th>€ /st</th><th>Opmerking</th><th></th></tr>${rijen||`<tr><td colspan="6" class="status">Nog niets op deze pakbon.</td></tr>`}
+      <tr class="pbtot"><td>Totaal</td><td class="r"><b>${getal(tp)}</b></td><td></td><td colspan="3">${te?"<b>"+euro(te)+"</b>":""}</td></tr></table>
+    ${opties?`<div class="pberbij"><select id="pbNieuwK"><option value="">＋ soort erbij…</option>${opties}</select><input id="pbNieuwN" class="pbin" inputmode="numeric" placeholder="aantal"><button class="btn licht" onclick="pbErbij(this)" ${K}>Toevoegen</button></div>`:""}`}
+const pbHer=b=>pakbonVan({dataset:{klant:b.dataset.klant,code:b.dataset.code}},true);
+const pbX=b=>((data.verkoop||{})[b.dataset.key]||[])[+b.dataset.i];
+function pbZet(b,veld){const x=pbX(b);if(!x)return;if(veld==="n"){const v=Math.max(0,Math.round(+String(b.value).replace(/[.\s]/g,"").replace(",",".")||0));if(!v){pbWeg(b);return}const r=fustRond(v,+x.perFust||0);if(r!==v)melding(`Afgerond naar ${getal(r)} (hele fusten)`,"#2d6a4f");x.n=r}
+  else{const pr=prijsLees(b.value);if(pr==null)delete x.prijs;else x.prijs=pr}opslaanLater();pbHer(b)}
+function pbFust(b){const x=pbX(b);if(!x)return;const f=prompt("Fust (bijv. tray, Deense kar):",x.fust||"");if(f===null)return;const p=prompt("Aantal planten per fust (leeg = niet afronden):",x.perFust||"");if(p===null)return;
+  x.fust=f.trim();const n=Math.round(+String(p).replace(/[.\s]/g,""));if(n>0)x.perFust=n;else delete x.perFust;if(!x.fust)delete x.fust;x.n=fustRond(+x.n||0,+x.perFust||0);opslaanLater();pbHer(b)}
+function pbOpm(b){const x=pbX(b);if(!x)return;if(opmVraag(x)===false)return;opslaanLater();pbHer(b)}
+function pbWeg(b){const l=(data.verkoop||{})[b.dataset.key];if(!l||!l[+b.dataset.i])return;if(!confirm("Deze regel van de pakbon weghalen?")){pbHer(b);return}
+  l.splice(+b.dataset.i,1);if(!l.length)delete data.verkoop[b.dataset.key];opslaanLater();render();pbHer(b)}
+function pbErbij(b){const kk=document.getElementById("pbNieuwK").value,v=Math.round(+String(document.getElementById("pbNieuwN").value).replace(/[.\s]/g,"").replace(",",".")||0);
+  if(!kk||v<=0){alert("Kies een soort en vul een aantal in.");return}const kl=klantVan(b.dataset.klant),x={klant:b.dataset.klant,n:v,datum:datumTekst(new Date())};
+  const oud=verkoopLijst().find(r=>r.klant===b.dataset.klant&&r.code===b.dataset.code&&r.datum);if(oud)x.datum=oud.datum;
+  if(kl){if(kl.fust)x.fust=kl.fust;if(+kl.perFust>1){x.perFust=+kl.perFust;x.n=fustRond(v,x.perFust)}}const ras=vkRasVan(kk),pv=ras?vkPrijs(kl&&kl.id,ras.id):null;if(pv!=null)x.prijs=pv;
+  const key=kk+"|"+b.dataset.code;data.verkoop=data.verkoop||{};(data.verkoop[key]=data.verkoop[key]||[]).push(x);opslaanLater();render();pbHer(b)}
+function pakbonVan(tr,wijzig){const klant=tr.dataset.klant,code=tr.dataset.code;wijzig=!kijker&&niveau()>1;
+  toonPop("📦 Pakbon · "+esc(klant)+" · week "+code,pakbonInhoud(klant,code,wijzig?"bewerk":true)+`<div class="rij" style="margin-top:14px">${wijzig?`<button class="btn licht" onclick="vkKlant=this.dataset.klant;vkPop('${code}')" data-klant="${esc(klant)}" title="Naar de reserveringen van deze klant in deze week (verplaatsen naar andere week)">↔ Andere week</button>`:""}<span style="flex:1"></span><button class="btn" onclick="pakbonPrint(this)" data-klant="${esc(klant)}" data-code="${code}">🖨️ Pakbon afdrukken</button></div>`);
   const m=document.querySelector("#mobPop .mpop");if(m)m.classList.add("breed")}
 function pakbonPrint(b){let d=document.getElementById("pakbonPrint");if(!d){d=document.createElement("div");d.id="pakbonPrint";document.body.appendChild(d)}
   d.innerHTML=pakbonInhoud(b.dataset.klant,b.dataset.code);document.body.classList.add("pbprint");
