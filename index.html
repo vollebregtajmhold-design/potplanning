@@ -748,6 +748,9 @@ body.mobiel #aanbodKnop{display:block}@media (max-width:900px),(pointer:coarse){
 .vkonder{display:flex;gap:6px 14px;flex-wrap:wrap;align-items:baseline}.vkonder .vkfust,.vkonder .vkopmrij{margin:0;cursor:pointer}
 
 .vkvast{background:#fff3c4;border:1px solid #e0c060;border-radius:20px;padding:1px 4px 1px 10px;font-size:13px;display:inline-flex;align-items:center;gap:4px}.vkvast button{border:0;background:transparent;cursor:pointer;font-size:13px;padding:0 4px;color:#7a5c00}
+
+.oftab input{width:80px;padding:4px 6px;text-align:right;font:inherit;font-size:15px;border:1px solid #cfc6b4;border-radius:6px;box-sizing:border-box}.oftab .ofp{width:70px}.oftab td.let{color:#b00020}
+@media (max-width:600px){.kktab.oftab th:nth-child(4),.kktab.oftab tr:not(.kkweek) td:nth-child(4){display:table-cell}.oftab th:nth-child(3),.oftab td:nth-child(3){display:none}.oftab input{width:64px}.oftab .ofp{width:56px}}
 </style>
 </head>
 <body>
@@ -910,7 +913,7 @@ body.mobiel #aanbodKnop{display:block}@media (max-width:900px),(pointer:coarse){
 
 <script>
 "use strict";
-const VERSIE="40.2";
+const VERSIE="40.3";
 const VERSIE_DATUM="03-11-2026";
 /* ---------- Basis ---------- */
 const PALET=["#2d6a4f","#1B5EBE","#E8007D","#c77d1a","#7a4fa0","#0f8b8d","#5b6b2f","#3d5a80","#a0522d","#7AB648"];
@@ -4650,7 +4653,7 @@ function klantKaart(naam){const k=klantVan(naam)||{naam},nu=wkCode(+dezeWeek()),
   let h=`<div class="kkkop"><div>${k.plaats?`<div>📍 ${esc(k.plaats)}</div>`:""}${k.contact?`<div>👤 ${esc(k.contact)}</div>`:""}${k.telefoon?`<div>☎ ${esc(k.telefoon)}</div>`:""}${k.email?`<div>✉ ${esc(k.email)}</div>`:""}${k.fust?`<div>📦 standaard ${esc(k.fust)}${+k.perFust>1?" · "+getal(k.perFust)+" per fust":""}</div>`:""}${k.opmerking?`<div class="status">💬 ${esc(k.opmerking)}</div>`:""}</div>
     <div class="kkcijfers"><div><b>${getal(tN)}</b><span>planten gereserveerd</span></div><div><b>${nR}</b><span>reserveringen</span></div><div><b>${tE?euro(tE):"–"}</b><span>waarde</span></div></div></div>
     <div class="rij" style="gap:6px;flex-wrap:wrap;margin:8px 0 12px">${tel?knop("tel:"+tel,"📞 Bellen"):""}${wa.length>8?knop("https://wa.me/"+wa,"💬 WhatsApp"):""}${k.email?`<button class="btn licht" onclick="klantMail(this.dataset.k)" data-k="${esc(naam)}" title="Nieuwe Gmail aan deze klant, met het overzicht van de reserveringen">✉ Gmail</button>`:""}
-      <button class="btn" onclick="sluitMobSoort();vo={datum:datumTekst(new Date()),klant:this.dataset.k,teelt:teeltFilter||'',soort:'',n:''};verkoopOrder()" data-k="${esc(k.naam||naam)}">＋ Nieuwe reservering</button>
+      <button class="btn" onclick="orderForm(this.dataset.k)" data-k="${esc(k.naam||naam)}" title="Alle soorten van één week onder elkaar: alleen aantallen invullen">🧾 Orderformulier</button><button class="btn licht" onclick="sluitMobSoort();vo={datum:datumTekst(new Date()),klant:this.dataset.k,teelt:teeltFilter||'',soort:'',n:''};verkoopOrder()" data-k="${esc(k.naam||naam)}">＋ Eén reservering</button>
       <label class="status" style="margin-left:auto"><input type="checkbox" ${kkAlles?"checked":""} onchange="kkAlles=this.checked;klantKaart(this.dataset.k)" data-k="${esc(naam)}"> ook afgelopen 8 weken</label></div>`;
   const wks=Object.keys(per).sort();
   if(!wks.length)h+=`<p class="status">Geen reserveringen ${kkAlles?"in deze periode":"vanaf deze week"}.</p>`;
@@ -4660,6 +4663,30 @@ function klantKaart(naam){const k=klantVan(naam)||{naam},nu=wkCode(+dezeWeek()),
       for(const{pr,so,x}of l)h+=`<tr class="${w<nu?"kkoud":""}"><td>${esc(so)} <span class="status">${esc(pr)}</span><span class="kkmob status">${[fustTxt(x),x.prijs!=null?"à "+prijsTxt(x.prijs):"",esc(x.opmerking||"")].filter(Boolean).join(" · ")}</span></td><td class="r">${getal(x.n)}</td><td>${fustTxt(x)}</td><td class="r">${x.prijs!=null?prijsTxt(x.prijs):""}</td><td class="r">${x.prijs!=null?euro(x.prijs*x.n):""}</td><td>${esc(x.opmerking||"")}</td></tr>`}
     h+=`</table></div>`}
   toonPop("👤 "+esc(k.naam||naam),h);const m=document.querySelector("#mobPop .mpop");if(m)m.classList.add("breed")}
+/* orderformulier: één klant, één week, alle soorten onder elkaar; alleen aantallen (en evt. prijs) invullen */
+let ofWeek=null;
+function orderForm(naam,t){const kk=klantVan(naam)||{naam},nu=+dezeWeek();if(t!=null)ofWeek=t;if(ofWeek==null||ofWeek<nu)ofWeek=+plusWeken(new Date(nu),1);
+  const per=new Map();for(const r of afleverRegels())if(r.aantal>0&&r.t===ofWeek&&(!teeltFilter||r.p.soortId===teeltFilter)){const k=r.product+"|"+r.soort;per.set(k,(per.get(k)||0)+r.aantal)}
+  const wks=[];for(let i=0;i<16;i++)wks.push(+plusWeken(new Date(nu),i));
+  const rijen=[...per.keys()].sort((a,b)=>a.localeCompare(b,"nl"));let vor="",h=`<div class="rij" style="gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:10px"><b>Week</b><select onchange="orderForm(this.dataset.k,+this.value)" data-k="${esc(kk.naam||naam)}">${wks.map(w=>`<option value="${w}" ${w===ofWeek?"selected":""}>wk ${isoWeek(new Date(w)).w}${w===nu?" (deze week)":""}</option>`).join("")}</select>
+    ${kk.fust||+kk.perFust>1?`<span class="status">📦 fust: ${esc(kk.fust||"")}${+kk.perFust>1?" · "+getal(kk.perFust)+" per fust (wordt afgerond)":""}</span>`:""}</div>`;
+  if(!rijen.length)h+=`<p class="status">In deze week wordt niets afgeleverd.</p>`;
+  else{h+=`<table class="kktab oftab"><tr><th>Soort</th><th class="r">Nog vrij</th><th class="r">Al besteld</th><th>Aantal</th><th>€ /st</th></tr>`;
+    for(const k of rijen){const[pr,so]=k.split("|");if(pr!==vor){h+=`<tr class="kkweek"><td colspan="5">${esc(pr)}</td></tr>`;vor=pr}
+      const vrij=per.get(k)-verkSom(k,ofWeek),al=verkVan(k,ofWeek).filter(x=>(x.klant||"").toLowerCase()===String(kk.naam||naam).toLowerCase()).reduce((a,x)=>a+ +x.n,0),ras=vkRasVan(k),pv=ras?vkPrijs(kk.id,ras.id):null;
+      h+=`<tr data-k="${esc(k)}"><td>${esc(so)}</td><td class="r ${vrij<0?"let":""}">${getal(vrij)}</td><td class="r">${al?getal(al):""}</td><td><input class="ofn" inputmode="numeric" placeholder="0" oninput="ofTel()"></td><td><input class="ofp" inputmode="decimal" value="${pv!=null?pF(pv):""}" placeholder="€"></td></tr>`}
+    h+=`</table><div class="rij" style="gap:8px;margin-top:12px;align-items:center;flex-wrap:wrap"><span class="status" id="ofTot">0 planten</span><button class="btn" style="margin-left:auto" onclick="orderOpslaan(this.dataset.k)" data-k="${esc(kk.naam||naam)}">✔ Opslaan</button></div>`}
+  toonPop("🧾 Order · "+esc(kk.naam||naam),h);const m=document.querySelector("#mobPop .mpop");if(m)m.classList.add("breed");
+  const e=document.querySelector(".oftab .ofn");if(e&&!/Android|iPhone|iPad/i.test(navigator.userAgent))e.focus()}
+function ofTel(){let n=0,r=0;document.querySelectorAll(".oftab .ofn").forEach(i=>{const v=Math.round(+String(i.value).replace(/[.\s]/g,"").replace(",",".")||0);if(v>0){n+=v;r++}});const el=document.getElementById("ofTot");if(el)el.textContent=`${getal(n)} planten · ${r} soort${r===1?"":"en"}`}
+function orderOpslaan(naam){const kk=klantVan(naam),code=wkCode(ofWeek);let r=0,n=0;data.verkoop=data.verkoop||{};
+  document.querySelectorAll(".oftab tr[data-k]").forEach(tr=>{let v=Math.round(+String(tr.querySelector(".ofn").value).replace(/[.\s]/g,"").replace(",",".")||0);if(v<=0)return;
+    const x={klant:kk?kk.naam:naam,n:v,datum:datumTekst(new Date())};if(kk){if(kk.fust)x.fust=kk.fust;if(+kk.perFust>1){x.perFust=+kk.perFust;x.n=fustRond(v,x.perFust)}}
+    const pr=prijsLees(tr.querySelector(".ofp").value);if(pr!=null)x.prijs=pr;
+    const key=tr.dataset.k+"|"+code;(data.verkoop[key]=data.verkoop[key]||[]).push(x);r++;n+=x.n});
+  if(!r){alert("Vul bij minstens één soort een aantal in.");return}
+  opslaanLater();render();melding(`✔ ${r} soort${r===1?"":"en"} · ${getal(n)} planten opgeslagen voor ${esc(naam)}`,"#2d6a4f");
+  pakbonVan({dataset:{klant:kk?kk.naam:naam,code}},true)}
 /* Gmail aan de klant met de komende reserveringen als tekst */
 function klantMail(naam){const k=klantVan(naam)||{naam},nu=wkCode(+dezeWeek()),per={};
   for(const[key,arr]of Object.entries(data.verkoop||{})){const p=key.split("|");if(p.length!==3||p[2]<nu)continue;
