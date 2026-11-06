@@ -447,7 +447,7 @@ dialog.vgl{border:0;padding:0;border-radius:12px;max-width:640px;width:95vw}dial
 body.eenvoudig .uitgebreid{display:none!important}
 body:not(.eenvoudig) .eenvoudigAlleen{display:none!important}
 .navMidden{flex:1;display:flex;justify-content:center;align-items:center;gap:8px;flex-wrap:wrap}
-body.eenvoudig .mob .mtabs{grid-template-columns:1fr 1fr;gap:8px;padding:10px}body.eenvoudig .mob .mtabs button{font-size:17px;padding:14px 4px;border-radius:12px}
+body.eenvoudig .mob .mtabs{grid-template-columns:repeat(auto-fit,minmax(0,1fr));gap:6px;padding:10px}body.eenvoudig .mob .mtabs button{font-size:17px;padding:14px 4px;border-radius:12px}
 .aflschuif{display:inline-flex;align-items:center;gap:8px;background:#fff;border:1px solid #ddd5c4;border-radius:9px;padding:4px 10px}
 .aflschuif input[type=range]{width:220px;accent-color:var(--groen)}
 .ovkop{margin-bottom:12px;gap:8px;flex-wrap:nowrap;white-space:nowrap}.ovschuif{display:inline-flex;align-items:center;gap:8px;padding:0 4px;background:transparent;border:0}.ovschuif input[type=range]{width:160px}
@@ -923,7 +923,7 @@ body.mobiel #aanbodKnop{display:block}@media (max-width:900px),(pointer:coarse){
 
 <script>
 "use strict";
-const VERSIE="41.2";
+const VERSIE="41.4";
 const VERSIE_DATUM="03-11-2026";
 /* ---------- Basis ---------- */
 const PALET=["#2d6a4f","#1B5EBE","#E8007D","#c77d1a","#7a4fa0","#0f8b8d","#5b6b2f","#3d5a80","#a0522d","#7AB648"];
@@ -1377,10 +1377,10 @@ function inkWzMarkeer(){if(!isBeheerHier())return;let S=null;try{S=JSON.parse(lo
   sc.before(d)}
 /* ================= ? uitleg per pagina ================= */
 const HULP={
-  soorten:["Parameters","<li>Hier staan uw <b>teelten</b> en <b>soorten</b>.</li><li>Per teelt: potmaat, planten per m² en de <b>teeltduur</b> per opzetweek.</li><li>Per soort: fust, raaptijd, uitval en levertijd.</li><li>Een soort met een andere teeltduur? Klik op <b>standaard duur</b> om een eigen duur te maken.</li><li>Het vinkje <b>klopt</b> zet u aan als de planning van die soort klopt met de praktijk.</li><li><b>Toetsen</b>: 1 = Parameters, 2 = Inkoop, 3 = Opzetplanning, 4 = Afleverplanning.</li>"],
+  soorten:["Parameters","<li>Hier staan uw <b>teelten</b> en <b>soorten</b>.</li><li>Per teelt: potmaat, planten per m² en de <b>teeltduur</b> per opzetweek.</li><li>Per soort: fust, raaptijd, uitval en levertijd.</li><li>Een soort met een andere teeltduur? Klik op <b>standaard duur</b> om een eigen duur te maken.</li><li>Het vinkje <b>klopt</b> zet u aan als de planning van die soort klopt met de praktijk.</li><li><b>📷</b> naast de naam: een foto bij de soort. Die ziet u op de mobiel en in de Aanbodlijst.</li><li><b>Toetsen</b>: 1 = Parameters, 2 = Inkoop, 3 = Opzetplanning, 4 = Afleverplanning.</li>"],
   oppot:["Inkoop / opzetten","<li>Vul per <b>soort</b> en per <b>week</b> in hoeveel planten u opzet.</li><li>De <b>grafiek</b> laat zien hoe vol de kas wordt. De rode lijn is de bruto kasruimte.</li><li>Rij <b>Verschil m²</b>: wat er verandert door uw invoer.</li><li><b>Rechtermuisknop</b> op een vakje: Max, Proberen of leeg maken.</li><li>Sleep het <b>groene blokje</b> rechtsonder in een vakje om te kopiëren, net als in Excel.</li><li><b>🪴 Lege ruimte</b>: hoeveel er nog bij past. <b>⬇ Excel</b>: alles naar Excel.</li>"],
   oppotov:["Opzetplanning","<li>Wat er <b>per week</b> wordt opgezet, per soort.</li><li>De rode week onder het weeknummer is de <b>uiterste bestelweek</b>.</li><li>Kies bij <b>Eenheid</b>: planten, trays, m² of kosten.</li><li>Met de <b>schuif</b> kiest u welke weken u ziet.</li><li>Klik op een soort om naar de Parameters te gaan.</li>"],
-  aflever:["Afleverplanning","<li>Wat er <b>per week</b> klaar is om af te leveren.</li><li>Kies: <b>Afleverplan</b>, <b>Gereserveerd</b> of <b>Nog beschikbaar</b>.</li><li>Klik op een <b>vakje</b> om een reservering te maken (klant, aantal, prijs).</li><li>Klik op een <b>weeknummer</b> voor het overzicht van alle reserveringen.</li><li>Toets <b>R</b>: snel een reservering maken.</li>"],
+  aflever:["Afleverplanning","<li>Bovenin kiest u: <b>Beschikbaar</b> of <b>👥 Klantoverzicht</b>.</li><li><b>Beschikbaar</b>: links in de tabel kiest u <b>Nog beschikbaar</b>, <b>Afleverplan</b> of <b>Gereserveerd</b>. Het is steeds dezelfde tabel.</li><li>Een <b>rode cirkel</b> om een getal: daar zit een order in.</li><li>Klik op een <b>vakje</b>: reservering maken (klant, aantal, prijs). Met <b>🖨️ Pakbon</b> opent u de pakbon. Die kunt u nog wijzigen en afdrukken.</li><li><b>👥 Klantoverzicht</b>: de klanten onder elkaar, de weken naast elkaar. Klik op een <b>klant</b> voor de klantkaart: bellen, mailen, <b>🧾 orderformulier</b>. Klik op een <b>getal</b> voor de pakbon.</li><li>Klik op een <b>weeknummer</b>: alle reserveringen van die week.</li><li><b>📄 Aanbodlijst</b> (module 3): lijst of fotocatalogus met prijzen, om te printen, als plaatje of via Gmail.</li><li>Toets <b>R</b>: snel een reservering maken.</li>"],
   verkoop:["Reserveringen","<li>Alle reserveringen, per week en per klant.</li><li>Klik op een regel voor de <b>pakbon</b>.</li><li>Met <b>+ Reservering</b> of toets <b>R</b> maakt u een nieuwe.</li>"],
   mkbesch:["Beschikbaar","<li>Hoeveel er per week <b>nog beschikbaar</b> is: afleverplan min reserveringen.</li><li>Deze gegevens zijn gedeeld door de klant.</li>"],
   beheer:["Beheer klanten","<li>Elke klant heeft een eigen <b>GitHub</b> (de app) en een eigen <b>Firebase</b> (de gegevens).</li><li><b>⬆ Alles bijwerken</b>: nieuwe versie bij alle klanten.</li><li><b>🧙 GitHub klaarzetten</b>: nieuwe klant in één keer online.</li><li><b>🕒 Laatst actief</b>: wanneer de klant voor het laatst werkte.</li>"]};
@@ -2623,7 +2623,7 @@ function toonSoorten(){
     ${data.teeltduren.length>1?`<button class="btn licht klein" onclick="data.teeltduren.forEach(t=>teeltOpen.add(t.id));render()">Alles open</button><button class="btn licht klein" onclick="teeltOpen.clear();render()">Alles dicht</button>`:""}${data.teeltduren.length?`<button class="btn licht klein" onclick="parametersXlsx()" title="Alle parameters naar Excel: elk tabblad één teelt">⬇ Excel</button>`:""}
     ${data.leveranciers.some(l=>l.naam)?"":`<span class="status">Nog geen leveranciers – maak ze aan bij <a href="#" onclick="naar('leveranciers');return false">Stamdata → Leveranciers</a>.</span>`}
     </div>`;
-  {const ob=document.getElementById("ovBalk");ob.hidden=false;ob.innerHTML=`<span class="navplek"></span><span class="ovtitel">Parameters</span><span style="flex:1"></span><button class="ovk ovlink" onclick="naar('oppot')" title="Inkoop / opzetten">Inkoop / opzetten ›</button>`}
+  {const ob=document.getElementById("ovBalk");ob.hidden=false;ob.innerHTML=`<span class="navplek"></span><span class="ovtitel">Parameters</span><span style="flex:1"></span>`}
   if(!data.teeltduren.length){$("#inhoud").innerHTML=h+`<div class="leeg">Nog geen teelten. Klik op <b>+ Teelt</b>.</div>`;return}
   const veld=(i,k,w,type,ph)=>{const t=data.teeltduren[i],v=t[k];const leeg=(k==="dicht1"||k==="dicht2"||k==="product")&&!v;
     return `<input ${type==="n"?'type="number" min="0" step="0.1"':""} class="${leeg?"mist":""}" style="width:${w}" value="${esc(v||(k==="potmaat"?v:""))}" placeholder="${ph}" data-sv="${i}" data-sk="${k}">`};
@@ -2953,9 +2953,9 @@ function bronArr(b,j){const[k,id]=[b.slice(0,1),b.slice(2)];
 function toonOppot(){
   const nuIso=isoWeek(new Date()),C=inkCols(),isNu=k=>k.j===nuIso.y&&k.w+1===nuIso.w;
   let h="";
-  {const ob=document.getElementById("ovBalk");ob.hidden=false;ob.innerHTML=`<button class="ovk ovlink" onclick="if(oppotKeuze&&oppotKeuze!=='alle')naarTeeltId(oppotKeuze);else naar('soorten')" title="Parameters (instellen)">‹ Parameters</button><span class="ovtitel">Inkoop / opzetten</span>
+  {const ob=document.getElementById("ovBalk");ob.hidden=false;ob.innerHTML=`<span class="ovtitel">Inkoop / opzetten</span>
     <span class="oppjaar"><button class="btn licht klein" onclick="inkStap(-1)" title="Half jaar terug">◀</button><b title="${inkHalf?"week 27 van "+planJaar+" t/m week 26 van "+(planJaar+1):"heel "+planJaar}">${inkLabel()}</b><button class="btn licht klein" onclick="inkStap(1)" title="Half jaar verder">▶</button></span>
-    <span style="flex:1"></span><button class="ovk inkcsv" onclick="legeRuimte()" title="Hoeveel planten passen er per opzetweek nog bij (zonder dat de kas te vol wordt)">🪴 Lege ruimte</button>${niveau()>=3?`<button class="ovk inkcsv" onclick="toonKostVerdeling()" title="Welk deel van de kosten hoort bij welke teelt en bij de vaste bezetting">📊 Kostenverdeling</button>`:""}<button class="ovk inkcsv" onclick="inkoopCsv()" title="Inkoop van ${planJaar} als Excel-bestand (CSV): alle teelten en soorten, per week">⬇ Excel</button><button class="ovk ovlink" onclick="naar('oppotov')" title="Opzetplanning (overzicht)">Opzetplanning ›</button>`}
+    <span style="flex:1"></span><button class="ovk inkcsv" onclick="legeRuimte()" title="Hoeveel planten passen er per opzetweek nog bij (zonder dat de kas te vol wordt)">🪴 Lege ruimte</button>${niveau()>=3?`<button class="ovk inkcsv" onclick="toonKostVerdeling()" title="Welk deel van de kosten hoort bij welke teelt en bij de vaste bezetting">📊 Kostenverdeling</button>`:""}<button class="ovk inkcsv" onclick="inkoopCsv()" title="Inkoop van ${planJaar} als Excel-bestand (CSV): alle teelten en soorten, per week">⬇ Excel</button>`}
   if(!data.teeltduren.length){$("#inhoud").innerHTML=h+`<div class="leeg">Nog geen teelten. Maak ze eerst aan bij <b>Stamdata → Teelt</b>, of <button class="btn" onclick="openPlak()">📋 Plak een bestellijst</button></div>`;return}
   if(!data.teeltduren.some(t=>t.id===oppotKeuze))oppotKeuze=data.teeltduren[0].id; /* "Alle teelten" is weg */
   h+=`<div class="tchips">${data.teeltduren.map(t=>{const TJ={},n=C.reduce((x,k)=>x+(+((TJ[k.j]=TJ[k.j]||aantalRij(t,k.j))[k.w])||0),0);return`<button type="button" class="tchip ${t.id===oppotKeuze?"aan":""}" onclick="oppotKeuze='${t.id}';render()" oncontextmenu="naarTeeltId('${t.id}');return false" title="Klik: inkoop van deze teelt · Rechtermuisknop: teelt bewerken"><b>${esc(teeltNaamKort(t))}</b><small>${getal(n)}</small></button>`}).join("")}
@@ -3908,7 +3908,7 @@ function toonKlanten(){const n=data.klanten.length;
   h+=`<table class="levtabel"><colgroup>${KL_VELDEN.map(v=>`<col style="width:${v[2]}">`).join("")}<col style="width:90px"><col style="width:50px"></colgroup>
     <tr>${KL_VELDEN.map(v=>`<th>${v[1]}</th>`).join("")}<th style="text-align:right">Gereserveerd</th><th></th></tr>`;
   [...data.klanten].sort((a,b)=>(a.naam||"~").localeCompare(b.naam||"~","nl")).forEach(k=>{
-    h+=`<tr class="levrij">${KL_VELDEN.map(([v])=>`<td><input data-kl="${k.id}" data-kk="${v}" value="${esc(k[v])}" ${v==="email"?'type="email"':v==="telefoon"?'type="tel"':v==="perFust"?'inputmode="numeric" placeholder="bijv. 80"':v==="fust"?'placeholder="bijv. Deense kar"':""} class="${v==="naam"&&!k.naam?"mist":""}" style="width:100%">${v==="perFust"?`<a href="#" class="status" style="font-size:11px;white-space:nowrap" onclick="klantPerTeelt('${k.id}');return false" title="Per teelt een andere traymaat en aantal per tray">per teelt${k.perTeelt?" ("+Object.keys(k.perTeelt).length+")":""} ✎</a>`:""}</td>`).join("")}
+    h+=`<tr class="levrij">${KL_VELDEN.map(([v])=>`<td><input data-kl="${k.id}" data-kk="${v}" value="${esc(k[v])}" ${v==="email"?'type="email"':v==="telefoon"?'type="tel"':v==="perFust"?'inputmode="numeric" placeholder="bijv. 8"':v==="fust"?'placeholder="bijv. 498"':""} class="${v==="naam"&&!k.naam?"mist":""}" style="width:100%">${v==="perFust"?`<a href="#" class="status" style="font-size:11px;white-space:nowrap" onclick="klantPerTeelt('${k.id}');return false" title="Per teelt een andere traymaat en aantal per tray">per teelt${k.perTeelt?" ("+Object.keys(k.perTeelt).length+")":""} ✎</a>`:""}</td>`).join("")}
       <td style="text-align:right"><b>${getal(klantVerkocht(k.naam))}</b></td>
       <td style="text-align:right"><button class="btn rood klein" onclick="klantWeg('${k.id}')" title="Klant verwijderen">✕</button></td></tr>`});
   $("#inhoud").innerHTML=h+`</table>`}
@@ -4060,13 +4060,13 @@ function toonOppotOv(){
   let h="";
   h+=`<div class="printkop"><h2>Oppotoverzicht ${jaar} (${ehNaam})</h2></div>`;
   const kop=(extra,info)=>{const ob=document.getElementById("ovBalk");ob.hidden=false;
-    ob.innerHTML=`<button class="ovk ovlink" onclick="naar('oppot')" title="Inkoop / opzetten">‹ Inkoop / opzetten</button><span class="ovtitel">Opzetplanning</span>
+    ob.innerHTML=`<span class="ovtitel">Opzetplanning</span>
     <select class="ovjaar" onchange="planJaar=+this.value;render()">${[-2,-1,0,1,2].map(d=>planJaar+d).map(j=>`<option value="${j}" ${j===jaar?"selected":""}>Jaar ${j}</option>`).join("")}</select>
     ${teeltKeuze()}
     <select class="ovjaar" onchange="ovEenheid=this.value;render()" title="Wat ziet u in de cellen">${Object.entries(EH).filter(([v])=>!ZV()||!["afdop","vlop","afduit","vluit","kost","kosttot"].includes(v)).map(([v,n])=>`<option value="${v}" ${ovEenheid===v?"selected":""}>${n.startsWith("m²")?n:n[0].toUpperCase()+n.slice(1)}</option>`).join("")}</select>${isKostEh?`<select class="ovjaar" onchange="ovKostLeeg=this.value==='1';render()" title="Excl. leegloop: alleen de m² die de planten gebruiken. Incl. leegloop: de kosten van de lege m² worden ook over de planten verdeeld.${+data.instellingen.brutoM2?"":" (Vul bruto m² in bij Bestand.)"}"><option value="0" ${ovKostLeeg?"":"selected"}>excl. leegloop</option><option value="1" ${ovKostLeeg?"selected":""}>incl. leegloop</option></select>`:""}
     ${extra||""}
     <span style="flex:1"></span>
-    <button class="ovk ovlink" onclick="naar('aflever')" title="Afleverplanning (overzicht)">Afleverplanning ›</button>`;return""};
+    `;return""};
   if(!regels.length){$("#inhoud").innerHTML=kop()+h+`<div class="leeg" style="padding:30px">Nog niets in de <a href="#" onclick="naar('oppot');return false">Inkoop</a> voor ${jaar}.</div>`;return}
   const alleW=[...new Set(regels.map(r=>r.w))].sort((a,b)=>a-b),cel={},rijen=new Set(),tot={};
   /* komen er weken bij of gaan er weken af? dan de schuif opnieuw zetten, zodat niets buiten beeld valt */
@@ -4127,7 +4127,7 @@ function toonBestel(){
     <span class="ovinfo" title="Standaard aantal weken tussen bestellen en afleveren">levertijd</span><input type="number" class="ovnum" min="0" value="${data.instellingen.levertijd}" onchange="data.instellingen.levertijd=Math.max(0,Math.round(+this.value||0));wijzig()"><span class="ovinfo">wk${lev&&lev.levertijd>0?` (${esc(lev.naam)}: ${lt})`:""}</span>
     <button class="ovk" onclick="bestelCsv()">Excel (CSV)</button><button class="ovk" onclick="window.print()">Afdrukken</button>
     <span class="ovinfo">${getal(tot0)} planten${euro0?" · ± €"+euro0.toLocaleString("nl-NL",{minimumFractionDigits:2,maximumFractionDigits:2}):""}</span>
-    <span style="flex:1"></span><button class="ovk ovlink" onclick="naar('oppot')" title="Aantallen per week invullen">Inkoop / opzetten ›</button>`;
+    <span style="flex:1"></span>`;
   $("#bestelLev").onchange=e=>{bestelLev=e.target.value;render()};
   let h="";
   if(!levs.length&&!zonder){$("#inhoud").innerHTML=h+`<div class="leeg">Nog geen leveranciers. Maak ze aan bij <b>Stamdata → Leveranciers</b> en koppel ze bij <b>Stamdata → Soort</b>.</div>`;return}
@@ -4246,7 +4246,7 @@ function toonAflever(){syncSoorten();
   const regels=afleverRegels().filter(r=>r.t>=van&&r.t<totT&&r.aantal>0&&(!teeltFilter||r.p.soortId===teeltFilter)),tlF=teeltLabelF();
   const eindWk=isoWeek(new Date(totT-6048e5)),pc=v=>M?v/M*100:0;
   const ob=document.getElementById("ovBalk");ob.hidden=false;
-  ob.innerHTML=`<button class="ovk ovlink" onclick="naar('oppotov')" title="Opzetplanning (overzicht)">‹ Opzetplanning</button><span class="ovtitel">Afleverplanning</span>
+  ob.innerHTML=`<span class="ovtitel">Afleverplanning</span>
     <select class="ovjaar" onchange="planJaar=+this.value;render()" title="Seizoen: wk ${S} t/m wk ${eindWk.w}">${[-2,-1,0,1,2].map(d=>jaar+d).map(j=>`<option value="${j}" ${j===jaar?"selected":""}>Seizoen ${j}/${String(j+1).slice(2)}</option>`).join("")}</select>
     ${teeltKeuze()}
     <div class="ovschuif" title="Sleep de linker- of rechterknop: van welke t/m welke week u ziet">
@@ -4791,7 +4791,7 @@ function toonRuimteGraf(){const jaar=planJaar,{kaart}=ruimteBerekening(),nu=deze
         <input type="range" id="rgLo" min="0" max="${M}" value="${rgS.start}" oninput="rgSchuif()">
         <input type="range" id="rgHi" min="0" max="${M}" value="${rgS.eind}" oninput="rgSchuif()"></div>
       <span id="rgTxt" class="ovinfo"></span></div>
-    <button class="ovk" onclick="window.print()">Afdrukken</button><button class="ovk ovlink" onclick="naar('oppotov')">Opzetplanning ›</button>`;
+    <button class="ovk" onclick="window.print()">Afdrukken</button>`;
   $("#inhoud").innerHTML=`<div class="printkop"><h2>Ruimte ${jaar} (m² per week)</h2></div><div id="rgGraf" style="padding:16px 18px 10px"></div>`;
   window.__rg={kaart,wkn,tl,kl,nu,jaar};rgSchuif()}
 function rgSchuif(){const lo=document.getElementById("rgLo"),hi=document.getElementById("rgHi");if(!lo||!window.__rg)return;
