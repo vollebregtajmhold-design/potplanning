@@ -904,7 +904,7 @@ body.mobiel #aanbodKnop{display:block}@media (max-width:900px),(pointer:coarse){
 
 <script>
 "use strict";
-const VERSIE="39.6";
+const VERSIE="39.7";
 const VERSIE_DATUM="03-11-2026";
 /* ---------- Basis ---------- */
 const PALET=["#2d6a4f","#1B5EBE","#E8007D","#c77d1a","#7a4fa0","#0f8b8d","#5b6b2f","#3d5a80","#a0522d","#7AB648"];
@@ -4624,7 +4624,7 @@ function klantKaart(naam){const k=klantVan(naam)||{naam},nu=wkCode(+dezeWeek()),
   const knop=(href,txt)=>`<a class="btn licht" style="text-decoration:none" href="${href}" target="_blank" rel="noopener">${txt}</a>`;
   let h=`<div class="kkkop"><div>${k.plaats?`<div>📍 ${esc(k.plaats)}</div>`:""}${k.contact?`<div>👤 ${esc(k.contact)}</div>`:""}${k.telefoon?`<div>☎ ${esc(k.telefoon)}</div>`:""}${k.email?`<div>✉ ${esc(k.email)}</div>`:""}${k.fust?`<div>📦 standaard ${esc(k.fust)}${+k.perFust>1?" · "+getal(k.perFust)+" per fust":""}</div>`:""}${k.opmerking?`<div class="status">💬 ${esc(k.opmerking)}</div>`:""}</div>
     <div class="kkcijfers"><div><b>${getal(tN)}</b><span>planten gereserveerd</span></div><div><b>${nR}</b><span>reserveringen</span></div><div><b>${tE?euro(tE):"–"}</b><span>waarde</span></div></div></div>
-    <div class="rij" style="gap:6px;flex-wrap:wrap;margin:8px 0 12px">${tel?knop("tel:"+tel,"📞 Bellen"):""}${wa.length>8?knop("https://wa.me/"+wa,"💬 WhatsApp"):""}${k.email?knop("mailto:"+encodeURIComponent(k.email),"✉ Mailen"):""}
+    <div class="rij" style="gap:6px;flex-wrap:wrap;margin:8px 0 12px">${tel?knop("tel:"+tel,"📞 Bellen"):""}${wa.length>8?knop("https://wa.me/"+wa,"💬 WhatsApp"):""}${k.email?`<button class="btn licht" onclick="klantMail(this.dataset.k)" data-k="${esc(naam)}" title="Nieuwe Gmail aan deze klant, met het overzicht van de reserveringen">✉ Gmail</button>`:""}
       <button class="btn" onclick="sluitMobSoort();vo={datum:datumTekst(new Date()),klant:this.dataset.k,teelt:teeltFilter||'',soort:'',n:''};verkoopOrder()" data-k="${esc(k.naam||naam)}">＋ Nieuwe reservering</button>
       <label class="status" style="margin-left:auto"><input type="checkbox" ${kkAlles?"checked":""} onchange="kkAlles=this.checked;klantKaart(this.dataset.k)" data-k="${esc(naam)}"> ook afgelopen 8 weken</label></div>`;
   const wks=Object.keys(per).sort();
@@ -4635,6 +4635,18 @@ function klantKaart(naam){const k=klantVan(naam)||{naam},nu=wkCode(+dezeWeek()),
       for(const{pr,so,x}of l)h+=`<tr class="${w<nu?"kkoud":""}"><td>${esc(so)} <span class="status">${esc(pr)}</span></td><td class="r">${getal(x.n)}</td><td>${fustTxt(x)}</td><td class="r">${x.prijs!=null?prijsTxt(x.prijs):""}</td><td class="r">${x.prijs!=null?euro(x.prijs*x.n):""}</td><td>${esc(x.opmerking||"")}</td></tr>`}
     h+=`</table>`}
   toonPop("👤 "+esc(k.naam||naam),h);const m=document.querySelector("#mobPop .mpop");if(m)m.classList.add("breed")}
+/* Gmail aan de klant met de komende reserveringen als tekst */
+function klantMail(naam){const k=klantVan(naam)||{naam},nu=wkCode(+dezeWeek()),per={};
+  for(const[key,arr]of Object.entries(data.verkoop||{})){const p=key.split("|");if(p.length!==3||p[2]<nu)continue;
+    for(const x of arr||[])if((x.klant||"").toLowerCase()===String(naam).toLowerCase()&&+x.n)(per[p[2]]=per[p[2]]||[]).push({pr:p[0],so:p[1],x})}
+  const ft=x=>{const f=fustTxt(x);return f?" ("+f.replace(/&amp;/g,"&")+")":""};
+  let t=`Beste ${k.contact||k.naam},\n\nHierbij het overzicht van uw reserveringen:\n`;
+  for(const w of Object.keys(per).sort()){t+=`\nWeek ${+w.slice(2)}\n`;for(const{pr,so,x}of per[w])t+=`- ${so} (${pr}): ${getal(x.n)} st${ft(x)}${x.prijs!=null?" à "+prijsTxt(x.prijs):""}${x.opmerking?" – "+x.opmerking:""}\n`}
+  if(!Object.keys(per).length)t+="\n(geen reserveringen vanaf deze week)\n";
+  t+="\nMet vriendelijke groet,\n";
+  const su="Uw reserveringen"+(KLANT.appNaam?" – "+KLANT.appNaam:""),mob=/Android|iPhone|iPad/i.test(navigator.userAgent);
+  const u=mob?`mailto:${encodeURIComponent(k.email||"")}?subject=${encodeURIComponent(su)}&body=${encodeURIComponent(t)}`:`https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(k.email||"")}&su=${encodeURIComponent(su)}&body=${encodeURIComponent(t)}`;
+  if(mob)location.href=u;else window.open(u,"_blank")}
 function pakbonVan(tr,wijzig){const klant=tr.dataset.klant,code=tr.dataset.code;
   toonPop("📦 Pakbon · "+esc(klant)+" · week "+code,pakbonInhoud(klant,code,true)+`<div class="rij" style="margin-top:14px">${wijzig?`<button class="btn licht" onclick="vkKlant=this.dataset.klant;vkPop('${code}')" data-klant="${esc(klant)}" title="Naar de reserveringen van deze klant in deze week (verplaatsen, weghalen)">✎ Reserveringen van deze week</button>`:""}<span style="flex:1"></span><button class="btn" onclick="pakbonPrint(this)" data-klant="${esc(klant)}" data-code="${code}">🖨️ Pakbon afdrukken</button></div>`);
   const m=document.querySelector("#mobPop .mpop");if(m)m.classList.add("breed")}
