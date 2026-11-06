@@ -900,7 +900,7 @@ body.mobiel #aanbodKnop{display:block}@media (max-width:900px),(pointer:coarse){
 
 <script>
 "use strict";
-const VERSIE="39.3";
+const VERSIE="39.4";
 const VERSIE_DATUM="03-11-2026";
 /* ---------- Basis ---------- */
 const PALET=["#2d6a4f","#1B5EBE","#E8007D","#c77d1a","#7a4fa0","#0f8b8d","#5b6b2f","#3d5a80","#a0522d","#7AB648"];
@@ -4310,7 +4310,7 @@ function beschLijst(){if(niveau()<4){melding("De aanbodlijst zit in module 3 (Be
       ${sel("blWk",[[1,"1 week"],[4,"4 weken"],[6,"6 weken"],[8,"8 weken"],[10,"10 weken"],[13,"13 weken"]],blWeken,"blWeken=+this.value;beschLijst()")}
       ${sel("blF",[[0,"in planten"],[1,"in fust (trays)"]],blFust?1:0,"blFust=this.value==='1';beschLijst()")}
       ${blWeerg==="cat"?"":`<label class="status"><input type="checkbox" ${blFoto?"checked":""} onchange="blFoto=this.checked;beschLijst()"> met foto's</label>`}
-      <label class="status" title="Welk deel van wat echt beschikbaar is op de lijst komt (de rest houdt u achter de hand). Planten worden naar beneden afgerond op 100-tallen.">tonen: ${sel("blP",[[100,"100%"],[90,"90%"],[80,"80%"],[70,"70%"],[60,"60%"],[50,"50%"]],blPct,"blPct=+this.value;try{localStorage.setItem('potplanning-blpct',blPct)}catch(e){}beschLijst()")}</label>
+      <label class="status" title="Welk deel van wat echt beschikbaar is op de lijst komt (de rest houdt u achter de hand). Planten worden naar beneden afgerond op 100-tallen.">tonen: ${sel("blP",[100,90,80,70,60,50,40,30,20,10].map(x=>[x,x+"%"]),blPct,"blPct=+this.value;try{localStorage.setItem('potplanning-blpct',blPct)}catch(e){}beschLijst()")}</label>
       ${sel("blPr",[["","zonder prijs"],["std","💶 standaardprijs"],...[...data.klanten].filter(k=>k.naam).sort((a,b)=>a.naam.localeCompare(b.naam,"nl")).map(k=>[k.id,"💶 prijs voor "+k.naam])],blPrVan,"blPrVan=this.value;try{localStorage.setItem('potplanning-blprijs',blPrVan)}catch(e){}beschLijst()")}
       <span class="status">vink: <a href="#" onclick="blAlles(true);return false">alles aan</a> · <a href="#" onclick="blAlles(false);return false">alles uit</a></span>
       <span class="status">${teeltFilter?"teelt: "+esc(teeltNaam(data.teeltduren.find(t=>t.id===teeltFilter)||{})):"alle teelten"}</span></div>
