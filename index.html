@@ -900,7 +900,7 @@ body.mobiel #aanbodKnop{display:block}@media (max-width:900px),(pointer:coarse){
 
 <script>
 "use strict";
-const VERSIE="39.4";
+const VERSIE="39.5";
 const VERSIE_DATUM="03-11-2026";
 /* ---------- Basis ---------- */
 const PALET=["#2d6a4f","#1B5EBE","#E8007D","#c77d1a","#7a4fa0","#0f8b8d","#5b6b2f","#3d5a80","#a0522d","#7AB648"];
@@ -4536,10 +4536,12 @@ document.addEventListener("keydown",e=>{if(e.code!=="KeyZ"||e.ctrlKey||e.metaKey
 /* Niveau per apparaat: 1 = oppotplan + afleverplan · 2 = + verkoop (zonder vloeren) · 3 = alles (ook ruimte en vloeren) */
 /* 3 modules: module 3 = intern niveau 4 (alles plus aanbodlijst, prijzen, foto delen en snel aanbod) */
 /* 2 modules: module 1 = intern niveau 2 (planning + reserveringen), module 2 = intern niveau 3 (plus kosten, afd en vloer) */
-const niveau=()=>{try{const v=localStorage.getItem("potplanning-niveau");if(v)return Math.max(2,+v);return localStorage.getItem("potplanning-zv")==="1"?2:3}catch(e){return 3}};
+/* module 3 (niveau 4) voorlopig alleen in de eigen app, niet bij klanten (MOD3_KLANT=false) */
+const MOD3_KLANT=false,mod3Mag=()=>MOD3_KLANT||!KLANT.code;
+const niveau=()=>{try{const v=localStorage.getItem("potplanning-niveau");if(v)return Math.min(mod3Mag()?4:3,Math.max(2,+v));return localStorage.getItem("potplanning-zv")==="1"?2:3}catch(e){return 3}};
 const ZV=()=>niveau()<3;
 const NIV_UITLEG={2:"Planning met reserveringen",3:"Plus kosten per week·m², afd en vloer",4:"Plus aanbodlijst, prijzen en delen"};const MODNR={2:1,3:2,4:3};
-function zvKlaar(){const bi=document.getElementById("brutoIn");if(bi&&document.activeElement!==bi)bi.value=(data.instellingen&&data.instellingen.brutoM2)||"";const li=document.getElementById("levIn");if(li&&document.activeElement!==li)li.value=(data.instellingen&&data.instellingen.levertijd)||0;const si=document.getElementById("seizIn");if(si&&document.activeElement!==si)si.value=(data.instellingen&&data.instellingen.seizoenStart)||11;const n=niveau(),z=n<3;document.body.classList.toggle("zv",z);[1,2,3,4].forEach(i=>{document.body.classList.toggle("niv"+i,i===n);const b=document.getElementById("niv"+i);if(b)b.classList.toggle("aan",i===n)});
+function zvKlaar(){const bi=document.getElementById("brutoIn");if(bi&&document.activeElement!==bi)bi.value=(data.instellingen&&data.instellingen.brutoM2)||"";const li=document.getElementById("levIn");if(li&&document.activeElement!==li)li.value=(data.instellingen&&data.instellingen.levertijd)||0;const si=document.getElementById("seizIn");if(si&&document.activeElement!==si)si.value=(data.instellingen&&data.instellingen.seizoenStart)||11;const n=niveau(),z=n<3;document.body.classList.toggle("zv",z);{const b4=document.getElementById("niv4");if(b4)b4.hidden=!mod3Mag()}[1,2,3,4].forEach(i=>{document.body.classList.toggle("niv"+i,i===n);const b=document.getElementById("niv"+i);if(b)b.classList.toggle("aan",i===n)});
   const u=document.getElementById("nivUitleg");if(u)u.textContent=NIV_UITLEG[n];
   if(z&&["afdop","vlop","afduit","vluit","kost","kosttot"].includes(ovEenheid))ovEenheid="planten";
   if(n===1){aflMod="afl";aflRij="teelt";if(["klanten","verkoop","bestel","werk"].includes(tab))tab="aflever"}
