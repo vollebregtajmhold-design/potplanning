@@ -744,6 +744,10 @@ body.mobiel #aanbodKnop{display:block}@media (max-width:900px),(pointer:coarse){
 .kktab tr.kkweek td{background:#f6f2ea;font-weight:700;padding-top:8px}.kktab tr.kkweek td{display:table-cell}.kktab tr.kkweek span{margin-right:10px}.kktab tr.kkweek .btn{padding:2px 8px;font-size:12px;float:right}.kktab tr.kkoud td{opacity:.55}
 
 @media (max-width:600px){.kkcijfers{width:100%}.kkcijfers div{flex:1;min-width:0;padding:6px}.kktab{font-size:13px}.kktab th,.kktab td{padding:4px 5px}.kktab td .status{display:block}.kktab th:nth-child(3),.kktab th:nth-child(4),.kktab th:nth-child(6),.kktab tr:not(.kkweek) td:nth-child(3),.kktab tr:not(.kkweek) td:nth-child(4),.kktab tr:not(.kkweek) td:nth-child(6){display:none}.kktab td.r{white-space:nowrap}}.kkmob{display:none}@media (max-width:600px){.kktab .kkmob{display:block;color:#7a5c00}}
+
+.vkonder{display:flex;gap:6px 14px;flex-wrap:wrap;align-items:baseline}.vkonder .vkfust,.vkonder .vkopmrij{margin:0;cursor:pointer}
+
+.vkvast{background:#fff3c4;border:1px solid #e0c060;border-radius:20px;padding:1px 4px 1px 10px;font-size:13px;display:inline-flex;align-items:center;gap:4px}.vkvast button{border:0;background:transparent;cursor:pointer;font-size:13px;padding:0 4px;color:#7a5c00}
 </style>
 </head>
 <body>
@@ -906,7 +910,7 @@ body.mobiel #aanbodKnop{display:block}@media (max-width:900px),(pointer:coarse){
 
 <script>
 "use strict";
-const VERSIE="40.0";
+const VERSIE="40.2";
 const VERSIE_DATUM="03-11-2026";
 /* ---------- Basis ---------- */
 const PALET=["#2d6a4f","#1B5EBE","#E8007D","#c77d1a","#7a4fa0","#0f8b8d","#5b6b2f","#3d5a80","#a0522d","#7AB648"];
@@ -4184,10 +4188,16 @@ function verkFust(k,t,i){const l=verkVan(k,t),x=l[i];if(!x)return;const f=prompt
   const p=prompt("Aantal planten per fust (leeg = niet afronden):",x.perFust||"");if(p===null)return;x.fust=f.trim();const n=Math.round(+String(p).replace(/[.\s]/g,""));x.perFust=n>0?n:"";
   if(!x.fust)delete x.fust;if(!x.perFust)delete x.perFust;const r=fustRond(+x.n||0,+x.perFust||0);if(r!==+x.n){x.n=r;melding(`Afgerond naar ${getal(r)} (hele fusten)`,"#2d6a4f")}
   opslaanLater();if(raapLaatst)raapPop(...raapLaatst)}
+/* vaste klant: na het invullen van een klant staat die 2 uur lang al klaar in de lege regel van elke soort */
+function vkVast(){try{const o=JSON.parse(sessionStorage.getItem("potplanning-vkvast")||"null");return o&&Date.now()-o.t<2*3600e3?o.naam:""}catch(e){return""}}
+function vkVastZet(n){try{if(n)sessionStorage.setItem("potplanning-vkvast",JSON.stringify({naam:n,t:Date.now()}));else sessionStorage.removeItem("potplanning-vkvast")}catch(e){}}
+function vkRasVan(k){const[pr,so]=k.split("|");return data.rassen.find(r=>r.naam===so&&teeltLabel(data.teeltduren.find(t=>t.id===r.teeltId)||{})===pr)}
 function verkZet(k,t,i,veld,v){data.verkoop=data.verkoop||{};const key=k+"|"+wkCode(t),l=data.verkoop[key]=data.verkoop[key]||[];
+  if(i>=l.length&&veld!=="klant"&&String(v).trim()&&vkVast()){verkZet(k,t,i,"klant",vkVast());return verkZet(k,t,Math.max(0,(data.verkoop[key]||[]).length-1),veld,v)}
   if(i>=l.length)l.push({klant:"",n:0});v=String(v).trim();
   if(veld==="klant"&&v&&!data.klanten.some(x=>x.naam.toLowerCase()===v.toLowerCase())){klantErbij(v);melding("➕ Nieuwe klant '"+esc(v)+"' bij Klanten gezet","#2d6a4f")}
   if(veld==="klant"){const b=data.klanten.find(x=>x.naam.toLowerCase()===v.toLowerCase());if(b)v=b.naam}if(veld==="prijs"){const pr=prijsLees(v);if(pr==null)delete l[i].prijs;else l[i].prijs=pr}else l[i][veld]=veld==="n"?Math.max(0,Math.round(+v.replace(/[.\s]/g,"").replace(",",".")||0)):v;
+  if(veld==="klant"&&v){vkVastZet(v);const x=l[i],ras=vkRasVan(k),kk=klantVan(v);if(x&&x.prijs==null&&ras){const pv=vkPrijs(kk&&kk.id,ras.id);if(pv!=null)x.prijs=pv}}
   {const x=l[i];if(x){if(veld==="klant"&&x.fust==null&&x.perFust==null){const kk=klantVan(x.klant);if(kk&&(kk.fust||kk.perFust)){if(kk.fust)x.fust=kk.fust;if(+kk.perFust>1)x.perFust=+kk.perFust}}
     if(veld==="klant"||veld==="n"){const r=fustRond(+x.n||0,+x.perFust||0);if(r!==(+x.n||0)){melding(`Afgerond naar ${getal(r)} = ${getal(r/x.perFust)} × ${getal(x.perFust)}${x.fust?" ("+esc(x.fust)+")":""}`,"#2d6a4f");x.n=r}}}}
   data.verkoop[key]=l.filter(x=>x.klant||x.n||x.opmerking);if(!data.verkoop[key].length)delete data.verkoop[key];opslaanLater();verkFocus=veld==="klant"?[i,1]:veld==="n"?[i,2]:[-1,0];if(raapLaatst)raapPop(...raapLaatst)}
@@ -4421,9 +4431,9 @@ function raapPop(k,t,l,onder){if(raapLaatst&&(raapLaatst[0]!==k||raapLaatst[1]!=
         h+=`<div class="vlinvrij mvl ${ok?"ok":"nee"}" oninput="this.classList.toggle('ok',!!this.querySelectorAll('input')[1].value.trim());this.classList.toggle('nee',!this.querySelectorAll('input')[1].value.trim())" onclick="setTimeout(()=>this.oninput(),0)"><b>${esc(partijNr(x.p))}</b>${veld("uitAfd","afd",d.uit||"",'numeric')}${veld("uit","vloer","",'decimal')}<b class="mvln">${getal(x.n)}</b></div>`}})}
   if(!l.length)h=`<div class="status" style="padding:6px 0">Deze week wordt hier niets afgeleverd.</div>`;
   else h+=`<div class="mrij tot"><span>Totaal</span><b>${getal(som)} planten</b></div>`;
-  if(!isTot&&niveau()>1){const vl=verkVan(k,t),vs=verkSom(k,t),K="this.closest('.verkoop').dataset.k",rij=(x,i)=>`<div class="verkrij"><input placeholder="klant" list="klantLijst" autocomplete="off" value="${esc(x.klant||"")}" onchange="verkZet(${K},${t},${i},'klant',this.value)"><input class="verkn" type="text" inputmode="numeric" pattern="[0-9]*" enterkeyhint="next" placeholder="aantal" value="${x.n||""}" onchange="verkZet(${K},${t},${i},'n',this.value)"><input class="verkp" type="text" inputmode="decimal" enterkeyhint="next" placeholder="€ /st" title="Prijs per plant" value="${x.prijs!=null?String(x.prijs).replace(".",","):""}" onchange="verkZet(${K},${t},${i},'prijs',this.value)">${i<vl.length?`<button class="btn licht klein vkpijl" onclick="verkSchuif(${K},${t},${i},-1)" title="Naar een week eerder">◀</button><button class="btn licht klein vkpijl" onclick="verkSchuif(${K},${t},${i},1)" title="Naar een week later">▶</button><button class="btn rood klein" onclick="verkWeg(${K},${t},${i})" title="Weg">✕</button>`:'<span style="width:30px"></span>'}</div>${i<vl.length&&x.klant?`<div class="vkfust" onclick="verkFust(${K},${t},${i})" title="Klik: fust of aantal per fust voor deze reservering veranderen">📦 ${fustTxt(x)||"geen fust"} <u>wijzigen</u></div>`:""}${i<vl.length?`<div class="vkopmrij" onclick="verkOpm(${K},${t},${i})" title="Klik: opmerking veranderen">💬 ${x.opmerking?esc(x.opmerking):'<span class="status">+ opmerking</span>'} <u>✎</u></div>`:""}`;
+  if(!isTot&&niveau()>1){const vl=verkVan(k,t),vs=verkSom(k,t),K="this.closest('.verkoop').dataset.k",rij=(x,i)=>`<div class="verkrij"><input placeholder="klant" list="klantLijst" autocomplete="off" value="${esc(x.klant||"")}" ${i>=vl.length&&x.klant?'style="background:#fff8dc"':""} onchange="verkZet(${K},${t},${i},'klant',this.value)"><input class="verkn" type="text" inputmode="numeric" pattern="[0-9]*" enterkeyhint="next" placeholder="aantal" value="${x.n||""}" onchange="verkZet(${K},${t},${i},'n',this.value)"><input class="verkp" type="text" inputmode="decimal" enterkeyhint="next" placeholder="€ /st" title="Prijs per plant" value="${x.prijs!=null?String(x.prijs).replace(".",","):""}" onchange="verkZet(${K},${t},${i},'prijs',this.value)">${i<vl.length?`<button class="btn licht klein vkpijl" onclick="verkSchuif(${K},${t},${i},-1)" title="Naar een week eerder">◀</button><button class="btn licht klein vkpijl" onclick="verkSchuif(${K},${t},${i},1)" title="Naar een week later">▶</button><button class="btn rood klein" onclick="verkWeg(${K},${t},${i})" title="Weg">✕</button>`:'<span style="width:30px"></span>'}</div>${i<vl.length?`<div class="vkonder">${x.klant?`<span class="vkfust" onclick="verkFust(${K},${t},${i})" title="Klik: fust of aantal per fust voor deze reservering veranderen">📦 ${fustTxt(x)||"geen fust"} <u>wijzigen</u></span>`:""}<span class="vkopmrij" onclick="verkOpm(${K},${t},${i})" title="Klik: opmerking veranderen">${x.opmerking?esc(x.opmerking)+" <u>✎</u>":'<u>opmerking</u>'}</span></div>`:""}`;
     h+=`<datalist id="klantLijst">${[...data.klanten].filter(x=>x.naam).sort((a,b)=>a.naam.localeCompare(b.naam,"nl")).map(x=>`<option value="${esc(x.naam)}">${esc(x.plaats||"")}</option>`).join("")}</datalist>
-      <div class="verkoop" data-k="${esc(k)}"><b>Gereserveerd</b>${vl.map(rij).join("")}${rij({},vl.length)}
+      <div class="verkoop" data-k="${esc(k)}"><div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap"><b>Gereserveerd</b>${vkVast()?`<span class="vkvast" title="Deze klant staat al ingevuld in de lege regel. Handig als een klant meer soorten wil.">👤 ${esc(vkVast())} <button onclick="vkVastZet('');raapLaatst&&raapPop(...raapLaatst)" title="Niet meer vast invullen">✕</button></span>`:""}</div>${vl.map(rij).join("")}${rij({klant:vkVast()},vl.length)}
       <div class="mrij" style="border:0;padding:4px 0 0"><span>Gereserveerd</span><b>${getal(vs)}</b></div>${(()=>{const w=vl.reduce((a,x)=>a+(x.prijs!=null?x.prijs*(+x.n||0):0),0);return w?`<div class="mrij" style="border:0;padding:0"><span>Waarde</span><b>${euro(w)}</b></div>`:""})()}
       <div class="mrij" style="border:0;padding:0"><span>Nog beschikbaar</span><b class="${som-vs<0?"let":""}">${getal(som-vs)}</b></div></div>`}
   raapLaatst=[k,t,l,onder];toonPop(titel,h,onder);
