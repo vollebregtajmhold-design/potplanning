@@ -730,6 +730,12 @@ table.oppot th.jaarstart,table.oppot td.jaarstart{border-left:3px solid #4b2a6e!
 .bltab td.blprcel{width:90px}.blprijs{width:80px;text-align:right;padding:3px 6px;border:1px solid #cfc6b4;border-radius:6px;font:inherit}.catprijs{font-weight:800;color:#b5179e;font-size:15px}
 
 .minfos{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:0 0 10px}.minfo{background:#f6f2ea;border-radius:10px;padding:7px 10px;display:flex;flex-direction:column;gap:2px;cursor:pointer}.minfo .status{font-size:12px}.minfo b{font-size:17px;color:#1f4d39}
+
+.mtekst{background:#fff7e0;border-left:4px solid #e0a800;border-radius:8px;padding:7px 10px;margin:0 0 10px;white-space:pre-wrap;font-size:15px}
+
+#aanbodKnop{display:none;position:fixed;right:16px;bottom:18px;z-index:60;width:58px;height:58px;border-radius:50%;border:0;background:#2d6a4f;color:#fff;font-size:26px;box-shadow:0 4px 14px rgba(0,0,0,.3);cursor:pointer}
+body.mobiel #aanbodKnop{display:block}body.mobiel{padding-bottom:84px}
+.abveld{width:100%;box-sizing:border-box;font:inherit;font-size:16px;padding:7px 9px;border:1px solid #cfc6b4;border-radius:8px}
 </style>
 </head>
 <body>
@@ -892,7 +898,7 @@ table.oppot th.jaarstart,table.oppot td.jaarstart{border-left:3px solid #4b2a6e!
 
 <script>
 "use strict";
-const VERSIE="38.7";
+const VERSIE="38.9";
 const VERSIE_DATUM="03-11-2026";
 /* ---------- Basis ---------- */
 const PALET=["#2d6a4f","#1B5EBE","#E8007D","#c77d1a","#7a4fa0","#0f8b8d","#5b6b2f","#3d5a80","#a0522d","#7AB648"];
@@ -3557,6 +3563,38 @@ function mobPrijs(id,k){const P=data.vkPrijzen=data.vkPrijzen||{},o=P.std=P.std|
 function mobKar(id,k){const r=data.rassen.find(x=>x.id===id);if(!r)return;const v=prompt("Max op kar (bijv. 24 trays / 720 st) — leeg = weghalen:",r.kar||"");if(v===null)return;
   const t=v.trim();if(t)r.kar=t;else delete r.kar;opslaanLater();mobSoort(k)}
 /* plaatje van de popup maken en delen via WhatsApp (of kopiëren / downloaden) */
+/* foto maken met de camera: wordt de foto van deze soort. Tekst per soort wordt onthouden (data.deelTekst) */
+async function mobFoto(id,file){if(!file)return;const m=document.getElementById("mobPop"),k=m&&m.dataset.k;
+  if((data.fotos||{})[id]&&!confirm("De oude foto van deze soort vervangen door de nieuwe?"))return;
+  await fotoZet(id,file,()=>{if(k)mobSoort(k)},800)}
+let mobTekstT=0;function mobTekstZet(id,v){const o=data.deelTekst=data.deelTekst||{},t=v.trim();if(t)o[id]=v;else delete o[id];
+  const el=document.getElementById("mobTekstToon");if(el){el.textContent=v;el.hidden=!t}clearTimeout(mobTekstT);mobTekstT=setTimeout(opslaanLater,800)}
+/* 📷 Snel aanbod (mobiel): foto maken, naam / prijs / max op kar / tekst erbij en delen. Los van de soorten; alleen op dit toestel onthouden */
+let aanbod=null;try{aanbod=JSON.parse(localStorage.getItem("potplanning-aanbod")||"null")}catch(e){}
+const aanbodBewaar=()=>{try{localStorage.setItem("potplanning-aanbod",JSON.stringify(aanbod))}catch(e){try{localStorage.setItem("potplanning-aanbod",JSON.stringify({...aanbod,img:""}))}catch(e2){}}};
+function aanbodOpen(){if(kijker)return;aanbod=aanbod||{img:"",naam:"",prijs:"",kar:"",tekst:""};const A=aanbod,v=x=>esc(x||"");
+  const veld=(id,lab,ph,mode)=>`<label class="status" style="display:block;margin:6px 0 2px">${lab}</label><input id="ab_${id}" value="${v(A[id])}" placeholder="${ph}" ${mode?`inputmode="${mode}"`:""} oninput="aanbodZet('${id}',this.value)" class="abveld">`;
+  const h=`<div id="mobDeel"><div class="mpopKop"><b id="abKop">${v(A.naam)||"Aanbod"}</b><button class="noshot" onclick="sluitMobSoort()">✕</button></div><div class="mpopIn">
+      ${A.img?`<div class="mfoto"><img src="${A.img}" alt=""></div>`:""}
+      <div class="minfos"><div class="minfo ${A.prijs?"":"noshot"}" id="abPr"><span class="status">💶 Prijs</span><b>${A.prijs?esc(prijsTxt(prijsLees(A.prijs)??A.prijs)):"–"}</b></div><div class="minfo ${A.kar?"":"noshot"}" id="abKar"><span class="status">🛒 Max op kar</span><b>${v(A.kar)||"–"}</b></div></div>
+      <div class="mtekst" id="abTekst" ${A.tekst&&A.tekst.trim()?"":"hidden"}>${v(A.tekst)}</div></div></div>
+    <div class="mpopIn" style="padding-top:0">
+      <label class="btn ${A.img?"licht":""}" style="width:100%;display:flex;justify-content:center;box-sizing:border-box">📷 ${A.img?"Nieuwe foto maken":"Foto maken"}<input type="file" accept="image/*" capture="environment" hidden onchange="aanbodFoto(this.files[0])"></label>
+      ${veld("naam","Naam","bijv. Cyclamen 13 cm mix")}${veld("prijs","Prijs per plant","bijv. 0,85","decimal")}${veld("kar","Max op kar","bijv. 24 trays / 720 st")}
+      <label class="status" style="display:block;margin:6px 0 2px">Tekst erbij</label><textarea id="ab_tekst" rows="2" class="abveld" placeholder="bijv. Nu volop in bloei, op = op" oninput="aanbodZet('tekst',this.value)">${v(A.tekst)}</textarea>
+      <div style="display:flex;gap:8px;margin-top:10px"><button class="btn licht" onclick="aanbodLeeg()">🗑 Leegmaken</button><button class="btn" style="flex:1" onclick="aanbodDelen()">📤 Delen (WhatsApp)</button></div></div>`;
+  let m=document.getElementById("mobPop");if(!m){m=document.createElement("div");m.id="mobPop";m.onclick=e=>{if(e.target===m)sluitMobSoort()};document.body.appendChild(m)}
+  m.className="";m.innerHTML=`<div class="mpop">${h}</div>`;m.hidden=false}
+function aanbodZet(id,val){aanbod[id]=val;aanbodBewaar();const t=val.trim(),$=x=>document.getElementById(x);
+  if(id==="naam")$("abKop").textContent=t||"Aanbod";
+  if(id==="prijs"){$("abPr").classList.toggle("noshot",!t);$("abPr").querySelector("b").textContent=t?prijsTxt(prijsLees(t)??t):"–"}
+  if(id==="kar"){$("abKar").classList.toggle("noshot",!t);$("abKar").querySelector("b").textContent=t||"–"}
+  if(id==="tekst"){$("abTekst").textContent=val;$("abTekst").hidden=!t}}
+async function aanbodFoto(file){if(!file)return;try{melding("Foto klaarmaken…");aanbod.img=await fotoKlein(file,900);aanbodBewaar();aanbodOpen()}catch(e){alert("Foto lukt niet: "+e.message)}}
+function aanbodLeeg(){if(!confirm("Foto en tekst weghalen en opnieuw beginnen?"))return;aanbod=null;try{localStorage.removeItem("potplanning-aanbod")}catch(e){}aanbodOpen()}
+async function aanbodDelen(){const A=aanbod;if(!A.img&&!A.naam){alert("Maak eerst een foto of vul een naam in.");return}
+  const tx=[A.naam,A.prijs?"Prijs: "+prijsTxt(prijsLees(A.prijs)??A.prijs):"",A.kar?"Max op kar: "+A.kar:"",A.tekst].filter(x=>x&&String(x).trim()).join("\n");
+  await mobDelenIn(A.naam||"aanbod",false,tx)}
 const mobDeelPct=()=>{try{return Math.max(1,Math.min(100,+localStorage.getItem("potplanning-deelpct")||80))}catch(e){return 80}};
 const mobAantDelen=()=>{try{return localStorage.getItem("potplanning-deelaant")!=="0"}catch(e){return true}};
 async function mobDelen(k){const zonder=!mobAantDelen(),pi=document.getElementById("mobPct"),pct=pi?Math.max(1,Math.min(100,+pi.value||80)):mobDeelPct(),terug=[];
@@ -3564,11 +3602,13 @@ async function mobDelen(k){const zonder=!mobAantDelen(),pi=document.getElementBy
   if(!zonder)document.querySelectorAll("#mobDeel .mweken b[data-n]").forEach(b=>{const v=Math.floor(Math.max(0,+b.dataset.n)*pct/100/100)*100,rij=b.closest(".mrij");terug.push([b,b.textContent,rij]);
     if(v>0)b.textContent=getal(v);else rij.classList.add("noshot")});
   try{await mobDelenIn(k,zonder)}finally{terug.forEach(([b,t,rij])=>{b.textContent=t;rij.classList.remove("noshot")})}}
-async function mobDelenIn(k,zonder){const el=document.getElementById("mobDeel");if(!el)return;
-  try{melding("Plaatje maken…");if(document.querySelector("#mobDeel [data-foto]"))await new Promise(r=>setTimeout(r,300));
+async function mobDelenIn(k,zonder,tekst){const el=document.getElementById("mobDeel");if(!el)return;const sc=el.closest(".mpop"),y0=sc?sc.scrollTop:0,wy=window.scrollY;if(sc)sc.scrollTop=0;window.scrollTo(0,0);
+  try{return await mobDelenIn2(k,zonder,tekst,el)}finally{if(sc)sc.scrollTop=y0;window.scrollTo(0,wy)}}
+async function mobDelenIn2(k,zonder,tekst,el){
+  try{melding("Plaatje maken…");if(document.querySelector("#mobDeel [data-foto], #mobDeel img"))await new Promise(r=>setTimeout(r,300));
     const h2c=await h2cLib(),cv=await h2c(el,{backgroundColor:"#ffffff",scale:2,ignoreElements:e=>e.classList&&(e.classList.contains("noshot")||zonder&&e.classList.contains("mweken"))});
     const blob=await new Promise(r=>cv.toBlob(r,"image/png")),naam=("beschikbaar "+k).replace(/[^\w .-]+/g," ").trim()+".png",file=new File([blob],naam,{type:"image/png"});
-    if(navigator.canShare&&navigator.canShare({files:[file]})){try{await navigator.share({files:[file],title:k});return}catch(e){if(e.name==="AbortError")return}}
+    if(navigator.canShare&&navigator.canShare({files:[file]})){try{const tx=tekst!=null?tekst:"";await navigator.share(tx.trim()?{files:[file],title:k,text:k+"\n"+tx.trim()}:{files:[file],title:k});return}catch(e){if(e.name==="AbortError")return}}
     if(navigator.clipboard&&window.ClipboardItem){try{await navigator.clipboard.write([new ClipboardItem({"image/png":blob})]);melding("📋 Plaatje gekopieerd – plak het in WhatsApp","#2d6a4f");return}catch(e){}}
     const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=naam;a.click();melding("⬇ Plaatje gedownload","#2d6a4f")}
   catch(e){alert("Delen lukt niet: "+e.message)}}
@@ -4340,9 +4380,9 @@ async function fotoPop(id){const r=data.rassen.find(x=>x.id===id);if(!r)return;c
       <p class="status" style="margin:6px 0 0;font-size:12px">Op de telefoon kunt u ook meteen een foto maken. De foto wordt verkleind bewaard.</p>`:wolkDoc?"":`<p class="status">Foto's werken alleen als u online bent ingelogd.</p>`}`)}
 function fotoKlein(file,max=480){return new Promise((ok,nee)=>{const u=URL.createObjectURL(file),im=new Image();im.onload=()=>{const f=Math.min(1,max/Math.max(im.width,im.height)),c=document.createElement("canvas");
     c.width=Math.round(im.width*f);c.height=Math.round(im.height*f);c.getContext("2d").drawImage(im,0,0,c.width,c.height);URL.revokeObjectURL(u);ok(c.toDataURL("image/jpeg",0.72))};im.onerror=()=>nee(new Error("Dit is geen foto"));im.src=u})}
-async function fotoZet(id,file){if(!file)return;try{melding("Foto bewaren…");let img=await fotoKlein(file);if(img.length>700000)img=await fotoKlein(file,320);
+async function fotoZet(id,file,na,max){if(!file)return;try{melding("Foto bewaren…");let img=await fotoKlein(file,max||480);if(img.length>700000)img=await fotoKlein(file,320);
     await wolkDoc.parent.doc("foto_"+id).set({img,t:new Date().toISOString(),door:wolkMail});fotoCache[id]=img;(data.fotos=data.fotos||{})[id]=Date.now();opslaanLater();
-    melding("📷 Foto bewaard","#2d6a4f");fotoPop(id);render()}catch(e){alert("Foto bewaren lukt niet: "+e.message)}}
+    melding("📷 Foto bewaard","#2d6a4f");if(na)na();else{fotoPop(id);render()}}catch(e){alert("Foto bewaren lukt niet: "+e.message)}}
 async function fotoWeg(id){if(!confirm("Foto weghalen?"))return;try{await wolkDoc.parent.doc("foto_"+id).delete()}catch(e){}delete fotoCache[id];if(data.fotos)delete data.fotos[id];opslaanLater();sluitMobSoort();render()}
 /* Mobiel: tik op een aantal → op welke vloer staan ze */
 function mobRaap(e,k,t){e.stopPropagation();const l=afleverRegels().filter(r=>r.t===t&&r.aantal>0&&r.product+" · "+r.soort===k);
@@ -5070,5 +5110,6 @@ function toonWelkom(){const st=(t,n,tab,uitleg)=>`<button type="button" class="w
   laatsteKern=kernVan(data);render();zetTerugKnop();
 })();
 </script>
+<button id="aanbodKnop" type="button" onclick="aanbodOpen()" title="Snel aanbod: foto maken en delen">📷</button>
 </body>
 </html>
