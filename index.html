@@ -892,7 +892,7 @@ table.oppot th.jaarstart,table.oppot td.jaarstart{border-left:3px solid #4b2a6e!
 
 <script>
 "use strict";
-const VERSIE="38.6";
+const VERSIE="38.7";
 const VERSIE_DATUM="03-11-2026";
 /* ---------- Basis ---------- */
 const PALET=["#2d6a4f","#1B5EBE","#E8007D","#c77d1a","#7a4fa0","#0f8b8d","#5b6b2f","#3d5a80","#a0522d","#7AB648"];
@@ -3540,10 +3540,11 @@ function mobSoort(k,start){const t=start||+mobWeekStart(),l=afleverRegels().filt
   /* per week: nog beschikbaar (afleverplan min gereserveerd), klein eronder het plan en de reserveringen */
   const vk=l.length?l[0].product+"|"+l[0].soort:"";
   const j0=isoWeek(new Date(t)).y,rij=[...per].filter(([tt])=>tt<t+364*864e5).sort((a,b)=>a[0]-b[0]).slice(0,5).map(([tt,n])=>{const{w,y}=isoWeek(new Date(tt)),r=vk?verkSom(vk,tt):0,b=n-r;
-    return`<div class="mrij"><span>wk ${w}${y!==j0?" ("+y+")":""}${r?`<br><span class="status noshot" style="font-size:12px">plan ${getal(n)} · gereserveerd ${getal(r)}</span>`:""}</span><b class="${b<0?"let":""}">${getal(b)}</b></div>`}).join("");
+    return`<div class="mrij"><span>wk ${w}${y!==j0?" ("+y+")":""}${r?`<br><span class="status noshot" style="font-size:12px">plan ${getal(n)} · gereserveerd ${getal(r)}</span>`:""}</span><b class="${b<0?"let":""}" data-n="${b}">${getal(b)}</b></div>`}).join("");
   const[kp,ks]=k.split(" · "),ras=data.rassen.find(r=>r.naam===ks&&teeltLabel(data.teeltduren.find(t=>t.id===r.teeltId)||{})===kp),fid=ras&&(data.fotos||{})[ras.id]?ras.id:"";
   const h=`<div id="mobDeel"><div class="mpopKop"><b>${esc(k)}</b><button class="noshot" onclick="sluitMobSoort()">✕</button></div><div class="mpopIn">${fid?`<div class="mfoto" data-foto="${fid}"></div>`:""}${ras?mobInfo(ras,k):""}${rij?`<div class="mweken"><div class="status" style="font-size:12px;text-align:right;margin-bottom:2px">nog beschikbaar</div>${rij}</div>`:""}${rij?"":'<div class="status" style="padding:8px 0">Niets gepland.</div>'}</div></div>
-    ${rij?`<div class="mpopIn" style="padding-top:0"><label class="status" style="display:flex;align-items:center;gap:8px;margin-top:4px"><input type="checkbox" style="width:20px;height:20px" ${mobAantDelen()?"checked":""} onchange="try{localStorage.setItem('potplanning-deelaant',this.checked?'1':'0')}catch(e){}"> beschikbaarheid meesturen</label><button class="btn" style="width:100%;margin-top:6px" onclick="mobDelen(this.dataset.k)" data-k="${esc(k)}">📤 Delen (WhatsApp)</button></div>`:""}`;
+    ${rij?`<div class="mpopIn" style="padding-top:0"><div style="display:flex;align-items:center;gap:8px;margin-top:4px;flex-wrap:wrap"><label class="status" style="display:flex;align-items:center;gap:8px"><input type="checkbox" style="width:20px;height:20px" ${mobAantDelen()?"checked":""} onchange="try{localStorage.setItem('potplanning-deelaant',this.checked?'1':'0')}catch(e){};document.getElementById('mobPctVak').style.display=this.checked?'':'none'"> beschikbaarheid meesturen</label>
+      <span id="mobPctVak" class="status" style="margin-left:auto;${mobAantDelen()?"":"display:none"}">voor <input id="mobPct" type="number" min="1" max="100" inputmode="numeric" value="${mobDeelPct()}" style="width:58px;padding:3px 6px;text-align:right;font:inherit;border:1px solid #cfc6b4;border-radius:6px" onchange="try{localStorage.setItem('potplanning-deelpct',Math.max(1,Math.min(100,+this.value||80)))}catch(e){}"> %</span></div><button class="btn" style="width:100%;margin-top:6px" onclick="mobDelen(this.dataset.k)" data-k="${esc(k)}">📤 Delen (WhatsApp)</button></div>`:""}`;
   let m=document.getElementById("mobPop");if(!m){m=document.createElement("div");m.id="mobPop";m.onclick=e=>{if(e.target===m)sluitMobSoort()};document.body.appendChild(m)}
   m.className=start?"midden":"";m.innerHTML=`<div class="mpop">${h}</div>`;m.hidden=false;if(fid)fotoVul()}
 /* prijs en max op kar bij de soort (mobiel). Tik om te veranderen. Lege vakjes komen niet op het plaatje */
@@ -3556,8 +3557,14 @@ function mobPrijs(id,k){const P=data.vkPrijzen=data.vkPrijzen||{},o=P.std=P.std|
 function mobKar(id,k){const r=data.rassen.find(x=>x.id===id);if(!r)return;const v=prompt("Max op kar (bijv. 24 trays / 720 st) — leeg = weghalen:",r.kar||"");if(v===null)return;
   const t=v.trim();if(t)r.kar=t;else delete r.kar;opslaanLater();mobSoort(k)}
 /* plaatje van de popup maken en delen via WhatsApp (of kopiëren / downloaden) */
+const mobDeelPct=()=>{try{return Math.max(1,Math.min(100,+localStorage.getItem("potplanning-deelpct")||80))}catch(e){return 80}};
 const mobAantDelen=()=>{try{return localStorage.getItem("potplanning-deelaant")!=="0"}catch(e){return true}};
-async function mobDelen(k){const zonder=!mobAantDelen();const el=document.getElementById("mobDeel");if(!el)return;
+async function mobDelen(k){const zonder=!mobAantDelen(),pi=document.getElementById("mobPct"),pct=pi?Math.max(1,Math.min(100,+pi.value||80)):mobDeelPct(),terug=[];
+  /* op het plaatje: xx% van wat beschikbaar is, naar beneden afgerond op honderdtallen; weken met 0 gaan er niet op */
+  if(!zonder)document.querySelectorAll("#mobDeel .mweken b[data-n]").forEach(b=>{const v=Math.floor(Math.max(0,+b.dataset.n)*pct/100/100)*100,rij=b.closest(".mrij");terug.push([b,b.textContent,rij]);
+    if(v>0)b.textContent=getal(v);else rij.classList.add("noshot")});
+  try{await mobDelenIn(k,zonder)}finally{terug.forEach(([b,t,rij])=>{b.textContent=t;rij.classList.remove("noshot")})}}
+async function mobDelenIn(k,zonder){const el=document.getElementById("mobDeel");if(!el)return;
   try{melding("Plaatje maken…");if(document.querySelector("#mobDeel [data-foto]"))await new Promise(r=>setTimeout(r,300));
     const h2c=await h2cLib(),cv=await h2c(el,{backgroundColor:"#ffffff",scale:2,ignoreElements:e=>e.classList&&(e.classList.contains("noshot")||zonder&&e.classList.contains("mweken"))});
     const blob=await new Promise(r=>cv.toBlob(r,"image/png")),naam=("beschikbaar "+k).replace(/[^\w .-]+/g," ").trim()+".png",file=new File([blob],naam,{type:"image/png"});
