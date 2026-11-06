@@ -759,6 +759,8 @@ body.mobiel #aanbodKnop{display:block}@media (max-width:900px),(pointer:coarse){
 .pbchips{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin:8px 0 4px}.pbchip{display:inline-flex;border:1px solid #2d6a4f;border-radius:16px;overflow:hidden;background:#fff}.pbchip button{border:0;background:transparent;padding:3px 10px;font:inherit;font-size:13px;cursor:pointer;color:#1f4d39}.pbchip button+button{border-left:1px solid #2d6a4f;padding:3px 8px;background:#eef6f1}.pbchip button:hover{background:#dcefe4}
 
 .verkrij .vkprint{padding:3px 8px;margin-left:2px;white-space:nowrap}@media (max-width:600px){.vkpt{display:none}}
+
+.ordring{display:inline-block;border:2px solid #d0103a;border-radius:999px;padding:0 7px;line-height:1.35;margin:-2px -9px}
 </style>
 </head>
 <body>
@@ -921,7 +923,7 @@ body.mobiel #aanbodKnop{display:block}@media (max-width:900px),(pointer:coarse){
 
 <script>
 "use strict";
-const VERSIE="41.1";
+const VERSIE="41.2";
 const VERSIE_DATUM="03-11-2026";
 /* ---------- Basis ---------- */
 const PALET=["#2d6a4f","#1B5EBE","#E8007D","#c77d1a","#7a4fa0","#0f8b8d","#5b6b2f","#3d5a80","#a0522d","#7AB648"];
@@ -4252,7 +4254,7 @@ function toonAflever(){syncSoorten();
         <input type="range" id="ovLo" min="0" max="${M}" value="${aflS.start}" oninput="ovSchuifLive()" onchange="ovSchuifLive()">
         <input type="range" id="ovHi" min="0" max="${M}" value="${aflS.eind}" oninput="ovSchuifLive()" onchange="ovSchuifLive()"></div>
       <span id="ovSchuifTxt" class="ovinfo"></span></div>
-    <button class="ovk ${aflRij!=="klant"?"aan":""}" onclick="aflRij='teelt';render()" title="Tabel per teelt · soort (kies links in de tabel: nog beschikbaar, afleverplan of gereserveerd)">Beschikbaar</button><button class="ovk nivVerk ${aflRij==="klant"?"aan":""}" onclick="aflRij='klant';aflMod='verk';render()" title="Per klant de reserveringen per week">👥 Klantoverzicht</button>${niveau()>=4?`<button class="ovk inkcsv" onclick="beschLijst()" title="Lijst 'nog beschikbaar' om te printen, als PDF te bewaren of als plaatje te versturen">📄 Aanbodlijst</button>`:""}
+    <button class="ovk ${aflRij!=="klant"?"aan":""}" onclick="aflRij='teelt';aflMod='vers';render()" title="Tabel per teelt · soort (kies links in de tabel: nog beschikbaar, afleverplan of gereserveerd)">Beschikbaar</button><button class="ovk nivVerk ${aflRij==="klant"?"aan":""}" onclick="aflRij='klant';aflMod='verk';render()" title="Per klant de reserveringen per week">👥 Klantoverzicht</button>${niveau()>=4?`<button class="ovk inkcsv" onclick="beschLijst()" title="Lijst 'nog beschikbaar' om te printen, als PDF te bewaren of als plaatje te versturen">📄 Aanbodlijst</button>`:""}
 
 `;
   const mistAfl=ruimteBerekening().fouten;
@@ -4290,7 +4292,7 @@ function toonAflever(){syncSoorten();
   for(const k of lijst){const[pr,so]=k.split("|");
     h+=`<tr><td class="ovnaam"><span class="ovtl" data-pr="${esc(pr)}" onclick="naarTeelt(this.dataset.pr)" oncontextmenu="naarTeelt(this.dataset.pr);return false" title="Klik: teelt openen">${esc(pr)}</span> · <span class="ovsl" data-k="${esc(pr+" · "+so)}" onclick="soortPop(this.dataset.k)" title="Klik: alle weken van deze soort (plan, gereserveerd, beschikbaar)">${esc(so)}</span></td>${alleWk.map((t,c)=>{const a=cel[k+"|"+t]||0,vk=verkSom(k,t),v=aflMod==="verk"?vk:aflMod==="vers"?a-vk:a;
       const kl=a>0&&a-vk<0?"stover":a>0&&vk>0&&(a-vk)<a*0.1?"stkrap":"";
-      return`<td data-c="${c}" data-v="${a||vk}" data-k="${esc(k)}" data-w="${t}"${vis(c)} class="${v<0?"ovmin":""} ${kl}" ${kl?`title="${kl==="stover"?"Te veel gereserveerd: "+getal(vk-a)+" tekort":"Bijna uitverkocht: nog "+getal(a-vk)+" van "+getal(a)}"`:""}>${v||(aflMod==="vers"&&(a||vk))?getal(v):'<span class="ovleeg">—</span>'}</td>`}).join("")}</tr>`}
+      return`<td data-c="${c}" data-v="${a||vk}" data-k="${esc(k)}" data-w="${t}"${vis(c)} class="${v<0?"ovmin":""} ${kl}" ${kl?`title="${kl==="stover"?"Te veel gereserveerd: "+getal(vk-a)+" tekort":"Bijna uitverkocht: nog "+getal(a-vk)+" van "+getal(a)}"`:""}>${v||(aflMod==="vers"&&(a||vk))?(vk>0&&aflMod!=="verk"?`<span class="ordring" title="Hier zit een order in: ${getal(vk)} gereserveerd">${getal(v)}</span>`:getal(v)):'<span class="ovleeg">—</span>'}</td>`}).join("")}</tr>`}
   const totM=t=>{if(aflMod==="afl")return tot[t]||0;const vk=lijst.reduce((a,k)=>a+verkSom(k,t),0);return aflMod==="verk"?vk:(tot[t]||0)-vk};
   h+=`<tr class="ovtot"><td class="ovnaam">Totaal ${{afl:"afleverplan",verk:"gereserveerd",vers:"nog beschikbaar"}[aflMod]}</td>${alleWk.map((t,c)=>{const v=totM(t);return`<td data-c="${c}" data-v="${tot[t]||0}" data-k="__tot" data-w="${t}"${vis(c)}${v<0?' class="ovmin"':""}>${v?getal(v):'<span class="ovleeg">—</span>'}</td>`}).join("")}</tr></table>`;
   $("#inhoud").innerHTML=h;ovSchuifLive()}
