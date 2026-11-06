@@ -921,7 +921,7 @@ body.mobiel #aanbodKnop{display:block}@media (max-width:900px),(pointer:coarse){
 
 <script>
 "use strict";
-const VERSIE="41.0";
+const VERSIE="41.1";
 const VERSIE_DATUM="03-11-2026";
 /* ---------- Basis ---------- */
 const PALET=["#2d6a4f","#1B5EBE","#E8007D","#c77d1a","#7a4fa0","#0f8b8d","#5b6b2f","#3d5a80","#a0522d","#7AB648"];
@@ -4252,7 +4252,7 @@ function toonAflever(){syncSoorten();
         <input type="range" id="ovLo" min="0" max="${M}" value="${aflS.start}" oninput="ovSchuifLive()" onchange="ovSchuifLive()">
         <input type="range" id="ovHi" min="0" max="${M}" value="${aflS.eind}" oninput="ovSchuifLive()" onchange="ovSchuifLive()"></div>
       <span id="ovSchuifTxt" class="ovinfo"></span></div>
-    ${[["afl","Afleverplan"],["verk","Gereserveerd"],["vers","Nog beschikbaar"]].map(([v,n])=>`<button class="ovk ${aflMod===v?"aan":""} ${v!=="afl"?"nivVerk":""}" onclick="aflMod='${v}';if(aflMod!=='verk')aflRij='teelt';render()">${n}</button>`).join("")}${niveau()>=4?`<button class="ovk inkcsv" onclick="beschLijst()" title="Lijst 'nog beschikbaar' om te printen, als PDF te bewaren of als plaatje te versturen">📄 Aanbodlijst</button>`:""}
+    <button class="ovk ${aflRij!=="klant"?"aan":""}" onclick="aflRij='teelt';render()" title="Tabel per teelt · soort (kies links in de tabel: nog beschikbaar, afleverplan of gereserveerd)">Beschikbaar</button><button class="ovk nivVerk ${aflRij==="klant"?"aan":""}" onclick="aflRij='klant';aflMod='verk';render()" title="Per klant de reserveringen per week">👥 Klantoverzicht</button>${niveau()>=4?`<button class="ovk inkcsv" onclick="beschLijst()" title="Lijst 'nog beschikbaar' om te printen, als PDF te bewaren of als plaatje te versturen">📄 Aanbodlijst</button>`:""}
 
 `;
   const mistAfl=ruimteBerekening().fouten;
@@ -4265,7 +4265,7 @@ function toonAflever(){syncSoorten();
     (aflDetail[k+"|"+r.t]=aflDetail[k+"|"+r.t]||[]).push(r);(aflDetail["__tot|"+r.t]=aflDetail["__tot|"+r.t]||[]).push(r)}
   const lijst=[...rijen].sort((a,b)=>a.localeCompare(b,"nl")),vis=c=>c>=aflS.start&&c<=aflS.eind?"":' style="display:none"';
   const kk=`<span class="kopknop noprint"><button onclick="event.stopPropagation();afleverCsv()" title="Download als Excel (CSV)">Excel</button><button onclick="event.stopPropagation();window.print()" title="Afdrukken">Print</button></span>`;
-  const kop=(niveau()===1?"Teelt · soort":`<select class="ovrijkeus" onclick="event.stopPropagation()" onchange="aflRij=this.value;if(aflRij==='klant')aflMod='verk';render()" title="Rijen: per teelt · soort of per klant"><option value="teelt" ${aflRij==="teelt"?"selected":""}>Teelt · soort</option><option value="klant" ${aflRij==="klant"?"selected":""}>Klant</option></select>`)+kk;
+  const kop=(niveau()===1?"Teelt · soort":aflRij==="klant"?"Klant":`<select class="ovrijkeus" onclick="event.stopPropagation()" onchange="aflMod=this.value;render()" title="Wat staat er in de tabel">${[["vers","Nog beschikbaar"],["afl","Afleverplan"],["verk","Gereserveerd"]].map(([v,n])=>`<option value="${v}" ${aflMod===v?"selected":""}>${n}</option>`).join("")}</select>`)+kk;
   if(aflRij==="klant"){
     /* per klant: alleen klanten met een verkoop, zelfde weken en totalen */
     const pk={},pkS={},pkE={};for(const[key,arr]of Object.entries(data.verkoop||{})){const p=key.split("|");if(p.length!==3||!codes.has(p[2])||(teeltFilter&&p[0]!==tlF))continue;
