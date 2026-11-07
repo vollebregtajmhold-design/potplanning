@@ -16,10 +16,13 @@
 /* Geen klant.js gevonden? Dan alleen werken met een json-bestand op de computer. */
 const KLANT=Object.assign({appNaam:"Potplanten Planning",code:"klant",leverancier:"Vollebregt",firebase:{apiKey:"VUL_IN"}},window.KLANT||{});
 if(!window.KLANT)console.warn("klant.js niet gevonden: de app werkt zonder online database.");
+/* productnaam: <klant>-CyclaPilot (eigen app: Vollebregt-CyclaPilot). Eigen naam kan met naamKort in klant.js */
+{const CPN={"":"Vollebregt",klant:"Vollebregt",bolk:"Bolk",bergcamp:"Bergcamp",adrichem:"Adrichem",kester:"Kester",derijke:"De Rijke",rijke:"De Rijke"},c=String(KLANT.code||"");
+  KLANT.appNaam=(KLANT.naamKort||CPN[c]||c.charAt(0).toUpperCase()+c.slice(1))+"-CyclaPilot"}
 document.title=KLANT.appNaam;
-try{document.querySelector('meta[name=apple-mobile-web-app-title]').content=KLANT.appNaam.slice(0,12)}catch(e){}
+try{document.querySelector('meta[name=apple-mobile-web-app-title]').content="CyclaPilot"}catch(e){}
 </script>
-<script>try{const m={name:KLANT.appNaam,short_name:KLANT.appNaam.slice(0,12),display:"standalone",background_color:"#4b2a6e",theme_color:"#4b2a6e",start_url:location.href,icons:[{src:document.querySelector('link[rel=apple-touch-icon]').href,sizes:"512x512",type:"image/png"}]};const l=document.createElement("link");l.rel="manifest";l.href=URL.createObjectURL(new Blob([JSON.stringify(m)],{type:"application/manifest+json"}));document.head.appendChild(l)}catch(e){}</script>
+<script>try{const m={name:KLANT.appNaam,short_name:"CyclaPilot",display:"standalone",background_color:"#4b2a6e",theme_color:"#4b2a6e",start_url:location.href,icons:[{src:document.querySelector('link[rel=apple-touch-icon]').href,sizes:"512x512",type:"image/png"}]};const l=document.createElement("link");l.rel="manifest";l.href=URL.createObjectURL(new Blob([JSON.stringify(m)],{type:"application/manifest+json"}));document.head.appendChild(l)}catch(e){}</script>
 <style>
 :root{
   --bg:#6d747a; --vlak:#f3efe6; --groen:#2d6a4f; --groen-d:#1f4d39;
@@ -952,7 +955,7 @@ body.sales .navMidden>.mknop.groot{display:none!important}body.kijkmodus #btnPri
 
 <script>
 "use strict";
-const VERSIE="43.4";
+const VERSIE="43.5";
 const VERSIE_DATUM="03-11-2026";
 /* ---------- Basis ---------- */
 const PALET=["#2d6a4f","#1B5EBE","#E8007D","#c77d1a","#7a4fa0","#0f8b8d","#5b6b2f","#3d5a80","#a0522d","#7AB648"];
