@@ -777,6 +777,8 @@ body.sales .navMidden>.mknop.groot{display:none!important}body.kijkmodus #btnPri
 #klMenu{position:fixed;z-index:200;background:#fff;border:2px solid #2b5fb4;border-radius:8px;box-shadow:0 8px 24px rgba(0,0,0,.25);min-width:260px;overflow:hidden;font-size:15px;font-family:system-ui,Segoe UI,Arial,sans-serif}
 #klMenu .klmkop{background:#f1ece2;font-weight:700;padding:12px 20px;font-size:16px;border-bottom:1px solid #d6d6d6}#klMenu .klmtel{padding:12px 20px;border-bottom:1px solid #d6d6d6;color:#222}
 #klMenu button{display:block;width:100%;text-align:left;border:0;border-bottom:1px solid #d6d6d6;background:#fff;padding:12px 20px;font:inherit;font-weight:500;cursor:pointer;color:#222}#klMenu button:hover{background:#eef6f1}#klMenu button:last-child{border-bottom:0}
+
+.zoeksnel{display:flex;gap:8px;align-items:center;margin:8px 2px 4px}.zoeksnel .btn{padding:4px 12px}
 </style>
 </head>
 <body>
@@ -795,7 +797,6 @@ body.sales .navMidden>.mknop.groot{display:none!important}body.kijkmodus #btnPri
     </div></div>
   
   <button id="btnZoekE" type="button" class="eenvoudigAlleen mknop zoekknop" title="Zoeken (toets Z of Ctrl + K)" onclick="zoekOpen()">🔍<span class="lang"> Zoeken</span></button>
-  <button id="btnPrijzenE" type="button" class="eenvoudigAlleen mknop zoekknop" title="Prijzen per soort en per klant" onclick="prijsTabel()">💶<span class="lang"> Prijzen</span></button>
   <button class="mknop groot" data-tab="soorten" type="button"><span class="lang">Parameters</span><span class="kort">Param.</span></button>
   <button class="mknop groot" data-tab="oppot" type="button"><span class="lang">Inkoop / opzetten</span><span class="kort">Inkoop</span></button>
   <button class="mknop groot" data-tab="oppotov" type="button"><span class="lang">Opzetplanning</span><span class="kort">Opzetten</span></button>
@@ -818,7 +819,7 @@ body.sales .navMidden>.mknop.groot{display:none!important}body.kijkmodus #btnPri
       <button id="btnCsv" type="button" class="uitgebreid">Naar Excel (CSV)</button>
     </div></div>
   <button class="mknop uitgebreid" data-tab="mobiel" type="button" title="Overzicht voor op de telefoon">📱<span class="lang"> Mobiel</span></button>
-  <button id="btnZoek" type="button" class="uitgebreid" title="Zoeken (Ctrl + K)">🔍 Zoeken</button><button id="btnPrijzen" type="button" class="uitgebreid" title="Prijzen per soort en per klant" onclick="prijsTabel()">💶 Prijzen</button>
+  <button id="btnZoek" type="button" class="uitgebreid" title="Zoeken (Ctrl + K)">🔍 Zoeken</button>
   </div>
   <button class="mknop" id="btnVerder" type="button" hidden></button>
   <div class="menu menuRechts"><button class="mknop" type="button" title="Bestand: nieuw, openen, kopie"><span id="dot" title="Niet opgeslagen in een bestand"></span><span class="lang"> Bestand</span> ▾</button>
@@ -887,6 +888,7 @@ body.sales .navMidden>.mknop.groot{display:none!important}body.kijkmodus #btnPri
 </div></dialog>
 <dialog id="zoekVenster"><div class="vlak">
   <input id="zoekInvoer" placeholder="Zoek: teeltduur, vloeren, Cyclamen, P08, leverancier…" autocomplete="off">
+  <div class="zoeksnel"><span class="status">Snel naar:</span><button type="button" class="btn licht" onclick="$('#zoekVenster').close();prijsTabel()">💶 Prijzen</button></div>
   <div id="zoekLijst"></div>
   <p class="status" style="margin:8px 4px 0">↑ ↓ = kiezen · Enter = openen · Esc = sluiten</p>
 </div></dialog>
@@ -942,7 +944,7 @@ body.sales .navMidden>.mknop.groot{display:none!important}body.kijkmodus #btnPri
 
 <script>
 "use strict";
-const VERSIE="42.4";
+const VERSIE="42.5";
 const VERSIE_DATUM="03-11-2026";
 /* ---------- Basis ---------- */
 const PALET=["#2d6a4f","#1B5EBE","#E8007D","#c77d1a","#7a4fa0","#0f8b8d","#5b6b2f","#3d5a80","#a0522d","#7AB648"];
@@ -3704,7 +3706,7 @@ async function mobDelenIn2(k,zonder,tekst,el){
     const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=naam;a.click();melding("⬇ Plaatje gedownload","#2d6a4f")}
   catch(e){alert("Delen lukt niet: "+e.message)}}
 function aflSoort(k){const n=isoWeek(new Date());mobSoort(k.replace("|"," · "),+maandagIso(n.y,n.w))}
-function sluitMobSoort(){const m=document.getElementById("mobPop");if(m)m.hidden=true;if(tab==="oppotov"||tab==="aflever"||tab==="mobiel")render()}
+function sluitMobSoort(){const m=document.getElementById("mobPop");if(m&&!m.hidden&&!window.ofKlaar&&[...m.querySelectorAll(".oftab .ofn")].some(i=>+i.value>0)&&!confirm("De order is nog niet opgeslagen.\nToch sluiten? (Klik op Annuleren en daarna op ✔ Opslaan)"))return;window.ofKlaar=false;if(m)m.hidden=true;if(tab==="oppotov"||tab==="aflever"||tab==="mobiel")render()}
 function mobWeek(d){const t=plusWeken(mobWeekStart(),d),n=isoWeek(t);mob.week=n.w;mob.jaar=n.y;mob.partijId="";render()}
 /* ---------- Post-it: opmerkingen en vragen voor iedereen (gedeeld via de online planning) ---------- */
 let postitAlles=false;
@@ -4791,7 +4793,7 @@ function orderOpslaan(naam){const kk=klantVan(naam),code=wkCode(ofWeek);let r=0,
     const pr=prijsLees(tr.querySelector(".ofp").value);if(pr!=null)x.prijs=pr;
     const key=tr.dataset.k+"|"+code;(data.verkoop[key]=data.verkoop[key]||[]).push(x);r++;n+=x.n});
   if(!r){alert("Vul bij minstens één soort een aantal in.");return}
-  opslaanLater();render();melding(`✔ ${r} soort${r===1?"":"en"} · ${getal(n)} planten opgeslagen voor ${esc(naam)}`,"#2d6a4f");
+  window.ofKlaar=true;opslaanLater();render();melding(`✔ ${r} soort${r===1?"":"en"} · ${getal(n)} planten opgeslagen voor ${esc(naam)}`,"#2d6a4f");
   pakbonVan({dataset:{klant:kk?kk.naam:naam,code}},true)}
 /* prijstabel: soorten onder elkaar, klanten naast elkaar. Kolom Standaard = voor iedereen; klantkolom leeg = standaardprijs (grijs) */
 function prijsTabel(alleen){if(niveau()<2||kijker)return;const P=data.vkPrijzen||{},kl=[...data.klanten].filter(k=>k.naam&&(!alleen||k.id===alleen)).sort((a,b)=>a.naam.localeCompare(b.naam,"nl"));
