@@ -947,7 +947,7 @@ body.sales .navMidden>.mknop.groot{display:none!important}body.kijkmodus #btnPri
 
 <script>
 "use strict";
-const VERSIE="43.0";
+const VERSIE="43.1";
 const VERSIE_DATUM="03-11-2026";
 /* ---------- Basis ---------- */
 const PALET=["#2d6a4f","#1B5EBE","#E8007D","#c77d1a","#7a4fa0","#0f8b8d","#5b6b2f","#3d5a80","#a0522d","#7AB648"];
@@ -4816,8 +4816,7 @@ function orderOpslaan(naam){const kk=klantVan(naam),code=wkCode(ofWeek);let r=0,
 /* prijstabel: soorten onder elkaar, klanten naast elkaar. Kolom Standaard = voor iedereen; klantkolom leeg = standaardprijs (grijs) */
 function prijsTabel(alleen){if(niveau()<2||kijker)return;const P=data.vkPrijzen||{},kl=[...data.klanten].filter(k=>k.naam&&(!alleen||k.id===alleen)).sort((a,b)=>a.naam.localeCompare(b.naam,"nl"));
   const ts=data.teeltduren.filter(t=>!teeltFilter||t.id===teeltFilter);let h=`<p class="status" style="margin:0 0 8px">Prijs per plant. <b>Standaard</b> geldt voor iedereen. Laat een klantvak leeg voor de standaardprijs (grijs). Wordt ook gebruikt bij reserveringen en in de Aanbodlijst.</p>
-    <div class="prwrap"><table class="prtab"><tr><th class="prsoort">Soort</th><th>Standaard</th>${kl.map(k=>`<th title="${esc(k.naam)}">${esc(k.naam)}</th>`).join("")}</tr>
-    <tr class="pralle"><td class="prsoort">Alle soorten ↓</td>${["std",...kl.map(k=>k.id)].map(k=>`<td><input class="prin" data-k="${k}" placeholder="alle" inputmode="decimal" title="Typ een prijs: de hele kolom krijgt deze prijs" onchange="prijsKolom(this)"></td>`).join("")}</tr>`;
+    <div class="prwrap"><table class="prtab"><tr><th class="prsoort">Soort</th><th>Standaard</th>${kl.map(k=>`<th title="${esc(k.naam)}">${esc(k.naam)}</th>`).join("")}</tr>`;
   for(const t of ts){const rs=data.rassen.filter(r=>r.teeltId===t.id&&r.naam).sort((a,b)=>a.naam.localeCompare(b.naam,"nl"));if(!rs.length)continue;
     h+=`<tr class="prgroep"><td class="prsoort">${esc(teeltLabel(t))} ↓</td>${["std",...kl.map(k=>k.id)].map(k=>`<td><input class="prin" data-k="${k}" data-tg="${t.id}" placeholder="teelt" inputmode="decimal" title="Typ een prijs: alle soorten van ${esc(teeltLabel(t))} in deze kolom" onchange="prijsKolom(this)"></td>`).join("")}</tr>`;
     for(const r of rs){const st=(P.std||{})[r.id];
