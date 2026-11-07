@@ -944,7 +944,7 @@ body.sales .navMidden>.mknop.groot{display:none!important}body.kijkmodus #btnPri
 
 <script>
 "use strict";
-const VERSIE="42.6";
+const VERSIE="42.7";
 const VERSIE_DATUM="03-11-2026";
 /* ---------- Basis ---------- */
 const PALET=["#2d6a4f","#1B5EBE","#E8007D","#c77d1a","#7a4fa0","#0f8b8d","#5b6b2f","#3d5a80","#a0522d","#7AB648"];
@@ -4762,7 +4762,7 @@ function klantKaart(naam,kaal){if(kaal!==undefined)kkKaal=kaal;const k=klantVan(
     <div class="rij" style="gap:6px;flex-wrap:wrap;margin:8px 0 12px">${tel?knop("tel:"+tel,"📞 Bellen"):""}${wa.length>8?knop("https://wa.me/"+wa,"💬 WhatsApp"):""}${k.email?`<button class="btn licht" onclick="klantMail(this.dataset.k)" data-k="${esc(naam)}" title="Nieuwe Gmail aan deze klant, met het overzicht van de reserveringen">✉ Gmail</button>`:""}
       <button class="btn" onclick="orderForm(this.dataset.k)" data-k="${esc(k.naam||naam)}" title="Alle soorten van één week onder elkaar: alleen aantallen invullen">🧾 Orderformulier</button><button class="btn licht" onclick="sluitMobSoort();vo={datum:datumTekst(new Date()),klant:this.dataset.k,teelt:teeltFilter||'',soort:'',n:''};verkoopOrder()" data-k="${esc(k.naam||naam)}">＋ Eén reservering</button>
       <label class="status" style="margin-left:auto"><input type="checkbox" ${kkAlles?"checked":""} onchange="kkAlles=this.checked;klantKaart(this.dataset.k)" data-k="${esc(naam)}"> ook afgelopen 8 weken</label></div>`;
-  if(kkKaal)h=`<div class="rij" style="margin:0 0 10px"><span class="status">${getal(tN)} planten · ${nR} reserveringen${tE?" · "+euro(tE):""}</span><label class="status" style="margin-left:auto"><input type="checkbox" ${kkAlles?"checked":""} onchange="kkAlles=this.checked;klantKaart(this.dataset.k)" data-k="${esc(naam)}"> ook afgelopen 8 weken</label></div>`;
+  if(kkKaal)h=`<div class="rij" style="margin:0 0 10px;gap:10px;align-items:center"><span class="status">${getal(tN)} planten · ${nR} reserveringen${tE?" · "+euro(tE):""}</span>${k.email?`<button class="btn licht" onclick="klantMailOverzicht(this.dataset.k)" data-k="${esc(naam)}" title="Gmail met dit overzicht (Ctrl + V om te plakken)">✉ Gmail overzicht</button>`:""}<label class="status" style="margin-left:auto"><input type="checkbox" ${kkAlles?"checked":""} onchange="kkAlles=this.checked;klantKaart(this.dataset.k)" data-k="${esc(naam)}"> ook afgelopen 8 weken</label></div>`;
   const wks=Object.keys(per).sort();
   if(!wks.length)h+=`<p class="status">Geen reserveringen ${kkAlles?"in deze periode":"vanaf deze week"}.</p>`;
   else{h+=`<div style="overflow-x:auto"><table class="kktab"><tr><th>Soort</th><th>Aantal</th><th>Fust</th><th>Prijs</th><th>Bedrag</th><th>Opmerking</th></tr>`;
@@ -4830,7 +4830,12 @@ function prijsCel(el){const P=data.vkPrijzen=data.vkPrijzen||{},o=P[el.dataset.k
   if(!Object.keys(o).length)delete P[el.dataset.k];el.value=v==null?"":pF(v);
   if(el.dataset.k==="std")el.closest("tr").querySelectorAll("input:not(.prstd)").forEach(i=>i.placeholder=v==null?"":pF(v));opslaanLater()}
 /* Gmail aan de klant met de komende reserveringen als tekst */
-function klantMail(naam){const k=klantVan(naam)||{naam},nu=wkCode(+dezeWeek()),per={};
+/* Gmail uit het klantmenu: leeg, alleen "Beste …" */
+function klantMail(naam){const k=klantVan(naam)||{naam},t=`Beste ${k.contact||k.naam},\n\n`,mob=/Android|iPhone|iPad/i.test(navigator.userAgent);
+  if(mob){location.href=`mailto:${encodeURIComponent(k.email||"")}?body=${encodeURIComponent(t)}`;return}
+  window.open(`https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(k.email||"")}&body=${encodeURIComponent(t)}`,"_blank")}
+/* Gmail uit Overzicht pakbonnen: overzicht van de reserveringen kopiëren (Ctrl + V) */
+function klantMailOverzicht(naam){const k=klantVan(naam)||{naam},nu=wkCode(+dezeWeek()),per={};
   for(const[key,arr]of Object.entries(data.verkoop||{})){const p=key.split("|");if(p.length!==3||p[2]<nu)continue;
     for(const x of arr||[])if((x.klant||"").toLowerCase()===String(naam).toLowerCase()&&+x.n)(per[p[2]]=per[p[2]]||[]).push({pr:p[0],so:p[1],x})}
   const ft=x=>{const f=fustTxt(x);return f?" ("+f.replace(/&amp;/g,"&")+")":""};
