@@ -966,7 +966,7 @@ body.sales .navMidden>.mknop.groot{display:none!important}body.kijkmodus #btnPri
 
 <script>
 "use strict";
-const VERSIE="44.8";
+const VERSIE="44.9";
 const VERSIE_DATUM="03-11-2026";
 /* ---------- Basis ---------- */
 const PALET=["#2d6a4f","#1B5EBE","#E8007D","#c77d1a","#7a4fa0","#0f8b8d","#5b6b2f","#3d5a80","#a0522d","#7AB648"];
@@ -4753,7 +4753,7 @@ function pakbonInhoud(klant,code,metInvoer){if(!vkPlek)maakPlekMap();const l=ver
   const rijen=l.map(r=>{const pl=plekVan(r.k,r.t);tp+=r.n;
     return`<tr><td>${esc(r.gewas)}</td><td>${esc(r.soort)}</td><td class="n">${getal(r.n)}</td>${mF?`<td>${fustTxt(r)}</td>`:""}${ZV()?"":`<td>${esc(pl.afd)}</td><td class="vl">${esc(pl.vloer)||"?"}</td>`}<td>☐</td></tr>${r.opm?`<tr><td colspan="${(ZV()?4:6)+(mF?1:0)}" style="font-size:12px;color:#555">💬 ${esc(r.opm)}</td></tr>`:""}`}).join("");
   const toonDat=dat.length?dat:[datumTekst(maandagIso(y,w))],datTxt=toonDat.map(d=>`<b>${datNL(d)}</b> &nbsp; <b>${datWeekDag(d)}</b>`).join("<br>");
-  return`<div class="pbkop"><div style="display:flex;gap:12px;align-items:center">${logoImg(44)}<div><h2>Pakbon</h2><div><b>${esc(KLANT.appNaam)}</b></div></div></div>
+  return`<div class="pbkop"><div><h2>Pakbon</h2><div><b>${esc(KLANT.appNaam)}</b></div></div>
     <div style="text-align:right">Afleveren: ${datTxt}</div></div>
     ${metInvoer?`<div class="noprint" style="margin-bottom:10px;display:flex;gap:8px;align-items:center"><span class="status">Afleverdatum:</span><input type="date" value="${dat[0]||datumTekst(maandagIso(y,w))}" min="${datumTekst(maandagIso(y,w))}" max="${datumTekst(new Date(plusWeken(maandagIso(y,w),1)-864e5))}" onchange="pakbonDatum(this)" data-klant="${esc(klant)}" data-code="${code}" style="font-size:15px;padding:4px 8px"></div>`:""}
     <div style="margin-bottom:10px"><b>Klant:</b> ${esc(klant)}${k.plaats?" · "+esc(k.plaats):""}${k.telefoon?" · ☎ "+esc(k.telefoon):""}${k.email?" · ✉ "+esc(k.email):""}${k.contact?`<br>${esc(k.contact)}`:""}</div>
