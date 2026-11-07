@@ -773,6 +773,10 @@ body.sales .navMidden>.mknop.groot{display:none!important}body.sales .navMidden>
 .prtab tr.prgroep td{background:#eef6f1;font-weight:800;color:#1f4d39;padding-top:6px}.prtab tr.prgroep .prin{border-color:#9cc7b0;background:#f6fbf8}.prin{width:64px;padding:4px 6px;text-align:right;font:inherit;border:1px solid #d8cfbd;border-radius:6px}.prin.prstd{border-color:#2d6a4f;font-weight:700}.prin::placeholder{color:#b9b0a0}
 
 .prtab tr.pralle td{background:#fff8dc;position:sticky;top:31px;z-index:2;border-bottom:2px solid #e0c060}.prtab tr.pralle td.prsoort{z-index:3;background:#fff3c4;font-weight:700;color:#7a5c00}.prtab tr.pralle .prin{border-color:#e0c060}
+
+#klMenu{position:fixed;z-index:200;background:#fff;border:2px solid #2b5fb4;border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,.25);min-width:230px;overflow:hidden;font-size:15px}
+#klMenu .klmkop{background:#f1ece2;font-weight:800;padding:10px 16px;font-size:16px;border-bottom:1px solid #ddd}#klMenu .klmtel{padding:9px 16px;border-bottom:1px solid #eee;color:#333}
+#klMenu button{display:block;width:100%;text-align:left;border:0;border-bottom:1px solid #eee;background:#fff;padding:10px 16px;font:inherit;cursor:pointer;color:#222}#klMenu button:hover{background:#eef6f1}#klMenu button:last-child{border-bottom:0}
 </style>
 </head>
 <body>
@@ -937,7 +941,7 @@ body.sales .navMidden>.mknop.groot{display:none!important}body.sales .navMidden>
 
 <script>
 "use strict";
-const VERSIE="41.9";
+const VERSIE="42.0";
 const VERSIE_DATUM="03-11-2026";
 /* ---------- Basis ---------- */
 const PALET=["#2d6a4f","#1B5EBE","#E8007D","#c77d1a","#7a4fa0","#0f8b8d","#5b6b2f","#3d5a80","#a0522d","#7AB648"];
@@ -4333,7 +4337,7 @@ function toonAflever(){syncSoorten();
     const cl=(v,t)=>`${v?` style="cursor:pointer" title="Klik: pakbon van deze klant in deze week" onclick="pakbonVan({dataset:{klant:this.parentNode.dataset.kl,code:'${code(t)}'}},true)"`:""}>${v?getal(v):'<span class="ovleeg">—</span>'}`;
     for(const kl of kls){
       const kt=Object.values(pk[kl]).reduce((a,b)=>a+b,0);
-      h+=`<tr data-kl="${esc(kl)}" class="ovklant"><td class="ovnaam" style="cursor:pointer" title="Klik: klantkaart (alle reserveringen, bellen, mailen)" onclick="klantKaart(this.parentNode.dataset.kl)"><span class="ovsl">${esc(kl)}</span></td>${alleWk.map((t,c)=>`<td data-c="${c}" data-v="${pk[kl][code(t)]||0}"${vis(c)}${cl(pk[kl][code(t)]||0,t)}</td>`).join("")}<td class="kltot klT"><b>${getal(kt)}</b></td><td class="kltot klE">${pkE[kl]?euro(pkE[kl]).replace(/,\d\d$/,""):"–"}</td></tr>`;
+      h+=`<tr data-kl="${esc(kl)}" class="ovklant"><td class="ovnaam" style="cursor:pointer" title="Klik: klantkaart (alle reserveringen, bellen, mailen)" onclick="klantMenu(this.parentNode.dataset.kl,this)"><span class="ovsl">${esc(kl)}</span></td>${alleWk.map((t,c)=>`<td data-c="${c}" data-v="${pk[kl][code(t)]||0}"${vis(c)}${cl(pk[kl][code(t)]||0,t)}</td>`).join("")}<td class="kltot klT"><b>${getal(kt)}</b></td><td class="kltot klE">${pkE[kl]?euro(pkE[kl]).replace(/,\d\d$/,""):"–"}</td></tr>`;
 }
     const kT=kls.reduce((a,kl)=>a+Object.values(pk[kl]).reduce((x,y)=>x+y,0),0),kE=kls.reduce((a,kl)=>a+(pkE[kl]||0),0);
     h+=`<tr class="ovtot"><td class="ovnaam">Totaal gereserveerd</td>${alleWk.map((t,c)=>{const v=kls.reduce((a,kl)=>a+(pk[kl][code(t)]||0),0);return`<td data-c="${c}"${vis(c)}>${v?getal(v):'<span class="ovleeg">—</span>'}</td>`}).join("")}<td class="kltot klT"><b>${getal(kT)}</b></td><td class="kltot klE"><b>${kE?euro(kE).replace(/,\d\d$/,""):"–"}</b></td></tr></table>`;
@@ -4721,6 +4725,21 @@ function pakbonDatum(inp){const klant=inp.dataset.klant,code=inp.dataset.code,d=
   if(wkCode(+leesDatum(d))!==code){alert("Kies een dag in week "+code+".");return}
   for(const r of verkoopLijst())if(r.klant===klant&&r.code===code)data.verkoop[r.key][r.i].datum=d;
   opslaanLater();pakbonVan({dataset:{klant,code}});if(tab==="verkoop"){const m=document.getElementById("mobPop");const keep=m.innerHTML;render();m.innerHTML=keep;m.hidden=false}}
+/* klantmenu (klik op een klant in het Klantoverzicht) */
+function klantMenu(naam,el){sluitKlantMenu();const k=klantVan(naam)||{naam},r=el.getBoundingClientRect(),m=document.createElement("div");m.id="klMenu";
+  const it=(ic,t,f,extra)=>`<button type="button" onclick="sluitKlantMenu();${f}">${ic} ${t}${extra||""}</button>`,N=JSON.stringify(k.naam||naam).replace(/"/g,"&quot;");
+  m.innerHTML=`<div class="klmkop">${esc(k.naam||naam)}</div>
+    <div class="klmtel">☎ ${k.telefoon?esc(k.telefoon):'<span class="status">geen telefoonnummer</span>'}</div>
+    ${k.email?it("✉","Gmail",`klantMail(${N})`):`<div class="klmtel status">✉ geen e-mailadres</div>`}
+    ${it("🧾","Orderformulier",`orderForm(${N})`)}
+    ${niveau()>=4&&k.id?it("💶","Prijzen",`prijsTabel('${k.id}')`):""}
+    ${k.id?it("📦","Fust per teelt",`klantPerTeelt('${k.id}')`):""}
+    ${it("＋","Reservering",`vo={datum:datumTekst(new Date()),klant:${N},teelt:teeltFilter||'',soort:'',n:''};verkoopOrder()`)}
+    ${it("📋","Overzicht pakbonnen",`klantKaart(${N})`)}`;
+  document.body.appendChild(m);const h=m.offsetHeight;m.style.left=Math.min(r.left+20,innerWidth-m.offsetWidth-8)+"px";m.style.top=Math.max(8,Math.min(r.bottom-6,innerHeight-h-8))+"px";
+  setTimeout(()=>document.addEventListener("click",klMenuBuiten,true),0)}
+function klMenuBuiten(e){const m=document.getElementById("klMenu");if(m&&!m.contains(e.target)){sluitKlantMenu();e.stopPropagation();e.preventDefault()}}
+function sluitKlantMenu(){const m=document.getElementById("klMenu");if(m)m.remove();document.removeEventListener("click",klMenuBuiten,true)}
 /* klantkaart: gegevens, contact en alle komende reserveringen van één klant */
 let kkAlles=false;
 function klantKaart(naam){const k=klantVan(naam)||{naam},nu=wkCode(+dezeWeek()),van=kkAlles?wkCode(+dezeWeek()-8*7*864e5):nu,per={};let tN=0,tE=0,nR=0;
@@ -4767,7 +4786,7 @@ function orderOpslaan(naam){const kk=klantVan(naam),code=wkCode(ofWeek);let r=0,
   opslaanLater();render();melding(`✔ ${r} soort${r===1?"":"en"} · ${getal(n)} planten opgeslagen voor ${esc(naam)}`,"#2d6a4f");
   pakbonVan({dataset:{klant:kk?kk.naam:naam,code}},true)}
 /* prijstabel: soorten onder elkaar, klanten naast elkaar. Kolom Standaard = voor iedereen; klantkolom leeg = standaardprijs (grijs) */
-function prijsTabel(){if(niveau()<4)return;const P=data.vkPrijzen||{},kl=[...data.klanten].filter(k=>k.naam).sort((a,b)=>a.naam.localeCompare(b.naam,"nl"));
+function prijsTabel(alleen){if(niveau()<4)return;const P=data.vkPrijzen||{},kl=[...data.klanten].filter(k=>k.naam&&(!alleen||k.id===alleen)).sort((a,b)=>a.naam.localeCompare(b.naam,"nl"));
   const ts=data.teeltduren.filter(t=>!teeltFilter||t.id===teeltFilter);let h=`<p class="status" style="margin:0 0 8px">Prijs per plant. <b>Standaard</b> geldt voor iedereen. Laat een klantvak leeg voor de standaardprijs (grijs). Wordt ook gebruikt bij reserveringen en in de Aanbodlijst.</p>
     <div class="prwrap"><table class="prtab"><tr><th class="prsoort">Soort</th><th>Standaard</th>${kl.map(k=>`<th title="${esc(k.naam)}">${esc(k.naam)}</th>`).join("")}</tr>
     <tr class="pralle"><td class="prsoort">Alle soorten ↓</td>${["std",...kl.map(k=>k.id)].map(k=>`<td><input class="prin" data-k="${k}" placeholder="alle" inputmode="decimal" title="Typ een prijs: de hele kolom krijgt deze prijs" onchange="prijsKolom(this)"></td>`).join("")}</tr>`;
@@ -4775,13 +4794,13 @@ function prijsTabel(){if(niveau()<4)return;const P=data.vkPrijzen||{},kl=[...dat
     h+=`<tr class="prgroep"><td class="prsoort">${esc(teeltLabel(t))} ↓</td>${["std",...kl.map(k=>k.id)].map(k=>`<td><input class="prin" data-k="${k}" data-tg="${t.id}" placeholder="teelt" inputmode="decimal" title="Typ een prijs: alle soorten van ${esc(teeltLabel(t))} in deze kolom" onchange="prijsKolom(this)"></td>`).join("")}</tr>`;
     for(const r of rs){const st=(P.std||{})[r.id];
       h+=`<tr><td class="prsoort">${esc(r.naam)}</td><td><input class="prin prstd" data-k="std" data-t="${t.id}" data-id="${r.id}" value="${st!=null?pF(st):""}" placeholder="€" inputmode="decimal" onchange="prijsCel(this)"></td>${kl.map(k=>{const v=(P[k.id]||{})[r.id];return`<td><input class="prin" data-k="${k.id}" data-t="${t.id}" data-id="${r.id}" value="${v!=null?pF(v):""}" placeholder="${st!=null?pF(st):""}" inputmode="decimal" onchange="prijsCel(this)"></td>`}).join("")}</tr>`}}
-  h+=`</table></div>`;toonPop("💶 Prijzen per soort en klant"+(teeltFilter?" · "+esc(teeltLabel(data.teeltduren.find(t=>t.id===teeltFilter)||{})):""),h);
-  const m=document.querySelector("#mobPop .mpop");if(m){m.classList.add("breed");m.style.maxWidth="min(1400px,98vw)";m.style.width="min(1400px,98vw)"}}
+  h+=`</table></div>`;toonPop((alleen&&kl[0]?"💶 Prijzen · "+esc(kl[0].naam):"💶 Prijzen per soort en klant")+(teeltFilter?" · "+esc(teeltLabel(data.teeltduren.find(t=>t.id===teeltFilter)||{})):""),h);
+  const m=document.querySelector("#mobPop .mpop");if(m){m.classList.add("breed");if(!alleen){m.style.maxWidth="min(1400px,98vw)";m.style.width="min(1400px,98vw)"}}}
 function prijsKolom(el){const v=prijsLees(el.value),k=el.dataset.k,tg=el.dataset.tg,ids=[...document.querySelectorAll(`.prtab input[data-k="${k}"][data-id]${tg?`[data-t="${tg}"]`:""}`)].map(i=>i.dataset.id);if(!ids.length)return;
   const naam=(k==="std"?"Standaard":(data.klanten.find(x=>x.id===k)||{}).naam||"")+(tg?" · "+teeltLabel(data.teeltduren.find(t=>t.id===tg)||{}):"");
   if(!confirm(v==null?`Alle prijzen in de kolom ${naam} leegmaken (${ids.length} soorten)?`:`Alle ${ids.length} soorten in de kolom ${naam} op ${prijsTxt(v)} zetten?`)){el.value="";return}
   const P=data.vkPrijzen=data.vkPrijzen||{},o=P[k]=P[k]||{};ids.forEach(id=>{if(v==null)delete o[id];else o[id]=v});if(!Object.keys(o).length)delete P[k];
-  opslaanLater();const w=document.querySelector(".prwrap"),sx=w?w.scrollLeft:0,sy=w?w.scrollTop:0;prijsTabel();const w2=document.querySelector(".prwrap");if(w2){w2.scrollLeft=sx;w2.scrollTop=sy}melding(`✓ Kolom ${naam}: ${ids.length} prijzen ${v==null?"leeg":"op "+prijsTxt(v)}`,"#2d6a4f")}
+  opslaanLater();const w=document.querySelector(".prwrap"),sx=w?w.scrollLeft:0,sy=w?w.scrollTop:0;prijsTabel(document.querySelectorAll(".prtab th").length===3?(data.klanten.find(x=>x.naam&&document.querySelector(".prtab th:nth-child(3)").title===x.naam)||{}).id:undefined);const w2=document.querySelector(".prwrap");if(w2){w2.scrollLeft=sx;w2.scrollTop=sy}melding(`✓ Kolom ${naam}: ${ids.length} prijzen ${v==null?"leeg":"op "+prijsTxt(v)}`,"#2d6a4f")}
 function prijsCel(el){const P=data.vkPrijzen=data.vkPrijzen||{},o=P[el.dataset.k]=P[el.dataset.k]||{},v=prijsLees(el.value);if(v==null)delete o[el.dataset.id];else o[el.dataset.id]=v;
   if(!Object.keys(o).length)delete P[el.dataset.k];el.value=v==null?"":pF(v);
   if(el.dataset.k==="std")el.closest("tr").querySelectorAll("input:not(.prstd)").forEach(i=>i.placeholder=v==null?"":pF(v));opslaanLater()}
