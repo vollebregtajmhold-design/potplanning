@@ -63,7 +63,7 @@ h1{margin:0;font-size:20px;color:var(--groen)}
 #btnStart{background:#dff0e6;color:#1f4d39;border:2px solid #fff;border-radius:9px;box-shadow:0 1px 3px rgba(0,0,0,.25);padding:8px 22px;font-size:15px;font-weight:700;cursor:pointer;white-space:nowrap}
 #btnStart:hover{background:#fff}
 @media (max-width:1750px){#status{display:none}.titel .versie{display:none}}
-@media (max-width:1450px){#balk .mknop,#balk #btnZoek{padding:5px 9px;font-size:13px}#balk #btnStart{padding:5px 10px;font-size:13px}#balk{gap:6px}.titel{font-size:15px;margin-right:4px}}
+@media (max-width:1450px){#balk .mknop,#balk #btnZoek,#btnPrijzen{padding:5px 9px;font-size:13px}#balk #btnStart{padding:5px 10px;font-size:13px}#balk{gap:6px}.titel{font-size:15px;margin-right:4px}}
 @media (max-width:1200px){.titel .naamtekst,#balk .lang{display:none}}
 @media (max-width:1150px){#btnNieuw,#btnOpen{padding:6px 8px;font-size:13px}}
 .wrap{padding-top:16px}
@@ -282,8 +282,8 @@ body.smal.afl .wrap{max-width:var(--aflW,1000px)}
 .nav2{display:inline-flex;gap:4px;margin-right:4px}
 .nav2 .mknop{padding:6px 9px}
 .nav2 .mknop:disabled{opacity:.35;cursor:default}
-#btnZoek{background:#dff0e6;color:#1f4d39;border:2px solid #fff;border-radius:9px;padding:6px 14px;font-size:14px;font-weight:700;cursor:pointer;white-space:nowrap;box-shadow:0 1px 3px rgba(0,0,0,.25)}
-#btnZoek:hover{background:#fff}
+#btnZoek,#btnPrijzen{background:#dff0e6;color:#1f4d39;border:2px solid #fff;border-radius:9px;padding:6px 14px;font-size:14px;font-weight:700;cursor:pointer;white-space:nowrap;box-shadow:0 1px 3px rgba(0,0,0,.25)}
+#btnZoek:hover,#btnPrijzen:hover{background:#fff}
 #duurVenster{border:0;padding:0;background:transparent;width:960px;max-width:96vw}
 #duurVenster::backdrop{background:rgba(0,0,0,.45)}
 #duurVenster .vlak{max-height:90vh;overflow:auto}
@@ -762,7 +762,7 @@ body.mobiel #aanbodKnop{display:block}@media (max-width:900px),(pointer:coarse){
 
 .ordring{display:inline-block;border:2px solid #d0103a;border-radius:999px;padding:0 7px;line-height:1.35;margin:-2px -9px}
 
-body.sales .navMidden>.mknop.groot{display:none!important}body.sales .navMidden>.menu.uitgebreid{display:none!important}
+body.sales .navMidden>.mknop.groot{display:none!important}body.kijkmodus #btnPrijzen{display:none}body.sales .navMidden>.menu.uitgebreid{display:none!important}
 #wgSales.aan,#wgAlles.aan{background:#2d6a4f;color:#fff;border-color:#2d6a4f}
 
 #btnUitleg{width:22px;height:22px;flex:none;border-radius:50%;background:#2d9d5a;color:#fff;border:3px solid #fff;cursor:pointer;padding:0;font:bold 12px/1 Arial,sans-serif;box-shadow:0 1px 3px rgba(0,0,0,.4);margin-left:6px}
@@ -795,6 +795,7 @@ body.sales .navMidden>.mknop.groot{display:none!important}body.sales .navMidden>
     </div></div>
   
   <button id="btnZoekE" type="button" class="eenvoudigAlleen mknop zoekknop" title="Zoeken (toets Z of Ctrl + K)" onclick="zoekOpen()">🔍<span class="lang"> Zoeken</span></button>
+  <button id="btnPrijzenE" type="button" class="eenvoudigAlleen mknop zoekknop" title="Prijzen per soort en per klant" onclick="prijsTabel()">💶<span class="lang"> Prijzen</span></button>
   <button class="mknop groot" data-tab="soorten" type="button"><span class="lang">Parameters</span><span class="kort">Param.</span></button>
   <button class="mknop groot" data-tab="oppot" type="button"><span class="lang">Inkoop / opzetten</span><span class="kort">Inkoop</span></button>
   <button class="mknop groot" data-tab="oppotov" type="button"><span class="lang">Opzetplanning</span><span class="kort">Opzetten</span></button>
@@ -817,7 +818,7 @@ body.sales .navMidden>.mknop.groot{display:none!important}body.sales .navMidden>
       <button id="btnCsv" type="button" class="uitgebreid">Naar Excel (CSV)</button>
     </div></div>
   <button class="mknop uitgebreid" data-tab="mobiel" type="button" title="Overzicht voor op de telefoon">📱<span class="lang"> Mobiel</span></button>
-  <button id="btnZoek" type="button" class="uitgebreid" title="Zoeken (Ctrl + K)">🔍 Zoeken</button>
+  <button id="btnZoek" type="button" class="uitgebreid" title="Zoeken (Ctrl + K)">🔍 Zoeken</button><button id="btnPrijzen" type="button" class="uitgebreid" title="Prijzen per soort en per klant" onclick="prijsTabel()">💶 Prijzen</button>
   </div>
   <button class="mknop" id="btnVerder" type="button" hidden></button>
   <div class="menu menuRechts"><button class="mknop" type="button" title="Bestand: nieuw, openen, kopie"><span id="dot" title="Niet opgeslagen in een bestand"></span><span class="lang"> Bestand</span> ▾</button>
@@ -941,7 +942,7 @@ body.sales .navMidden>.mknop.groot{display:none!important}body.sales .navMidden>
 
 <script>
 "use strict";
-const VERSIE="42.3";
+const VERSIE="42.4";
 const VERSIE_DATUM="03-11-2026";
 /* ---------- Basis ---------- */
 const PALET=["#2d6a4f","#1B5EBE","#E8007D","#c77d1a","#7a4fa0","#0f8b8d","#5b6b2f","#3d5a80","#a0522d","#7AB648"];
@@ -4315,7 +4316,7 @@ function toonAflever(){syncSoorten();
         <input type="range" id="ovLo" min="0" max="${M}" value="${aflS.start}" oninput="ovSchuifLive()" onchange="ovSchuifLive()">
         <input type="range" id="ovHi" min="0" max="${M}" value="${aflS.eind}" oninput="ovSchuifLive()" onchange="ovSchuifLive()"></div>
       <span id="ovSchuifTxt" class="ovinfo"></span></div>
-    <button class="ovk ${aflRij!=="klant"?"aan":""}" onclick="aflRij='teelt';aflMod='vers';render()" title="Tabel per teelt · soort (kies links in de tabel: nog beschikbaar, afleverplan of gereserveerd)">Beschikbaar</button><button class="ovk nivVerk ${aflRij==="klant"?"aan":""}" onclick="aflRij='klant';aflMod='verk';render()" title="Per klant de reserveringen per week">👥 Klantoverzicht</button>${niveau()>=4?`<button class="ovk inkcsv" onclick="beschLijst()" title="Lijst 'nog beschikbaar' om te printen, als PDF te bewaren of als plaatje te versturen">📄 Aanbodlijst</button><button class="ovk inkcsv" onclick="prijsTabel()" title="Prijzen per soort en per klant invullen">💶 Prijzen</button>`:""}
+    <button class="ovk ${aflRij!=="klant"?"aan":""}" onclick="aflRij='teelt';aflMod='vers';render()" title="Tabel per teelt · soort (kies links in de tabel: nog beschikbaar, afleverplan of gereserveerd)">Beschikbaar</button><button class="ovk nivVerk ${aflRij==="klant"?"aan":""}" onclick="aflRij='klant';aflMod='verk';render()" title="Per klant de reserveringen per week">👥 Klantoverzicht</button>${niveau()>=4?`<button class="ovk inkcsv" onclick="beschLijst()" title="Lijst 'nog beschikbaar' om te printen, als PDF te bewaren of als plaatje te versturen">📄 Aanbodlijst</button>`:""}
 
 `;
   const mistAfl=ruimteBerekening().fouten;
@@ -4737,7 +4738,7 @@ function klantMenu(naam,el){sluitKlantMenu();const k=klantVan(naam)||{naam},r=el
     <div class="klmtel">☎ ${k.telefoon?esc(k.telefoon):'<span class="status">geen telefoonnummer</span>'}</div>
     ${k.email?it("✉","Gmail",`klantMail(${N})`):`<div class="klmtel status">Gmail (geen e-mailadres)</div>`}
     ${it("🧾","Orderformulier",`orderForm(${N})`)}
-    ${niveau()>=4&&k.id?it("💶","Prijzen",`prijsTabel('${k.id}')`):""}
+    ${niveau()>1&&k.id?it("💶","Prijzen",`prijsTabel('${k.id}')`):""}
     ${k.id?it("📦","Fust per teelt",`klantPerTeelt('${k.id}')`):""}
     ${it("＋","Reservering",`vo={datum:datumTekst(new Date()),klant:${N},teelt:teeltFilter||'',soort:'',n:''};verkoopOrder()`)}
     ${it("📋","Overzicht pakbonnen",`klantKaart(${N},true)`)}`;
@@ -4793,7 +4794,7 @@ function orderOpslaan(naam){const kk=klantVan(naam),code=wkCode(ofWeek);let r=0,
   opslaanLater();render();melding(`✔ ${r} soort${r===1?"":"en"} · ${getal(n)} planten opgeslagen voor ${esc(naam)}`,"#2d6a4f");
   pakbonVan({dataset:{klant:kk?kk.naam:naam,code}},true)}
 /* prijstabel: soorten onder elkaar, klanten naast elkaar. Kolom Standaard = voor iedereen; klantkolom leeg = standaardprijs (grijs) */
-function prijsTabel(alleen){if(niveau()<4)return;const P=data.vkPrijzen||{},kl=[...data.klanten].filter(k=>k.naam&&(!alleen||k.id===alleen)).sort((a,b)=>a.naam.localeCompare(b.naam,"nl"));
+function prijsTabel(alleen){if(niveau()<2||kijker)return;const P=data.vkPrijzen||{},kl=[...data.klanten].filter(k=>k.naam&&(!alleen||k.id===alleen)).sort((a,b)=>a.naam.localeCompare(b.naam,"nl"));
   const ts=data.teeltduren.filter(t=>!teeltFilter||t.id===teeltFilter);let h=`<p class="status" style="margin:0 0 8px">Prijs per plant. <b>Standaard</b> geldt voor iedereen. Laat een klantvak leeg voor de standaardprijs (grijs). Wordt ook gebruikt bij reserveringen en in de Aanbodlijst.</p>
     <div class="prwrap"><table class="prtab"><tr><th class="prsoort">Soort</th><th>Standaard</th>${kl.map(k=>`<th title="${esc(k.naam)}">${esc(k.naam)}</th>`).join("")}</tr>
     <tr class="pralle"><td class="prsoort">Alle soorten ↓</td>${["std",...kl.map(k=>k.id)].map(k=>`<td><input class="prin" data-k="${k}" placeholder="alle" inputmode="decimal" title="Typ een prijs: de hele kolom krijgt deze prijs" onchange="prijsKolom(this)"></td>`).join("")}</tr>`;
