@@ -149,10 +149,6 @@ body.zv .ovvl,body.zv .raapplek,body.zv .vlinvrij,body.zv .vlinv,body.zv .zvweg{
 .postit{background:#fff59d;border-radius:4px;padding:8px 10px;margin:8px 0;box-shadow:0 2px 5px rgba(0,0,0,.18);position:relative}.postit.klaar{background:#eee;opacity:.75}.postit.klaar .pt{text-decoration:line-through}
 .postit .pt{white-space:pre-wrap;font-size:15px}.postit .pm{font-size:12px;color:#6b6558;margin-top:4px;display:flex;gap:8px;align-items:center}.postit .pm button{border:0;background:none;cursor:pointer;font-size:13px;padding:2px 4px}.postit .pm button:hover{text-decoration:underline}
 .postit .antw{margin:6px 0 0 14px;padding:5px 8px;background:#fffbd0;border-left:3px solid #e6d65a;font-size:14px;white-space:pre-wrap}.postit .antw small{display:block;color:#6b6558;font-size:11px}
-#btnStip{width:22px;height:22px;flex:none;border-radius:50%;background:#E8007D;border:3px solid #fff;cursor:pointer;padding:0;box-shadow:0 1px 3px rgba(0,0,0,.4)}
-#btnStip.aan{background:#fff;border-color:#E8007D}
-body.toonKlik :is(button,a,summary,select,.ovtabel td[data-k],.ovtabel th[data-c],[onclick]):not(table):not(#mobPop):not(#btnStip):not(.mstap):not(.mpop){
-  background-image:radial-gradient(circle at calc(100% - 6px) 6px,#E8007D 0,#E8007D 4px,#fff 4.5px,#fff 6px,transparent 6.5px)!important;background-repeat:no-repeat!important}
 @media (max-width:700px){
   #balk{padding:4px 6px!important;gap:4px!important;flex-wrap:nowrap!important}
   #balk .titel .naamtekst,#balk .titel .versie,#btnScherm{display:none}
@@ -771,7 +767,7 @@ body.mobiel #aanbodKnop{display:block}@media (max-width:900px),(pointer:coarse){
 body.sales .navMidden>.mknop.groot{display:none!important}body.kijkmodus #btnPrijzen{display:none}body.sales .navMidden>.menu.uitgebreid{display:none!important}
 #wgSales.aan,#wgAlles.aan,#mp_gmail.aan,#mp_outlook.aan,#mp_standaard.aan{background:#2d6a4f;color:#fff;border-color:#2d6a4f}
 
-#btnUitleg{width:22px;height:22px;flex:none;border-radius:50%;background:#2d9d5a;color:#fff;border:3px solid #fff;cursor:pointer;padding:0;font:bold 12px/1 Arial,sans-serif;box-shadow:0 1px 3px rgba(0,0,0,.4);margin-left:6px}
+#btnUitleg{width:22px;height:22px;flex:none;border-radius:50%;background:#2d9d5a;color:#fff;border:3px solid #fff;cursor:pointer;padding:0;font:bold 12px/1 Arial,sans-serif;box-shadow:0 1px 3px rgba(0,0,0,.4);margin-left:2px}
 
 .prwrap{overflow:auto;max-height:70vh;border:1px solid #ddd3c0;border-radius:8px}.prtab{border-collapse:separate;border-spacing:0;font-size:14px}
 .prtab th{position:sticky;top:0;background:#2d6a4f;color:#fff;padding:6px 8px;font-size:13px;white-space:nowrap;max-width:120px;overflow:hidden;text-overflow:ellipsis;z-index:2}
@@ -797,13 +793,16 @@ body.sales .navMidden>.mknop.groot{display:none!important}body.kijkmodus #btnPri
 
 .ondertitel{font-style:italic;color:#7a4fa8;font-weight:600;margin:-4px 0 10px}.naamblok{display:inline-flex;flex-direction:column;line-height:1.1;vertical-align:middle}.naamsub{font-size:10.5px;font-style:italic;font-weight:500;opacity:.8;letter-spacing:.2px}
 @media (max-width:900px){.naamsub{display:none}}
+
+.welkmerk{display:flex;align-items:center;gap:14px;background:linear-gradient(180deg,#5a3484,#3e2160);color:#fff;border-radius:12px;padding:14px 18px;margin:0 0 14px}
+.welkmerk img{width:58px;height:58px;border-radius:14px;border:3px solid #fff;box-shadow:0 3px 10px rgba(0,0,0,.45)}.wmnaam{font-size:22px;font-weight:800;letter-spacing:.2px}.wmsub{font-size:14px;font-style:italic;opacity:.85;margin-top:2px}
 </style>
 </head>
 <body>
 <div id="balk">
   <span class="titel" title="Pijltje links = terug · pijltje rechts = vooruit (max. 10 stappen)"><img class="logoic" alt=""> <span class="naamblok"><span class="naamtekst"></span><span class="naamsub">Planning · voorraad · verkoop</span></span> <span class="versie" id="versie"></span></span>
   <span id="kwekerijNaam" hidden></span>
-  <button type="button" id="btnStip" title="Toon alles waar u op kunt klikken (nog een keer klikken = weg)" onclick="document.body.classList.toggle('toonKlik');this.classList.toggle('aan')"></button>
+  
   <button type="button" id="btnUitleg" title="Uitleg van de tabel (met plaatje)" onclick="toonTabelUitleg()">?</button>
   <button type="button" id="btnPostit" title="Post-it: opmerkingen en vragen voor iedereen" onclick="toonPostit()">📝<span id="postitN" hidden></span></button>
   <div class="navMidden">
@@ -963,7 +962,7 @@ body.sales .navMidden>.mknop.groot{display:none!important}body.kijkmodus #btnPri
 
 <script>
 "use strict";
-const VERSIE="43.9";
+const VERSIE="44.1";
 const VERSIE_DATUM="03-11-2026";
 /* ---------- Basis ---------- */
 const PALET=["#2d6a4f","#1B5EBE","#E8007D","#c77d1a","#7a4fa0","#0f8b8d","#5b6b2f","#3d5a80","#a0522d","#7AB648"];
@@ -5420,7 +5419,7 @@ document.addEventListener("contextmenu",e=>{const t=e.target;
   t.dispatchEvent(new MouseEvent("click",{bubbles:true,cancelable:true,view:window,clientX:e.clientX,clientY:e.clientY}))});
 /* ---------- Welkom: korte uitleg bij het openen (1 keer per sessie, uit te zetten) ---------- */
 function toonWelkom(){const st=(t,n,tab,uitleg)=>`<button type="button" class="welstap" onclick="sluitMobSoort();naar('${tab}')"><span class="welnr">${n}</span><span><b>${t}</b><br><span class="status">${uitleg}</span></span></button>`;
-  toonPop("🌱 Welkom bij "+KLANT.appNaam,`<p class="ondertitel" style="margin:0 0 10px;font-size:17px">Planning · voorraad · verkoop</p><p style="margin:0 0 10px">Met deze app plant u de teelt: van <b>inkoop</b> tot <b>aflevering</b>.</p>
+  toonPop("Welkom",`<div class="welkmerk"><img src="${(document.querySelector('link[rel=icon]')||{}).href||""}" alt=""><div><div class="wmnaam">${esc(KLANT.appNaam)}</div><div class="wmsub">Planning · voorraad · verkoop</div></div></div><p style="margin:0 0 10px">Met deze app plant u de teelt: van <b>inkoop</b> tot <b>aflevering</b>.</p>
     ${st("Parameters",1,"soorten","teelten en soorten: teeltduur, fust, levertijd")}
     ${st("Inkoop / opzetten",2,"oppot","per week invullen wat u opzet · ziet direct de ruimte in de kas")}
     ${st("Opzetplanning",3,"oppotov","overzicht per week: planten, trays, m², bestelweek")}
