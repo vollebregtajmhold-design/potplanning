@@ -971,7 +971,7 @@ body.sales .navMidden>.mknop.groot{display:none!important}body.kijkmodus #btnPri
 
 <script>
 "use strict";
-const VERSIE="45.0";
+const VERSIE="45.1";
 const VERSIE_DATUM="03-11-2026";
 /* ---------- Basis ---------- */
 const PALET=["#2d6a4f","#1B5EBE","#E8007D","#c77d1a","#7a4fa0","#0f8b8d","#5b6b2f","#3d5a80","#a0522d","#7AB648"];
@@ -4846,11 +4846,11 @@ const OF_UITLEG_IMG="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYE
 function uitlegLaag(titel,inhoud){let l=document.getElementById("uitlegLaag");if(l)l.remove();l=document.createElement("div");l.id="uitlegLaag";
   l.innerHTML=`<div class="ulkaart"><div class="ulkop"><b>${titel}</b><button type="button" onclick="document.getElementById('uitlegLaag').remove()">✕</button></div><div class="ulin">${inhoud}</div></div>`;
   l.onclick=e=>{if(e.target===l)l.remove()};document.body.appendChild(l)}
-function toonOrderUitleg(){const OX=300,OY=150,A={week:[149,78],tot:[313,78],pct:[531,78],mail:[639,78],opsl:[754,78],uit:[36,256],aan:[249,180],vrij:[348,180],al:[463,118],n:[574,218],pr:[713,180]};
+function toonOrderUitleg(){const OX=300,OY=150,A={week:[149,78],tot:[313,78],pct:[531,78],mail:[639,78],opsl:[754,78],uit:[36,256],vk:[36,118],aan:[249,180],vrij:[348,180],al:[463,118],n:[574,218],pr:[713,180]};
   const C=[[["Week:","kies de week van","de levering"],20,20,"week"],[["Totaal:","wat u nu invult"],330,20,"tot"],
     [["Aanbod %:","hoeveel van Nog vrij","in de mail komt"],600,20,"pct"],[["Mail aanbod:","Gmail/Outlook gaat open,","plak met Ctrl + V"],880,20,"mail"],
     [["Opslaan:","de order komt in de planning,","daarna opent de pakbon"],1110,140,"opsl"],
-    [["Vinkje uit:","deze soort komt","niet in de mail"],20,270,"uit"],[["In mail (grijs):","wat de klant in de mail ziet,","afgerond op 100"],20,470,"aan"],
+    [["Vinkje in de kop:","alles in 1 keer","aan of uit"],20,160,"vk"],[["Vinkje uit:","deze soort komt","niet in de mail"],20,290,"uit"],[["In mail (grijs):","wat de klant in de mail ziet,","afgerond op 100"],20,470,"aan"],
     [["Nog vrij:","wat nog te koop is"],300,660,"vrij"],[["Al besteld:","wat deze klant","al heeft"],560,660,"al"],
     [["Aantal:","typ hier het aantal,","afgerond op hele trays"],1150,300,"n"],[["€ /st:","prijs van deze klant","(uit Prijzen)"],1150,460,"pr"]];
   let g="";for(const[t,x,y,a]of C){const w=Math.max(...t.map(r=>r.length))*8.6+22,h=t.length*21+14,cx=x+w/2,cy=y+h/2,px=OX+A[a][0],py=OY+A[a][1];
