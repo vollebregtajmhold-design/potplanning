@@ -763,7 +763,7 @@ body.mobiel #aanbodKnop{display:block}@media (max-width:900px),(pointer:coarse){
 .ordring{display:inline-block;border:2px solid #d0103a;border-radius:999px;padding:0 7px;line-height:1.35;margin:-2px -9px}
 
 body.sales .navMidden>.mknop.groot{display:none!important}body.kijkmodus #btnPrijzen{display:none}body.sales .navMidden>.menu.uitgebreid{display:none!important}
-#wgSales.aan,#wgAlles.aan{background:#2d6a4f;color:#fff;border-color:#2d6a4f}
+#wgSales.aan,#wgAlles.aan,#mp_gmail.aan,#mp_outlook.aan,#mp_standaard.aan{background:#2d6a4f;color:#fff;border-color:#2d6a4f}
 
 #btnUitleg{width:22px;height:22px;flex:none;border-radius:50%;background:#2d9d5a;color:#fff;border:3px solid #fff;cursor:pointer;padding:0;font:bold 12px/1 Arial,sans-serif;box-shadow:0 1px 3px rgba(0,0,0,.4);margin-left:6px}
 
@@ -832,6 +832,7 @@ body.sales .navMidden>.mknop.groot{display:none!important}body.kijkmodus #btnPri
       <div class="zvkeus" title="Welke module ziet u op dit apparaat"><span>Module:</span><button type="button" id="niv2" onclick="zetNiveau(2)" title="Planning met reserveringen">1</button><button type="button" id="niv3" onclick="zetNiveau(3)" title="Plus kosten per week·m², afd en vloer">2</button><button type="button" id="niv4" onclick="zetNiveau(4)" title="Plus aanbodlijst, prijzen en delen">3</button></div>
       <div class="status" id="nivUitleg" style="padding:0 10px 6px;font-size:11px"></div>
       <div class="zvkeus" title="Sales: alleen Zoeken en de Afleverplanning. Alles: alle pagina's."><span>Weergave:</span><button type="button" id="wgSales" onclick="event.stopPropagation();zetWeergave('sales')">Sales</button><button type="button" id="wgAlles" onclick="event.stopPropagation();zetWeergave('alles')">Alles</button></div>
+      <div class="zvkeus" title="Met welk mailprogramma de mailknoppen openen (per apparaat)"><span>Mail:</span><button type="button" id="mp_gmail" onclick="event.stopPropagation();zetMailProg('gmail')">Gmail</button><button type="button" id="mp_outlook" onclick="event.stopPropagation();zetMailProg('outlook')">Outlook</button><button type="button" id="mp_standaard" onclick="event.stopPropagation();zetMailProg('standaard')" title="Het mailprogramma dat op dit apparaat is ingesteld">Standaard</button></div>
       <div class="zvkeus" title="Totale oppervlakte van de kas (bruto). Komt als lijn in de Ruimte-grafiek."><span>Bruto kasruimte</span><input type="number" id="brutoIn" min="0" step="1" style="width:80px;font-size:13px;padding:3px 5px" onclick="event.stopPropagation()" onchange="data.instellingen.brutoM2=Math.max(0,Math.round(+this.value||0));wijzig();melding('✓ Bruto kasruimte: '+getal(data.instellingen.brutoM2)+' m²','#2d6a4f')"><span>m²</span></div>
       <div class="zvkeus" title="Het afleverseizoen loopt van deze week t/m de week ervoor in het volgende jaar"><span>Seizoen begint wk</span><input type="number" id="seizIn" min="1" max="52" style="width:56px;font-size:13px;padding:3px 5px" onclick="event.stopPropagation()" onchange="data.instellingen.seizoenStart=Math.max(1,Math.min(52,Math.round(+this.value||11)));aflS=null;wijzig();melding('✓ Seizoen begint nu in week '+data.instellingen.seizoenStart,'#2d6a4f')"></div>
       <button id="btnInlezen" class="wolkAlleen" type="button" title="Een json-bestand inlezen in de online planning">📥 Json-bestand inlezen</button>
@@ -944,7 +945,7 @@ body.sales .navMidden>.mknop.groot{display:none!important}body.kijkmodus #btnPri
 
 <script>
 "use strict";
-const VERSIE="42.7";
+const VERSIE="42.9";
 const VERSIE_DATUM="03-11-2026";
 /* ---------- Basis ---------- */
 const PALET=["#2d6a4f","#1B5EBE","#E8007D","#c77d1a","#7a4fa0","#0f8b8d","#5b6b2f","#3d5a80","#a0522d","#7AB648"];
@@ -4437,7 +4438,7 @@ function beschLijst(){if(niveau()<4){melding("De aanbodlijst zit in module 3 (Be
       <span class="status">${teeltFilter?"teelt: "+esc(teeltNaam(data.teeltduren.find(t=>t.id===teeltFilter)||{})):"alle teelten"}</span></div>
     <div id="blLijst" class="bllijst">${beschHtml()}</div>
     <div class="rij" style="margin-top:12px;gap:8px;flex-wrap:wrap"><span class="status">PDF: kies bij afdrukken "Opslaan als PDF".</span><span style="flex:1"></span>
-      <button class="btn licht" onclick="beschPlaatje(false)">⬇ Plaatje</button><button class="btn licht" onclick="beschPlaatje(true)" title="Kopiëren en daarna plakken in WhatsApp of mail">📋 Kopieer plaatje</button>${navigator.share?`<button class="btn licht" onclick="beschPlaatje('deel')">📤 Delen</button>`:""}<button class="btn licht" onclick="beschMail()" title="Opent een nieuwe Gmail met de lijst als tekst. Het plaatje staat dan klaar om te plakken (Ctrl + V).">✉ Gmail</button><button class="btn" onclick="beschPrint()">🖨️ Afdrukken / PDF</button></div>`);
+      <button class="btn licht" onclick="beschPlaatje(false)">⬇ Plaatje</button><button class="btn licht" onclick="beschPlaatje(true)" title="Kopiëren en daarna plakken in WhatsApp of mail">📋 Kopieer plaatje</button>${navigator.share?`<button class="btn licht" onclick="beschPlaatje('deel')">📤 Delen</button>`:""}<button class="btn licht" onclick="beschMail()" title="Opent een nieuwe Gmail met de lijst als tekst. Het plaatje staat dan klaar om te plakken (Ctrl + V).">✉ ${mailNaam()}</button><button class="btn" onclick="beschPrint()">🖨️ Afdrukken / PDF</button></div>`);
   const m=document.querySelector("#mobPop .mpop");if(m){m.style.maxWidth="900px";m.style.width="auto"}if(blFoto||blWeerg==="cat")blFotosKlaar()}
 /* lijst als tekst (alleen aangevinkte soorten) en een nieuwe Gmail openen */
 function beschTekst(){const{wk,rijen}=beschData(),l=rijen.filter(r=>!blUit.has(r.pr+"|"+r.so)),wn=t=>isoWeek(new Date(t)).w;
@@ -4468,9 +4469,9 @@ async function beschMail(){const{onderwerp,tekst,leeg}=beschTekst();if(leeg){ale
   const w=window.open("about:blank","_blank");let gekopieerd=false;
   try{melding("Mail klaarmaken…");const html=await beschMailHtml();
     await navigator.clipboard.write([new ClipboardItem({"text/html":new Blob([html],{type:"text/html"}),"text/plain":new Blob([tekst],{type:"text/plain"})})]);gekopieerd=true}catch(e){}
-  const u=`https://mail.google.com/mail/?view=cm&fs=1&su=${encodeURIComponent(onderwerp)}${gekopieerd?"":"&body="+encodeURIComponent(tekst)}`;
-  if(w)w.location.href=u;else window.open(u,"_blank");
-  melding(gekopieerd?"✉ Gmail gaat open · klik in de mail en druk op Ctrl + V: de lijst met foto's komt erin":"✉ Gmail gaat open met de lijst als tekst","#2d6a4f")}
+  const u=mailUrl("",onderwerp,gekopieerd?"":tekst);
+  mailGa(u,w);
+  melding(gekopieerd?`✉ ${mailNaam()} gaat open · klik in de mail en druk op Ctrl + V: de lijst met foto's komt erin`:`✉ ${mailNaam()} gaat open met de lijst als tekst`,"#2d6a4f")}
 async function blFotosKlaar(){if(!blFoto&&blWeerg!=="cat")return;await Promise.all(Object.keys(data.fotos||{}).map(fotoLaad));fotoVul();await new Promise(r=>setTimeout(r,150))}
 async function beschPrint(){await blFotosKlaar();let d=document.getElementById("pakbonPrint");if(!d){d=document.createElement("div");d.id="pakbonPrint";document.body.appendChild(d)}
   d.innerHTML=`<div class="bllijst">${beschHtml(true)}</div>`;fotoVul();await new Promise(r=>setTimeout(r,200));document.body.classList.add("pbprint");
@@ -4483,7 +4484,7 @@ async function beschPlaatje(kopie){const bron=document.getElementById("blLijst")
   try{melding("Plaatje maken…");const fotos=fotoBijsnijd(el),h2c=await h2cLib(),cv=await h2c(el,{backgroundColor:"#ffffff",scale:2,onclone:doc=>fotoZetKloon(fotos,doc.getElementById("blShot"))});
     const blob=await new Promise(r=>cv.toBlob(r,"image/png"));
     if(kopie==="deel"){const f=new File([blob],`beschikbaar ${wkCode(+dezeWeek())}.png`,{type:"image/png"});if(navigator.canShare&&navigator.canShare({files:[f]})){try{await navigator.share({files:[f]});return}catch(e){if(e.name==="AbortError")return}}}
-    if(kopie&&navigator.clipboard&&window.ClipboardItem){try{await navigator.clipboard.write([new ClipboardItem({"image/png":blob})]);melding(kopie==="stil"?"✉ Gmail is open · het plaatje staat klaar: plak het in de mail met Ctrl + V":"📋 Plaatje gekopieerd – plak het in WhatsApp of mail (Ctrl + V)","#2d6a4f");return}catch(e){}}
+    if(kopie&&navigator.clipboard&&window.ClipboardItem){try{await navigator.clipboard.write([new ClipboardItem({"image/png":blob})]);melding(kopie==="stil"?`✉ ${mailNaam()} is open · het plaatje staat klaar: plak het in de mail met Ctrl + V`:"📋 Plaatje gekopieerd – plak het in WhatsApp of mail (Ctrl + V)","#2d6a4f");return}catch(e){}}
     if(kopie==="stil")return;
     const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=`beschikbaar ${wkCode(+dezeWeek())}.png`;a.click();melding("⬇ Plaatje gedownload","#2d6a4f")}
   catch(e){alert("Plaatje maken lukt niet: "+e.message)}finally{el.remove()}}
@@ -4738,7 +4739,7 @@ function klantMenu(naam,el){sluitKlantMenu();const k=klantVan(naam)||{naam},r=el
   const it=(ic,t,f)=>`<button type="button" onclick="sluitKlantMenu();${f}">${t}</button>`,N=JSON.stringify(k.naam||naam).replace(/"/g,"&quot;");
   m.innerHTML=`<div class="klmkop">${esc(k.naam||naam)}</div>
     <div class="klmtel">☎ ${k.telefoon?esc(k.telefoon):'<span class="status">geen telefoonnummer</span>'}</div>
-    ${k.email?it("✉","Gmail",`klantMail(${N})`):`<div class="klmtel status">Gmail (geen e-mailadres)</div>`}
+    ${k.email?it("✉",mailNaam(),`klantMail(${N})`):`<div class="klmtel status">${mailNaam()} (geen e-mailadres)</div>`}
     ${it("🧾","Orderformulier",`orderForm(${N})`)}
     ${niveau()>1&&k.id?it("💶","Prijzen",`prijsTabel('${k.id}')`):""}
     ${k.id?it("📦","Fust per teelt",`klantPerTeelt('${k.id}')`):""}
@@ -4759,10 +4760,10 @@ function klantKaart(naam,kaal){if(kaal!==undefined)kkKaal=kaal;const k=klantVan(
   const knop=(href,txt)=>`<a class="btn licht" style="text-decoration:none" href="${href}" target="_blank" rel="noopener">${txt}</a>`;
   let h=`<div class="kkkop"><div>${k.plaats?`<div>📍 ${esc(k.plaats)}</div>`:""}${k.contact?`<div>👤 ${esc(k.contact)}</div>`:""}${k.telefoon?`<div>☎ ${esc(k.telefoon)}</div>`:""}${k.email?`<div>✉ ${esc(k.email)}</div>`:""}${k.fust||k.perTeelt?`<div>📦 ${esc(k.fust||"fust")}${+k.perFust>1?" · "+getal(k.perFust)+" per fust":""}${k.perTeelt?"<br>"+Object.keys(k.perTeelt).map(tid=>{const t=data.teeltduren.find(x=>x.id===tid),kf=klantFust(k,tid);return t?`${esc(teeltLabel(t))}: ${kf.per>0?getal(kf.per):"–"} per ${esc(kf.fust||"fust")}`:""}).filter(Boolean).join(" · "):""}</div>`:""}${k.opmerking?`<div class="status">💬 ${esc(k.opmerking)}</div>`:""}</div>
     <div class="kkcijfers"><div><b>${getal(tN)}</b><span>planten gereserveerd</span></div><div><b>${nR}</b><span>reserveringen</span></div><div><b>${tE?euro(tE):"–"}</b><span>waarde</span></div></div></div>
-    <div class="rij" style="gap:6px;flex-wrap:wrap;margin:8px 0 12px">${tel?knop("tel:"+tel,"📞 Bellen"):""}${wa.length>8?knop("https://wa.me/"+wa,"💬 WhatsApp"):""}${k.email?`<button class="btn licht" onclick="klantMail(this.dataset.k)" data-k="${esc(naam)}" title="Nieuwe Gmail aan deze klant, met het overzicht van de reserveringen">✉ Gmail</button>`:""}
+    <div class="rij" style="gap:6px;flex-wrap:wrap;margin:8px 0 12px">${tel?knop("tel:"+tel,"📞 Bellen"):""}${wa.length>8?knop("https://wa.me/"+wa,"💬 WhatsApp"):""}${k.email?`<button class="btn licht" onclick="klantMail(this.dataset.k)" data-k="${esc(naam)}" title="Nieuwe Gmail aan deze klant, met het overzicht van de reserveringen">✉ ${mailNaam()}</button>`:""}
       <button class="btn" onclick="orderForm(this.dataset.k)" data-k="${esc(k.naam||naam)}" title="Alle soorten van één week onder elkaar: alleen aantallen invullen">🧾 Orderformulier</button><button class="btn licht" onclick="sluitMobSoort();vo={datum:datumTekst(new Date()),klant:this.dataset.k,teelt:teeltFilter||'',soort:'',n:''};verkoopOrder()" data-k="${esc(k.naam||naam)}">＋ Eén reservering</button>
       <label class="status" style="margin-left:auto"><input type="checkbox" ${kkAlles?"checked":""} onchange="kkAlles=this.checked;klantKaart(this.dataset.k)" data-k="${esc(naam)}"> ook afgelopen 8 weken</label></div>`;
-  if(kkKaal)h=`<div class="rij" style="margin:0 0 10px;gap:10px;align-items:center"><span class="status">${getal(tN)} planten · ${nR} reserveringen${tE?" · "+euro(tE):""}</span>${k.email?`<button class="btn licht" onclick="klantMailOverzicht(this.dataset.k)" data-k="${esc(naam)}" title="Gmail met dit overzicht (Ctrl + V om te plakken)">✉ Gmail overzicht</button>`:""}<label class="status" style="margin-left:auto"><input type="checkbox" ${kkAlles?"checked":""} onchange="kkAlles=this.checked;klantKaart(this.dataset.k)" data-k="${esc(naam)}"> ook afgelopen 8 weken</label></div>`;
+  if(kkKaal)h=`<div class="rij" style="margin:0 0 10px;gap:10px;align-items:center"><span class="status">${getal(tN)} planten · ${nR} reserveringen${tE?" · "+euro(tE):""}</span>${k.email?`<button class="btn licht" onclick="klantMailOverzicht(this.dataset.k)" data-k="${esc(naam)}" title="Gmail met dit overzicht (Ctrl + V om te plakken)">✉ ${mailNaam()} overzicht</button>`:""}<label class="status" style="margin-left:auto"><input type="checkbox" ${kkAlles?"checked":""} onchange="kkAlles=this.checked;klantKaart(this.dataset.k)" data-k="${esc(naam)}"> ook afgelopen 8 weken</label></div>`;
   const wks=Object.keys(per).sort();
   if(!wks.length)h+=`<p class="status">Geen reserveringen ${kkAlles?"in deze periode":"vanaf deze week"}.</p>`;
   else{h+=`<div style="overflow-x:auto"><table class="kktab"><tr><th>Soort</th><th>Aantal</th><th>Fust</th><th>Prijs</th><th>Bedrag</th><th>Opmerking</th></tr>`;
@@ -4783,7 +4784,7 @@ function orderForm(naam,t){const kk=klantVan(naam)||{naam},nu=+dezeWeek();if(t!=
     for(const k of rijen){const[pr,so]=k.split("|");if(pr!==vor){h+=`<tr class="kkweek"><td colspan="5">${esc(pr)}</td></tr>`;vor=pr}
       const vrij=per.get(k)-verkSom(k,ofWeek),al=verkVan(k,ofWeek).filter(x=>(x.klant||"").toLowerCase()===String(kk.naam||naam).toLowerCase()).reduce((a,x)=>a+ +x.n,0),ras=vkRasVan(k),pv=ras?vkPrijs(kk.id,ras.id):null;
       h+=`<tr data-k="${esc(k)}"><td>${esc(so)}</td><td class="r ${vrij<0?"let":""}">${getal(vrij)}</td><td class="r">${al?getal(al):""}</td><td><input class="ofn" inputmode="numeric" placeholder="0" oninput="ofTel()"></td><td><input class="ofp" inputmode="decimal" value="${pv!=null?pF(pv):""}" placeholder="€"></td></tr>`}
-    h+=`</table><div class="rij" style="gap:8px;margin-top:12px;align-items:center;flex-wrap:wrap"><span class="status" id="ofTot">0 planten</span><span class="noprint" style="margin-left:auto;display:flex;gap:6px;align-items:center">${kk.email&&!/Android|iPhone|iPad/i.test(navigator.userAgent)?`<span class="status">aanbod</span><select id="ofPct" title="Welk deel van wat vrij is in de mail zetten (afgerond op 100)">${[100,90,80,70,60,50,40,30,20,10].map(x=>`<option value="${x}" ${x===ofPctVan()?"selected":""}>${x}%</option>`).join("")}</select><button class="btn licht" onclick="orderMail(this.dataset.k)" data-k="${esc(kk.naam||naam)}" title="Gmail met het aanbod van deze week voor deze klant (Ctrl + V om te plakken)">✉ Gmail aanbod</button>`:""}<button class="btn" onclick="orderOpslaan(this.dataset.k)" data-k="${esc(kk.naam||naam)}">✔ Opslaan</button></span></div>`}
+    h+=`</table><div class="rij" style="gap:8px;margin-top:12px;align-items:center;flex-wrap:wrap"><span class="status" id="ofTot">0 planten</span><span class="noprint" style="margin-left:auto;display:flex;gap:6px;align-items:center">${kk.email&&!/Android|iPhone|iPad/i.test(navigator.userAgent)?`<span class="status">aanbod</span><select id="ofPct" title="Welk deel van wat vrij is in de mail zetten (afgerond op 100)">${[100,90,80,70,60,50,40,30,20,10].map(x=>`<option value="${x}" ${x===ofPctVan()?"selected":""}>${x}%</option>`).join("")}</select><button class="btn licht" onclick="orderMail(this.dataset.k)" data-k="${esc(kk.naam||naam)}" title="Gmail met het aanbod van deze week voor deze klant (Ctrl + V om te plakken)">✉ ${mailNaam()} aanbod</button>`:""}<button class="btn" onclick="orderOpslaan(this.dataset.k)" data-k="${esc(kk.naam||naam)}">✔ Opslaan</button></span></div>`}
   toonPop("🧾 Order · "+esc(kk.naam||naam),h);const m=document.querySelector("#mobPop .mpop");if(m)m.classList.add("breed");
   const e=document.querySelector(".oftab .ofn");if(e&&!/Android|iPhone|iPad/i.test(navigator.userAgent))e.focus()}
 /* aanbod van één week voor één klant als opgemaakte Gmail: soort, beschikbaar (xx% naar beneden op 100), prijs */
@@ -4799,8 +4800,8 @@ function orderMail(naam){const kk=klantVan(naam)||{naam},pct=+(document.getEleme
   h+=`</table><p style="font-size:12px;color:#555">Onder voorbehoud van tussentijdse verkoop.</p><p>Met vriendelijke groet,</p></div>`;t+="\nOnder voorbehoud van tussentijdse verkoop.\n\nMet vriendelijke groet,\n";
   const su=`Aanbod week ${wk}`+(KLANT.appNaam?" – "+KLANT.appNaam:""),w=window.open("about:blank","_blank");
   (async()=>{let ok=false;try{await navigator.clipboard.write([new ClipboardItem({"text/html":new Blob([h],{type:"text/html"}),"text/plain":new Blob([t],{type:"text/plain"})})]);ok=true}catch(e){}
-    const u=`https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(kk.email||"")}&su=${encodeURIComponent(su)}${ok?"":"&body="+encodeURIComponent(t)}`;
-    if(w)w.location.href=u;else window.open(u,"_blank");melding(ok?"✉ Gmail gaat open · klik in de mail en druk op Ctrl + V: het aanbod komt erin":"✉ Gmail gaat open met het aanbod als tekst","#2d6a4f")})()}
+    const u=mailUrl(kk.email,su,ok?"":t);
+    mailGa(u,w);melding(ok?`✉ ${mailNaam()} gaat open · klik in de mail en druk op Ctrl + V: het aanbod komt erin`:`✉ ${mailNaam()} gaat open met het aanbod als tekst`,"#2d6a4f")})()}
 function ofTel(){let n=0,r=0;document.querySelectorAll(".oftab .ofn").forEach(i=>{const v=Math.round(+String(i.value).replace(/[.\s]/g,"").replace(",",".")||0);if(v>0){n+=v;r++}});const el=document.getElementById("ofTot");if(el)el.textContent=`${getal(n)} planten · ${r} soort${r===1?"":"en"}`}
 function orderOpslaan(naam){const kk=klantVan(naam),code=wkCode(ofWeek);let r=0,n=0;data.verkoop=data.verkoop||{};
   document.querySelectorAll(".oftab tr[data-k]").forEach(tr=>{let v=Math.round(+String(tr.querySelector(".ofn").value).replace(/[.\s]/g,"").replace(",",".")||0);if(v<=0)return;
@@ -4830,10 +4831,24 @@ function prijsCel(el){const P=data.vkPrijzen=data.vkPrijzen||{},o=P[el.dataset.k
   if(!Object.keys(o).length)delete P[el.dataset.k];el.value=v==null?"":pF(v);
   if(el.dataset.k==="std")el.closest("tr").querySelectorAll("input:not(.prstd)").forEach(i=>i.placeholder=v==null?"":pF(v));opslaanLater()}
 /* Gmail aan de klant met de komende reserveringen als tekst */
-/* Gmail uit het klantmenu: leeg, alleen "Beste …" */
+/* mailprogramma per apparaat: gmail | outlook | standaard (mailto) */
+function mailProg(){try{return localStorage.getItem("potplanning-mail")||"gmail"}catch(e){return"gmail"}}
+const mailNaam=()=>({gmail:"Gmail",outlook:"Outlook",standaard:"Mail"})[mailProg()];
+function mailUrl(to,su,body){const e=encodeURIComponent,m=mailProg();
+  if(m==="outlook")return`https://outlook.office.com/mail/deeplink/compose?to=${e(to||"")}${su?"&subject="+e(su):""}${body?"&body="+e(body):""}`;
+  if(m==="standaard")return`mailto:${e(to||"")}?${su?"subject="+e(su)+"&":""}${body?"body="+e(body):""}`;
+  return`https://mail.google.com/mail/?view=cm&fs=1&to=${e(to||"")}${su?"&su="+e(su):""}${body?"&body="+e(body):""}`}
+function mailGa(u,w){if(u.startsWith("mailto:")){if(w)try{w.close()}catch(e){}location.href=u;return}if(w)w.location.href=u;else window.open(u,"_blank")}
+function zetMailProg(v){try{localStorage.setItem("potplanning-mail",v)}catch(e){}mailKnoppen();render();melding("✉ Mail met: "+mailNaam(),"#2d6a4f")}
+function mailKnoppen(){["gmail","outlook","standaard"].forEach(v=>{const b=document.getElementById("mp_"+v);if(b)b.classList.toggle("aan",mailProg()===v)})}
+setTimeout(mailKnoppen,0);
+/* mail uit het klantmenu: leeg, alleen "Beste …" */
 function klantMail(naam){const k=klantVan(naam)||{naam},t=`Beste ${k.contact||k.naam},\n\n`,mob=/Android|iPhone|iPad/i.test(navigator.userAgent);
   if(mob){location.href=`mailto:${encodeURIComponent(k.email||"")}?body=${encodeURIComponent(t)}`;return}
-  window.open(`https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(k.email||"")}&body=${encodeURIComponent(t)}`,"_blank")}
+  /* geen tekst meesturen in de link: dan zet Gmail/Outlook de handtekening eronder. "Beste …" staat klaar om te plakken (Ctrl + V) */
+  if(mailProg()==="standaard"){mailGa(mailUrl(k.email,"",t));return}
+  const w=window.open("about:blank","_blank");(async()=>{let ok=false;try{await navigator.clipboard.write([new ClipboardItem({"text/html":new Blob([`<div>Beste ${esc(k.contact||k.naam)},</div><div><br></div>`],{type:"text/html"}),"text/plain":new Blob([t],{type:"text/plain"})})]);ok=true}catch(e){}
+    mailGa(mailUrl(k.email,"",ok?"":t),w);if(ok)melding(`✉ ${mailNaam()} gaat open · druk in de mail op Ctrl + V voor "Beste ${esc(k.contact||k.naam)},"`,"#2d6a4f")})()}
 /* Gmail uit Overzicht pakbonnen: overzicht van de reserveringen kopiëren (Ctrl + V) */
 function klantMailOverzicht(naam){const k=klantVan(naam)||{naam},nu=wkCode(+dezeWeek()),per={};
   for(const[key,arr]of Object.entries(data.verkoop||{})){const p=key.split("|");if(p.length!==3||p[2]<nu)continue;
@@ -4855,9 +4870,9 @@ function klantMailOverzicht(naam){const k=klantVan(naam)||{naam},nu=wkCode(+deze
   h+=`<tr><td style="${td}font-weight:bold;border-top:2px solid ${G}">Totaal</td><td style="${td}font-weight:bold;text-align:right;border-top:2px solid ${G}">${getal(tot)}</td><td colspan="2" style="${td}border-top:2px solid ${G}"></td><td style="${td}font-weight:bold;text-align:right;border-top:2px solid ${G}">${totE?euro(totE):""}</td><td style="${td}border-top:2px solid ${G}"></td></tr></table><p>Met vriendelijke groet,</p></div>`;
   const w=window.open("about:blank","_blank");let ok=false;
   (async()=>{try{await navigator.clipboard.write([new ClipboardItem({"text/html":new Blob([h],{type:"text/html"}),"text/plain":new Blob([t],{type:"text/plain"})})]);ok=true}catch(e){}
-    const u=`https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(k.email||"")}&su=${encodeURIComponent(su)}${ok?"":"&body="+encodeURIComponent(t)}`;
-    if(w)w.location.href=u;else window.open(u,"_blank");
-    melding(ok?"✉ Gmail gaat open · klik in de mail en druk op Ctrl + V: het overzicht komt erin":"✉ Gmail gaat open met het overzicht als tekst","#2d6a4f")})()}
+    const u=mailUrl(k.email,su,ok?"":t);
+    mailGa(u,w);
+    melding(ok?`✉ ${mailNaam()} gaat open · klik in de mail en druk op Ctrl + V: het overzicht komt erin`:`✉ ${mailNaam()} gaat open met het overzicht als tekst`,"#2d6a4f")})()}
 /* pakbon in het scherm: meteen te wijzigen (aantal, fust, prijs, opmerking, weghalen, soort erbij). Afdrukken blijft de nette versie */
 function pakbonBewerk(klant,code,l,k,dat,y,w){const K=`data-klant="${esc(klant)}" data-code="${code}"`;let tp=0,te=0;
   const rijen=l.map(r=>{const pl=plekVan(r.k,r.t);tp+=r.n;if(r.prijs!=null)te+=r.prijs*r.n;const D=`data-key="${esc(r.key)}" data-i="${r.i}" ${K}`;
