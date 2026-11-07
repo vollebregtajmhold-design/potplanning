@@ -941,7 +941,7 @@ body.sales .navMidden>.mknop.groot{display:none!important}body.sales .navMidden>
 
 <script>
 "use strict";
-const VERSIE="42.2";
+const VERSIE="42.3";
 const VERSIE_DATUM="03-11-2026";
 /* ---------- Basis ---------- */
 const PALET=["#2d6a4f","#1B5EBE","#E8007D","#c77d1a","#7a4fa0","#0f8b8d","#5b6b2f","#3d5a80","#a0522d","#7AB648"];
@@ -1416,21 +1416,26 @@ function toonTabelUitleg(){const klant=tab==="aflever"&&aflRij==="klant";let OX=
     [["Rood vlak met min:","te veel verkocht,","kijk hier naar!"],430,480,509,88],
     [["Rode cirkel:","hier zit al","een order in"],985,150,651,88],
     [["— = niets","beschikbaar"],985,360,651,125]];
-  if(klant){OX=320;OY=170;W=540;H=224;BEELD=UITLEG_IMG2;C=[
-    [["Klantoverzicht:","klanten onder elkaar,","weken naast elkaar"],20,20,105,42],
-    [["Excel of Print:","overzicht downloaden","of afdrukken"],330,20,150,43],
-    [["Klik op een week:","alle reserveringen","van die week. Geel = nu"],760,20,322,42],
-    [["Notitie: klik op +","voor een notitie","bij die week"],20,170,115,70],
-    [["Klik op een klant:","klantkaart met bellen,","mailen en orderformulier"],20,330,110,132],
-    [["Klik op een getal:","de pakbon van die klant","in die week (wijzigen","en afdrukken)"],930,150,465,97],
-    [["— = geen order","in die week"],930,330,385,133],
-    [["Totaal gereserveerd:","alle klanten samen","per week"],430,445,322,203]]}
-  let g="";for(const[t,x,y,ax,ay]of C){const w=Math.max(...t.map(r=>r.length))*8.6+22,h=t.length*21+14,cx=x+w/2,cy=y+h/2,px=OX+ax,py=OY+ay;
+  let extra="";
+  if(klant){OX=40;OY=150;W=540;H=224;BEELD=UITLEG_IMG2;
+    /* menu tekenen onder "Klant 2" */
+    const MX=190,MY=OY+140,MW=250,RH=38,reg=["☎ 0297-123456","Gmail","Orderformulier","Prijzen","Fust per teelt","Reservering","Overzicht pakbonnen"];
+    extra=`<rect x="${MX+4}" y="${MY+5}" width="${MW}" height="${40+reg.length*RH}" rx="8" fill="rgba(0,0,0,.18)"/><rect x="${MX}" y="${MY}" width="${MW}" height="${40+reg.length*RH}" rx="8" fill="#fff" stroke="#2b5fb4" stroke-width="2"/>
+      <path d="M${MX+2},${MY+40}V${MY+8}a6,6 0 0 1 6,-6H${MX+MW-8}a6,6 0 0 1 6,6V${MY+40}z" fill="#f1ece2"/><text x="${MX+16}" y="${MY+26}" font-size="15" font-weight="bold" font-family="Arial,sans-serif" fill="#222">Klant 2</text>
+      ${reg.map((r,i)=>`<line x1="${MX+2}" x2="${MX+MW-2}" y1="${MY+40+i*RH}" y2="${MY+40+i*RH}" stroke="#d6d6d6"/><text x="${MX+16}" y="${MY+40+i*RH+24}" font-size="15" font-family="Arial,sans-serif" fill="#222">${esc(r)}</text>`).join("")}`;
+    const uit=["Telefoonnummer, alleen om te lezen","Nieuwe Gmail met de reserveringen van deze klant","Meer soorten in één week invullen, daarna de pakbon","Prijzen van deze klant (module 3)","Traymaat en aantal per tray, per teelt","Eén reservering maken, klant staat al ingevuld","Alle weken van deze klant, met knop Pakbon"];
+    C=[[["Klantoverzicht:","klanten onder elkaar,","weken naast elkaar"],20,20,105,42],
+      [["Excel of Print:","overzicht downloaden","of afdrukken"],300,20,150,43],
+      [["Klik op een week:","alle reserveringen","van die week. Geel = nu"],620,20,322,42],
+      [["Klik op een getal:","de pakbon van die klant","in die week"],900,150,465,97],
+      [["Klik op een klant:","dit menu gaat open"],20,560,80,133],
+      ...uit.map((t,i)=>[[t],610,MY+40+i*RH+2,MX+MW,MY+40+i*RH+RH/2,true])]}
+  let g="";for(const[t,x,y,ax,ay,abs]of C){const w=Math.max(...t.map(r=>r.length))*8.6+22,h=abs?32:t.length*21+14,cx=x+w/2,cy=y+h/2,px=abs?ax:OX+ax,py=abs?ay:OY+ay;
     const ex=px<x?x:px>x+w?x+w:cx,ey=py<y?y:py>y+h?y+h:cy;
     g+=`<line x1="${ex}" y1="${ey}" x2="${px}" y2="${py}" stroke="#2d6a4f" stroke-width="2.5" marker-end="url(#pijl)"/><circle cx="${px}" cy="${py}" r="5" fill="#2d6a4f"/>
-      <rect x="${x}" y="${y}" width="${w}" height="${h}" rx="10" fill="#eef6f1" stroke="#2d6a4f" stroke-width="1.5"/>${t.map((r,i)=>`<text x="${x+11}" y="${y+24+i*21}" font-size="16" font-family="Arial,sans-serif" fill="#1f4d39" ${i?"":'font-weight="bold"'}>${esc(r)}</text>`).join("")}`}
-  const svg=`<svg viewBox="0 0 1180 ${klant?520:590}" style="width:100%;height:auto;display:block"><defs><marker id="pijl" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0L10,5L0,10z" fill="#2d6a4f"/></marker></defs>
-    <image href="${BEELD}" x="${OX}" y="${OY}" width="${W}" height="${H}"/><rect x="${OX}" y="${OY}" width="${W}" height="${H}" fill="none" stroke="#bbb"/>${g}</svg>`;
+      <rect x="${x}" y="${y}" width="${w}" height="${h}" rx="10" fill="#eef6f1" stroke="#2d6a4f" stroke-width="1.5"/>${t.map((r,i)=>`<text x="${x+11}" y="${y+(abs?21:24)+i*21}" font-size="16" font-family="Arial,sans-serif" fill="#1f4d39" ${i?"":'font-weight="bold"'}>${esc(r)}</text>`).join("")}`}
+  const svg=`<svg viewBox="0 0 1180 ${klant?606:590}" style="width:100%;height:auto;display:block"><defs><marker id="pijl" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0L10,5L0,10z" fill="#2d6a4f"/></marker></defs>
+    <image href="${BEELD}" x="${OX}" y="${OY}" width="${W}" height="${H}"/><rect x="${OX}" y="${OY}" width="${W}" height="${H}" fill="none" stroke="#bbb"/>${extra}${g}</svg>`;
   toonPop(klant?"❓ Uitleg van het klantoverzicht":"❓ Uitleg van de tabel",svg+`<p class="status" style="margin:8px 0 0">${klant?"Alleen weken met een order staan in het overzicht. Bovenin: <b>Beschikbaar</b> = terug naar de tabel per soort.":"Bovenin: <b>Beschikbaar</b> = deze tabel · <b>👥 Klantoverzicht</b> = klanten onder elkaar, weken naast elkaar."}</p>`);
   const m=document.querySelector("#mobPop .mpop");if(m){m.classList.add("breed");m.style.maxWidth="min(1180px,97vw)";m.style.width="min(1180px,97vw)"}}
 function toonHulp(t){const h=HULP[t];if(!h)return;toonPop("❓ "+h[0],`<ul class="vwlijst" style="font-size:15px">${h[1]}</ul>`)}
