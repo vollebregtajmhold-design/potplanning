@@ -952,7 +952,7 @@ body.sales .navMidden>.mknop.groot{display:none!important}body.kijkmodus #btnPri
 
 <script>
 "use strict";
-const VERSIE="43.3";
+const VERSIE="43.4";
 const VERSIE_DATUM="03-11-2026";
 /* ---------- Basis ---------- */
 const PALET=["#2d6a4f","#1B5EBE","#E8007D","#c77d1a","#7a4fa0","#0f8b8d","#5b6b2f","#3d5a80","#a0522d","#7AB648"];
@@ -4012,8 +4012,7 @@ function klantVeldZet(k,veld,el){const v=el.value.trim();
   k[veld]=v;if(veld==="naam")el.classList.toggle("mist",!v);opslaanLater()}
 /* klantgegevens als formulier (uit het klantmenu) */
 function klantGegevens(id){const k=data.klanten.find(x=>x.id===id);if(!k)return;
-  const h=`<div class="klgform">${KL_VELDEN.map(([v,lab])=>`<label>${v==="fust"?"Traymaat (standaard)":v==="perFust"?"Per tray (standaard)":lab}</label><input data-klg="${v}" value="${esc(k[v]??"")}" ${v==="email"?'type="email"':v==="telefoon"?'type="tel"':v==="perFust"?'inputmode="numeric" placeholder="bijv. 8"':v==="fust"?'placeholder="bijv. 498"':""} onchange="klantVeldZet(data.klanten.find(x=>x.id==='${k.id}'),'${v}',this)">`).join("")}
-    <label>Per teelt</label><div><a href="#" onclick="klantPerTeelt('${k.id}');return false">Traymaat en aantal per teelt ✎</a>${k.perTeelt?` <span class="status">(${Object.keys(k.perTeelt).length} teelten)</span>`:""}</div></div>
+  const h=`<div class="klgform">${KL_VELDEN.filter(([v])=>v!=="fust"&&v!=="perFust").map(([v,lab])=>`<label>${v==="fust"?"Traymaat (standaard)":v==="perFust"?"Per tray (standaard)":lab}</label><input data-klg="${v}" value="${esc(k[v]??"")}" ${v==="email"?'type="email"':v==="telefoon"?'type="tel"':v==="perFust"?'inputmode="numeric" placeholder="bijv. 8"':v==="fust"?'placeholder="bijv. 498"':""} onchange="klantVeldZet(data.klanten.find(x=>x.id==='${k.id}'),'${v}',this)">`).join("")}</div>
     <div class="rij" style="margin-top:14px"><span class="status">Wordt meteen opgeslagen.</span><button class="btn" style="margin-left:auto" onclick="sluitMobSoort();render()">Klaar</button></div>`;
   toonPop("Klantgegevens · "+esc(k.naam||""),h)}
 /* ---------- Oppotoverzicht: per week wat er wordt opgepot (zoals een orderoverzicht) ---------- */
