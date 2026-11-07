@@ -17,12 +17,15 @@
 const KLANT=Object.assign({appNaam:"Potplanten Planning",code:"klant",leverancier:"Vollebregt",firebase:{apiKey:"VUL_IN"}},window.KLANT||{});
 if(!window.KLANT)console.warn("klant.js niet gevonden: de app werkt zonder online database.");
 /* productnaam: <klant>-CyclaPilot (eigen app: Vollebregt-CyclaPilot). Eigen naam kan met naamKort in klant.js */
-{const CPN={"":"Vollebregt",klant:"Vollebregt",bolk:"Bolk",bergcamp:"Bergcamp",adrichem:"Adrichem",kester:"Kester",derijke:"De Rijke",rijke:"De Rijke"},c=String(KLANT.code||"");
-  KLANT.appNaam=(KLANT.naamKort||CPN[c]||c.charAt(0).toUpperCase()+c.slice(1))+"-CyclaPilot"}
+window.cpNaam=(code,kort)=>{const CPN={"":"Vollebregt",klant:"Vollebregt",bolk:"Bolk",bergcamp:"Bergcamp",adrichem:"Adrichem",kester:"Kester",derijke:"De Rijke",rijke:"De Rijke"},c=String(code||"");
+  return(kort||CPN[c]||c.charAt(0).toUpperCase()+c.slice(1))+"-CyclaPilot™"};
+KLANT.appNaam=cpNaam(KLANT.code,KLANT.naamKort);
 document.title=KLANT.appNaam;
 try{document.querySelector('meta[name=apple-mobile-web-app-title]').content="CyclaPilot"}catch(e){}
 </script>
-<script>try{const m={name:KLANT.appNaam,short_name:"CyclaPilot",display:"standalone",background_color:"#4b2a6e",theme_color:"#4b2a6e",start_url:location.href,icons:[{src:document.querySelector('link[rel=apple-touch-icon]').href,sizes:"512x512",type:"image/png"}]};const l=document.createElement("link");l.rel="manifest";l.href=URL.createObjectURL(new Blob([JSON.stringify(m)],{type:"application/manifest+json"}));document.head.appendChild(l)}catch(e){}</script>
+<script>try{const m={name:KLANT.appNaam,short_name:"CyclaPilot",display:"standalone",background_color:"#4b2a6e",theme_color:"#4b2a6e",start_url:location.href,icons:[{src:document.querySelector('link[rel=apple-touch-icon]').href,sizes:"512x512",type:"image/png"}]};const l=document.createElement("link");l.rel="manifest";
+  if(location.protocol.startsWith("http"))fetch("manifest.json",{method:"HEAD",cache:"no-store"}).then(r=>{l.href=r.ok?"manifest.json":URL.createObjectURL(new Blob([JSON.stringify(m)],{type:"application/manifest+json"}));document.head.appendChild(l)}).catch(()=>{});
+  else{l.href=URL.createObjectURL(new Blob([JSON.stringify(m)],{type:"application/manifest+json"}));document.head.appendChild(l)}}catch(e){}</script>
 <style>
 :root{
   --bg:#6d747a; --vlak:#f3efe6; --groen:#2d6a4f; --groen-d:#1f4d39;
@@ -957,7 +960,7 @@ body.sales .navMidden>.mknop.groot{display:none!important}body.kijkmodus #btnPri
 
 <script>
 "use strict";
-const VERSIE="43.6";
+const VERSIE="43.7";
 const VERSIE_DATUM="03-11-2026";
 /* ---------- Basis ---------- */
 const PALET=["#2d6a4f","#1B5EBE","#E8007D","#c77d1a","#7a4fa0","#0f8b8d","#5b6b2f","#3d5a80","#a0522d","#7AB648"];
@@ -5025,6 +5028,16 @@ function ghSleutel(){const t=prompt("Plak hier uw GitHub-sleutel (token).\nDeze 
 const ghRepo=u=>{const m=String(u||"").match(/github\.com\/([^\/\s]+)\/([^\/\s#?]+)/i);return m?{o:m[1],r:m[2].replace(/\.git$/,"")}:null};
 const b64=t=>{const b=new TextEncoder().encode(t);let s="";for(let i=0;i<b.length;i+=0x8000)s+=String.fromCharCode.apply(null,b.subarray(i,i+0x8000));return btoa(s)};
 const unb64=t=>new TextDecoder().decode(Uint8Array.from(atob(String(t).replace(/\s/g,"")),c=>c.charCodeAt(0)));
+/* los icoon (icon.png) en app-bestand (manifest.json) per app, zodat snelkoppelingen overal het goede icoon krijgen */
+async function ghZetB64(rp,pad,b64s,bericht){const tk=ghToken(),url=`https://api.github.com/repos/${rp.o}/${rp.r}/contents/${pad}`,h={Authorization:"Bearer "+tk,Accept:"application/vnd.github+json"};
+  let sha;const g=await fetch(url+"?t="+Date.now(),{headers:h,cache:"no-store"});
+  if(g.ok){const j=await g.json();sha=j.sha;if(j.content&&j.content.replace(/\s/g,"")===b64s)return"gelijk"}else if(g.status!==404)throw new Error("GitHub "+g.status);
+  const p=await fetch(url,{method:"PUT",headers:h,body:JSON.stringify({message:bericht,content:b64s,...(sha?{sha}:{})})});
+  if(!p.ok){const j=await p.json().catch(()=>({}));throw new Error(j.message||"GitHub "+p.status)}return"ok"}
+const iconB64=()=>{try{return document.querySelector('link[rel=apple-touch-icon]').href.split(",")[1]}catch(e){return""}};
+const manifestTekst=k=>JSON.stringify({name:cpNaam(k.code),short_name:"CyclaPilot",start_url:"./",scope:"./",display:"standalone",background_color:"#4b2a6e",theme_color:"#4b2a6e",
+  icons:[{src:"icon.png",sizes:"512x512",type:"image/png",purpose:"any"},{src:"icon.png",sizes:"512x512",type:"image/png",purpose:"maskable"}]},null,2);
+async function ghIcoon(rp,k){const a=await ghZetB64(rp,"icon.png",iconB64(),"Icoon CyclaPilot"),b=await ghZet(rp,"manifest.json",manifestTekst(k),"manifest.json");return a==="ok"||b==="ok"?"ok":"gelijk"}
 async function ghZet(rp,pad,tekst,bericht){const tk=ghToken(),url=`https://api.github.com/repos/${rp.o}/${rp.r}/contents/${pad}`,h={Authorization:"Bearer "+tk,Accept:"application/vnd.github+json"};
   let sha;const g=await fetch(url+"?t="+Date.now(),{headers:h,cache:"no-store"});
   if(g.ok){const j=await g.json();sha=j.sha;if(j.content&&unb64(j.content)===tekst)return"gelijk"}
@@ -5038,13 +5051,14 @@ function ghAlles(){if(!ghToken()){alert("Eerst de GitHub-sleutel invullen (knop 
     if(!m||!/window\.KLANT/.test(html)){alert("Dit is geen goed index.html-bestand van de planning.");return}
     const L=beheerData().klanten.filter(k=>ghRepo(k.repo));
     if(!confirm(`Versie ${m[1]} zetten bij ${L.length} app(s)?\n\n${L.map(k=>"• "+(k.naam||k.repo)).join("\n")}`))return;
-    const regel=(k,a,b)=>`<div class="mrij"><span><b>${esc(k.naam||"")}</b></span><span>index.html: ${a} · klant.js: ${b}</span></div>`,uit={};
-    const toon=()=>toonPop("⬆ Alles bijwerken · versie "+esc(m[1]),L.map(k=>regel(k,...(uit[k.id]||["…","…"]))).join("")+`<p class="status" style="margin:10px 0 0">Na afloop duurt het nog 1 à 2 minuten voordat de apps de nieuwe versie hebben.</p>`);
+    const regel=(k,a,b,c)=>`<div class="mrij"><span><b>${esc(k.naam||"")}</b></span><span>index.html: ${a} · klant.js: ${b} · icoon: ${c}</span></div>`,uit={};
+    const toon=()=>toonPop("⬆ Alles bijwerken · versie "+esc(m[1]),L.map(k=>regel(k,...(uit[k.id]||["…","…","…"]))).join("")+`<p class="status" style="margin:10px 0 0">Na afloop duurt het nog 1 à 2 minuten voordat de apps de nieuwe versie hebben.</p>`);
     toon();const sym=r=>r==="ok"?"✅ bijgewerkt":r==="gelijk"?"✓ was al goed":r==="overslaan"?"– overgeslagen (geen Firebase ingevuld)":"❌ "+esc(r);
     for(const k of L){const rp=ghRepo(k.repo);let a,b;
       try{a=await ghZet(rp,"index.html",html,"Versie "+m[1])}catch(e){a=e.message}
       if(fbLees(k.firebase).apiKey){try{b=await ghZet(rp,"klant.js",bhKlantJsTekst(k),"klant.js bijgewerkt")}catch(e){b=e.message}}else b="overslaan";
-      uit[k.id]=[sym(a),sym(b)];toon()}
+      let c;try{c=await ghIcoon(rp,k)}catch(e){c=e.message}
+      uit[k.id]=[sym(a),sym(b),sym(c)];toon()}
     const fout=Object.values(uit).some(x=>x.join().includes("❌"));melding(fout?"Klaar, maar niet alles is gelukt. Kijk in het venster.":"✅ Alle apps bijgewerkt naar versie "+esc(m[1]),fout?"#b3261e":"#2d6a4f");
     setTimeout(()=>{if(tab==="beheer")bhAlleVersies(true)},90000)};
   i.click()}
@@ -5073,6 +5087,7 @@ async function ghWizard(i){const k=beheerData().klanten[i];if(!k)return;
     const a=await ghZet(rp,"index.html",html,"Versie "+v);zet("index.html",(a==="gelijk"?"✓ was al goed":"✅ versie "+esc(v)));
     if(fbLees(k.firebase).apiKey){zet("klant.js","…");const b=await ghZet(rp,"klant.js",bhKlantJsTekst(k),"klant.js");zet("klant.js",b==="gelijk"?"✓ was al goed":"✅")}
     else zet("klant.js","– nog niet (eerst firebaseConfig invullen, daarna ⬆ Alles bijwerken)");
+    try{await ghIcoon(rp,k)}catch(e){}
     zet("Website (Pages)","…");const pg=await ghApi("GET",`/repos/${o}/${naam}/pages`);
     if(pg.ok)zet("Website (Pages)","✓ stond al aan");
     else{const pp=await ghApi("POST",`/repos/${o}/${naam}/pages`,{source:{branch:"main",path:"/"}});
