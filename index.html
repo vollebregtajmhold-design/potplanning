@@ -774,9 +774,9 @@ body.sales .navMidden>.mknop.groot{display:none!important}body.sales .navMidden>
 
 .prtab tr.pralle td{background:#fff8dc;position:sticky;top:31px;z-index:2;border-bottom:2px solid #e0c060}.prtab tr.pralle td.prsoort{z-index:3;background:#fff3c4;font-weight:700;color:#7a5c00}.prtab tr.pralle .prin{border-color:#e0c060}
 
-#klMenu{position:fixed;z-index:200;background:#fff;border:2px solid #2b5fb4;border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,.25);min-width:230px;overflow:hidden;font-size:15px}
-#klMenu .klmkop{background:#f1ece2;font-weight:800;padding:10px 16px;font-size:16px;border-bottom:1px solid #ddd}#klMenu .klmtel{padding:9px 16px;border-bottom:1px solid #eee;color:#333}
-#klMenu button{display:block;width:100%;text-align:left;border:0;border-bottom:1px solid #eee;background:#fff;padding:10px 16px;font:inherit;cursor:pointer;color:#222}#klMenu button:hover{background:#eef6f1}#klMenu button:last-child{border-bottom:0}
+#klMenu{position:fixed;z-index:200;background:#fff;border:2px solid #2b5fb4;border-radius:8px;box-shadow:0 8px 24px rgba(0,0,0,.25);min-width:260px;overflow:hidden;font-size:15px;font-family:system-ui,Segoe UI,Arial,sans-serif}
+#klMenu .klmkop{background:#f1ece2;font-weight:700;padding:12px 20px;font-size:16px;border-bottom:1px solid #d6d6d6}#klMenu .klmtel{padding:12px 20px;border-bottom:1px solid #d6d6d6;color:#222}
+#klMenu button{display:block;width:100%;text-align:left;border:0;border-bottom:1px solid #d6d6d6;background:#fff;padding:12px 20px;font:inherit;font-weight:500;cursor:pointer;color:#222}#klMenu button:hover{background:#eef6f1}#klMenu button:last-child{border-bottom:0}
 </style>
 </head>
 <body>
@@ -941,7 +941,7 @@ body.sales .navMidden>.mknop.groot{display:none!important}body.sales .navMidden>
 
 <script>
 "use strict";
-const VERSIE="42.0";
+const VERSIE="42.1";
 const VERSIE_DATUM="03-11-2026";
 /* ---------- Basis ---------- */
 const PALET=["#2d6a4f","#1B5EBE","#E8007D","#c77d1a","#7a4fa0","#0f8b8d","#5b6b2f","#3d5a80","#a0522d","#7AB648"];
@@ -4727,10 +4727,10 @@ function pakbonDatum(inp){const klant=inp.dataset.klant,code=inp.dataset.code,d=
   opslaanLater();pakbonVan({dataset:{klant,code}});if(tab==="verkoop"){const m=document.getElementById("mobPop");const keep=m.innerHTML;render();m.innerHTML=keep;m.hidden=false}}
 /* klantmenu (klik op een klant in het Klantoverzicht) */
 function klantMenu(naam,el){sluitKlantMenu();const k=klantVan(naam)||{naam},r=el.getBoundingClientRect(),m=document.createElement("div");m.id="klMenu";
-  const it=(ic,t,f,extra)=>`<button type="button" onclick="sluitKlantMenu();${f}">${ic} ${t}${extra||""}</button>`,N=JSON.stringify(k.naam||naam).replace(/"/g,"&quot;");
+  const it=(ic,t,f)=>`<button type="button" onclick="sluitKlantMenu();${f}">${t}</button>`,N=JSON.stringify(k.naam||naam).replace(/"/g,"&quot;");
   m.innerHTML=`<div class="klmkop">${esc(k.naam||naam)}</div>
     <div class="klmtel">☎ ${k.telefoon?esc(k.telefoon):'<span class="status">geen telefoonnummer</span>'}</div>
-    ${k.email?it("✉","Gmail",`klantMail(${N})`):`<div class="klmtel status">✉ geen e-mailadres</div>`}
+    ${k.email?it("✉","Gmail",`klantMail(${N})`):`<div class="klmtel status">Gmail (geen e-mailadres)</div>`}
     ${it("🧾","Orderformulier",`orderForm(${N})`)}
     ${niveau()>=4&&k.id?it("💶","Prijzen",`prijsTabel('${k.id}')`):""}
     ${k.id?it("📦","Fust per teelt",`klantPerTeelt('${k.id}')`):""}
