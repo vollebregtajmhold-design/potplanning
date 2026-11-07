@@ -966,7 +966,7 @@ body.sales .navMidden>.mknop.groot{display:none!important}body.kijkmodus #btnPri
 
 <script>
 "use strict";
-const VERSIE="44.5";
+const VERSIE="44.6";
 const VERSIE_DATUM="03-11-2026";
 /* ---------- Basis ---------- */
 const PALET=["#2d6a4f","#1B5EBE","#E8007D","#c77d1a","#7a4fa0","#0f8b8d","#5b6b2f","#3d5a80","#a0522d","#7AB648"];
@@ -1444,11 +1444,11 @@ function toonTabelUitleg(){const klant=tab==="aflever"&&aflRij==="klant";let OX=
   let extra="";
   if(klant){OX=40;OY=150;W=540;H=224;BEELD=UITLEG_IMG2;
     /* menu tekenen onder "Klant 2" */
-    const MX=190,MY=OY+140,MW=250,RH=38,reg=["☎ 0297-123456","Gmail","Orderformulier","Prijzen","Fust per teelt","Reservering","Overzicht pakbonnen"];
+    const MX=190,MY=OY+140,MW=250,RH=38,reg=["Klantgegevens","☎ 0297-123456","Gmail","Fust per teelt","Prijzen","Reservering","Orderformulier","Overzicht pakbonnen"];
     extra=`<rect x="${MX+4}" y="${MY+5}" width="${MW}" height="${40+reg.length*RH}" rx="8" fill="rgba(0,0,0,.18)"/><rect x="${MX}" y="${MY}" width="${MW}" height="${40+reg.length*RH}" rx="8" fill="#fff" stroke="#2b5fb4" stroke-width="2"/>
       <path d="M${MX+2},${MY+40}V${MY+8}a6,6 0 0 1 6,-6H${MX+MW-8}a6,6 0 0 1 6,6V${MY+40}z" fill="#f1ece2"/><text x="${MX+16}" y="${MY+26}" font-size="15" font-weight="bold" font-family="Arial,sans-serif" fill="#222">Klant 2</text>
       ${reg.map((r,i)=>`<line x1="${MX+2}" x2="${MX+MW-2}" y1="${MY+40+i*RH}" y2="${MY+40+i*RH}" stroke="#d6d6d6"/><text x="${MX+16}" y="${MY+40+i*RH+24}" font-size="15" font-family="Arial,sans-serif" fill="#222">${esc(r)}</text>`).join("")}`;
-    const uit=["Telefoonnummer, alleen om te lezen","Nieuwe Gmail met de reserveringen van deze klant","Meer soorten in één week invullen, daarna de pakbon","Prijzen van deze klant (module 3)","Traymaat en aantal per tray, per teelt","Eén reservering maken, klant staat al ingevuld","Alle weken van deze klant, met knop Pakbon"];
+    const uit=["Naam, plaats, contact, telefoon, e-mail","Telefoonnummer, alleen om te lezen","Nieuwe mail aan deze klant","Traymaat en aantal per tray, per teelt","Prijzen van deze klant","Eén reservering maken, klant staat al ingevuld","Meer soorten in één week, mail met aanbod","Alle weken, mail met overzicht, knop Pakbon"];
     C=[[["Klantoverzicht:","klanten onder elkaar,","weken naast elkaar"],20,20,105,42],
       [["Excel of Print:","overzicht downloaden","of afdrukken"],300,20,150,43],
       [["Klik op een week:","alle reserveringen","van die week. Geel = nu"],620,20,322,42],
@@ -1459,7 +1459,7 @@ function toonTabelUitleg(){const klant=tab==="aflever"&&aflRij==="klant";let OX=
     const ex=px<x?x:px>x+w?x+w:cx,ey=py<y?y:py>y+h?y+h:cy;
     g+=`<line x1="${ex}" y1="${ey}" x2="${px}" y2="${py}" stroke="#2d6a4f" stroke-width="2.5" marker-end="url(#pijl)"/><circle cx="${px}" cy="${py}" r="5" fill="#2d6a4f"/>
       <rect x="${x}" y="${y}" width="${w}" height="${h}" rx="10" fill="#eef6f1" stroke="#2d6a4f" stroke-width="1.5"/>${t.map((r,i)=>`<text x="${x+11}" y="${y+(abs?21:24)+i*21}" font-size="16" font-family="Arial,sans-serif" fill="#1f4d39" ${i?"":'font-weight="bold"'}>${esc(r)}</text>`).join("")}`}
-  const svg=`<svg viewBox="0 0 1180 ${klant?606:590}" style="width:100%;height:auto;display:block"><defs><marker id="pijl" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0L10,5L0,10z" fill="#2d6a4f"/></marker></defs>
+  const svg=`<svg viewBox="0 0 1180 ${klant?648:590}" style="width:100%;height:auto;display:block"><defs><marker id="pijl" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0L10,5L0,10z" fill="#2d6a4f"/></marker></defs>
     <image href="${BEELD}" x="${OX}" y="${OY}" width="${W}" height="${H}"/><rect x="${OX}" y="${OY}" width="${W}" height="${H}" fill="none" stroke="#bbb"/>${extra}${g}</svg>`;
   toonPop(klant?"❓ Uitleg van het klantoverzicht":"❓ Uitleg van de tabel",svg+`<p class="status" style="margin:8px 0 0">${klant?"Alleen weken met een order staan in het overzicht. Bovenin: <b>Beschikbaar</b> = terug naar de tabel per soort.":"Bovenin: <b>Beschikbaar</b> = deze tabel · <b>👥 Klantoverzicht</b> = klanten onder elkaar, weken naast elkaar."}</p>`);
   const m=document.querySelector("#mobPop .mpop");if(m){m.classList.add("breed");m.style.maxWidth="min(1180px,97vw)";m.style.width="min(1180px,97vw)"}}
@@ -4769,13 +4769,13 @@ function pakbonDatum(inp){const klant=inp.dataset.klant,code=inp.dataset.code,d=
 function klantMenu(naam,el){sluitKlantMenu();const k=klantVan(naam)||{naam},r=el.getBoundingClientRect(),m=document.createElement("div");m.id="klMenu";
   const it=(ic,t,f)=>`<button type="button" onclick="sluitKlantMenu();${f}">${t}</button>`,N=JSON.stringify(k.naam||naam).replace(/"/g,"&quot;");
   m.innerHTML=`<div class="klmkop">${esc(k.naam||naam)}</div>
-    <div class="klmtel">☎ ${k.telefoon?esc(k.telefoon):'<span class="status">geen telefoonnummer</span>'}</div>
     ${k.id?it("","Klantgegevens",`klantGegevens('${k.id}')`):""}
+    <div class="klmtel">☎ ${k.telefoon?esc(k.telefoon):'<span class="status">geen telefoonnummer</span>'}</div>
     ${k.email?it("✉",mailNaam(),`klantMail(${N})`):`<div class="klmtel status">${mailNaam()} (geen e-mailadres)</div>`}
-    ${it("🧾","Orderformulier",`orderForm(${N})`)}
-    ${niveau()>1&&k.id?it("💶","Prijzen",`prijsTabel('${k.id}')`):""}
     ${k.id?it("📦","Fust per teelt",`klantPerTeelt('${k.id}')`):""}
+    ${niveau()>1&&k.id?it("💶","Prijzen",`prijsTabel('${k.id}')`):""}
     ${it("＋","Reservering",`vo={datum:datumTekst(new Date()),klant:${N},teelt:teeltFilter||'',soort:'',n:''};verkoopOrder()`)}
+    ${it("🧾","Orderformulier",`orderForm(${N})`)}
     ${it("📋","Overzicht pakbonnen",`klantKaart(${N},true)`)}`;
   document.body.appendChild(m);const h=m.offsetHeight;m.style.left=Math.min(r.left+20,innerWidth-m.offsetWidth-8)+"px";m.style.top=Math.max(8,Math.min(r.bottom-6,innerHeight-h-8))+"px";
   setTimeout(()=>document.addEventListener("click",klMenuBuiten,true),0)}
