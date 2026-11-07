@@ -966,7 +966,7 @@ body.sales .navMidden>.mknop.groot{display:none!important}body.kijkmodus #btnPri
 
 <script>
 "use strict";
-const VERSIE="44.3";
+const VERSIE="44.4";
 const VERSIE_DATUM="03-11-2026";
 /* ---------- Basis ---------- */
 const PALET=["#2d6a4f","#1B5EBE","#E8007D","#c77d1a","#7a4fa0","#0f8b8d","#5b6b2f","#3d5a80","#a0522d","#7AB648"];
@@ -4758,7 +4758,7 @@ function pakbonInhoud(klant,code,metInvoer){if(!vkPlek)maakPlekMap();const l=ver
     ${metInvoer?`<div class="noprint" style="margin-bottom:10px;display:flex;gap:8px;align-items:center"><span class="status">Afleverdatum:</span><input type="date" value="${dat[0]||datumTekst(maandagIso(y,w))}" min="${datumTekst(maandagIso(y,w))}" max="${datumTekst(new Date(plusWeken(maandagIso(y,w),1)-864e5))}" onchange="pakbonDatum(this)" data-klant="${esc(klant)}" data-code="${code}" style="font-size:15px;padding:4px 8px"></div>`:""}
     <div style="margin-bottom:10px"><b>Klant:</b> ${esc(klant)}${k.plaats?" · "+esc(k.plaats):""}${k.telefoon?" · ☎ "+esc(k.telefoon):""}${k.email?" · ✉ "+esc(k.email):""}${k.contact?`<br>${esc(k.contact)}`:""}</div>
     <table class="pbtab"><tr><th>Gewas</th><th>Soort</th><th style="text-align:right">Aantal</th>${mF?"<th>Fust</th>":""}${ZV()?"":"<th>Afd</th><th>Vloer</th>"}<th>✓</th></tr>${rijen}
-    <tr class="tot"><td colspan="2">Totaal</td><td class="n">${getal(tp)}</td><td colspan="${(ZV()?1:3)+(mF?1:0)}"></td></tr></table>${logoVoet()}
+    <tr class="tot"><td colspan="2">Totaal</td><td class="n">${getal(tp)}</td><td colspan="${(ZV()?1:3)+(mF?1:0)}"></td></tr></table>
 `}
 /* afleverdatum voor alle regels van deze pakbon (blijft in dezelfde week) */
 function pakbonDatum(inp){const klant=inp.dataset.klant,code=inp.dataset.code,d=inp.value;if(!d)return;
@@ -4900,7 +4900,7 @@ function klantMailOverzicht(naam){const k=klantVan(naam)||{naam},nu=wkCode(+deze
   for(const w of Object.keys(per).sort()){const l=per[w],sn=l.reduce((a,b)=>a+ +b.x.n,0),se=l.reduce((a,b)=>a+(b.x.prijs!=null?b.x.prijs*b.x.n:0),0);tot+=sn;totE+=se;
     h+=`<tr><td colspan="6" style="${td}background:#eef6f1;font-weight:bold;color:#1f4d39;padding-top:8px">Week ${+w.slice(2)} · ${getal(sn)} planten${se?" · "+euro(se):""}</td></tr>`;
     for(const{pr,so,x}of l)h+=`<tr><td style="${td}">${esc(so)} <span style="color:#777;font-size:12px">${esc(pr)}</span></td><td style="${td}text-align:right">${getal(x.n)}</td><td style="${td}">${fustTxt(x)}</td><td style="${td}text-align:right">${x.prijs!=null?prijsTxt(x.prijs):""}</td><td style="${td}text-align:right">${x.prijs!=null?euro(x.prijs*x.n):""}</td><td style="${td}">${esc(x.opmerking||"")}</td></tr>`}
-  h+=`<tr><td style="${td}font-weight:bold;border-top:2px solid ${G}">Totaal</td><td style="${td}font-weight:bold;text-align:right;border-top:2px solid ${G}">${getal(tot)}</td><td colspan="2" style="${td}border-top:2px solid ${G}"></td><td style="${td}font-weight:bold;text-align:right;border-top:2px solid ${G}">${totE?euro(totE):""}</td><td style="${td}border-top:2px solid ${G}"></td></tr></table><p>Met vriendelijke groet,</p>${logoVoet()}</div>`;
+  h+=`<tr><td style="${td}font-weight:bold;border-top:2px solid ${G}">Totaal</td><td style="${td}font-weight:bold;text-align:right;border-top:2px solid ${G}">${getal(tot)}</td><td colspan="2" style="${td}border-top:2px solid ${G}"></td><td style="${td}font-weight:bold;text-align:right;border-top:2px solid ${G}">${totE?euro(totE):""}</td><td style="${td}border-top:2px solid ${G}"></td></tr></table><p>Met vriendelijke groet,</p></div>`;
   const w=window.open("about:blank","_blank");let ok=false;
   (async()=>{try{await navigator.clipboard.write([new ClipboardItem({"text/html":new Blob([h],{type:"text/html"}),"text/plain":new Blob([t],{type:"text/plain"})})]);ok=true}catch(e){}
     const u=mailUrl(k.email,su,ok?"":t);
