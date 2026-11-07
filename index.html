@@ -19,7 +19,7 @@ if(!window.KLANT)console.warn("klant.js niet gevonden: de app werkt zonder onlin
 /* productnaam: <klant>-CyclaPilot (eigen app: Vollebregt-CyclaPilot). Eigen naam kan met naamKort in klant.js */
 window.cpNaam=(code,kort)=>{const CPN={"":"Vollebregt",klant:"Vollebregt",bolk:"Bolk",bergcamp:"Bergcamp",adrichem:"Adrichem",kester:"Kester",derijke:"De Rijke",rijke:"De Rijke"},c=String(code||"");
   return(kort||CPN[c]||c.charAt(0).toUpperCase()+c.slice(1))+"-CyclaPilot™"};
-KLANT.appNaam=cpNaam(KLANT.code,KLANT.naamKort);if(/[?&]demo\b/.test(location.search))KLANT.appNaam="CyclaPilot™ Demo";
+KLANT.appNaam=cpNaam(KLANT.code,KLANT.naamKort);if(/[?&#]demo\b/i.test(location.search+location.hash))KLANT.appNaam="CyclaPilot™ Demo";
 document.title=KLANT.appNaam;
 try{document.querySelector('meta[name=apple-mobile-web-app-title]').content="CyclaPilot"}catch(e){}
 </script>
@@ -861,6 +861,7 @@ body.sales .navMidden>.mknop.groot{display:none!important}body.kijkmodus #btnPri
       <button type="button" class="alleenBeheer" onclick="document.querySelectorAll('#balk .menu.open').forEach(m=>m.classList.remove('open'));naar('beheer')">🛠 Beheer klanten</button>
       <button type="button" class="alleenKlantVw" onclick="document.querySelectorAll('#balk .menu.open').forEach(m=>m.classList.remove('open'));toonVoorwaarden()">📄 Voorwaarden</button>
       <button type="button" onclick="document.querySelectorAll('#balk .menu.open').forEach(m=>m.classList.remove('open'));toonWelkom()">ℹ️ Uitleg (welkom)</button>
+      <button type="button" onclick="document.querySelectorAll('#balk .menu.open').forEach(m=>m.classList.remove('open'));window.open(location.origin+location.pathname+'?demo','_blank')" title="Opent de demo in een nieuw tabblad. Uw eigen planning blijft zoals hij is.">🎬 Demo bekijken</button>
       <button type="button" class="wolkAlleen" onclick="toonKopieen()" title="Automatische reservekopieën (elke week één)">🗂 Reservekopieën</button>
       <button id="btnKopie" type="button" title="Download een kopie van al je gegevens (.json), bijvoorbeeld om te versturen">⬇ Kopie downloaden</button>
     </div></div>
@@ -965,7 +966,7 @@ body.sales .navMidden>.mknop.groot{display:none!important}body.kijkmodus #btnPri
 
 <script>
 "use strict";
-const VERSIE="44.2";
+const VERSIE="44.3";
 const VERSIE_DATUM="03-11-2026";
 /* ---------- Basis ---------- */
 const PALET=["#2d6a4f","#1B5EBE","#E8007D","#c77d1a","#7a4fa0","#0f8b8d","#5b6b2f","#3d5a80","#a0522d","#7AB648"];
@@ -5439,7 +5440,7 @@ function toonWelkom(){const st=(t,n,tab,uitleg)=>`<button type="button" class="w
   if((lg&&!lg.hidden)||(m&&!m.hidden)||(typeof wolkEerste!=="undefined"&&wolkDoc&&wolkEerste)){if(n<120)setTimeout(kijk,1000);return}
   try{sessionStorage.setItem("potplanning-welkom","1")}catch(e){}toonWelkom()};setTimeout(kijk,900)})();
 /* ---------- Demo: ?demo achter het adres = voorbeeldgegevens, niets wordt opgeslagen ---------- */
-const DEMO=/[?&]demo\b/.test(location.search);
+const DEMO=/[?&#]demo\b/i.test(location.search+location.hash);
 function demoStart(){try{data=normaliseer(JSON.parse(document.getElementById("demoData").textContent))}catch(e){alert("Demo laden lukt niet");return}
   proef=true;echt=null;terugStapel=[];laatsteKern=kernVan(data);document.body.classList.add("demomodus");
   const b=document.createElement("div");b.id="demoBalk";b.innerHTML=`<b>DEMO</b><span>Voorbeeldgegevens · probeer gerust alles uit · er wordt niets opgeslagen</span><button type="button" onclick="location.reload()">↺ Opnieuw beginnen</button>`;
