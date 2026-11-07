@@ -789,11 +789,13 @@ body.sales .navMidden>.mknop.groot{display:none!important}body.kijkmodus #btnPri
 
 .klgform{display:grid;grid-template-columns:180px 1fr;gap:8px 14px;align-items:center}.klgform label{font-weight:600;color:#333}.klgform input{font:inherit;padding:7px 10px;border:1px solid #cfc6b4;border-radius:8px;width:100%;box-sizing:border-box}
 @media (max-width:600px){.klgform{grid-template-columns:1fr;gap:4px}.klgform label{margin-top:6px}}
+
+.logoic{width:32px;height:32px;border-radius:9px;border:2px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,.45);vertical-align:middle;margin:-4px 4px -4px 0;background:#5a3484}
 </style>
 </head>
 <body>
 <div id="balk">
-  <span class="titel" title="Pijltje links = terug · pijltje rechts = vooruit (max. 10 stappen)">🌱 <span class="naamtekst"></span> <span class="versie" id="versie"></span></span>
+  <span class="titel" title="Pijltje links = terug · pijltje rechts = vooruit (max. 10 stappen)"><img class="logoic" alt=""> <span class="naamtekst"></span> <span class="versie" id="versie"></span></span>
   <span id="kwekerijNaam" hidden></span>
   <button type="button" id="btnStip" title="Toon alles waar u op kunt klikken (nog een keer klikken = weg)" onclick="document.body.classList.toggle('toonKlik');this.classList.toggle('aan')"></button>
   <button type="button" id="btnUitleg" title="Uitleg van de tabel (met plaatje)" onclick="toonTabelUitleg()">?</button>
@@ -955,7 +957,7 @@ body.sales .navMidden>.mknop.groot{display:none!important}body.kijkmodus #btnPri
 
 <script>
 "use strict";
-const VERSIE="43.5";
+const VERSIE="43.6";
 const VERSIE_DATUM="03-11-2026";
 /* ---------- Basis ---------- */
 const PALET=["#2d6a4f","#1B5EBE","#E8007D","#c77d1a","#7a4fa0","#0f8b8d","#5b6b2f","#3d5a80","#a0522d","#7AB648"];
@@ -5385,7 +5387,7 @@ $("#btnScherm").onclick=async()=>{
 document.addEventListener("fullscreenchange",()=>{if(!document.fullscreenElement)zetVol(false)});
 $("#versie").textContent="versie "+VERSIE;
 $("#versie").title="Versie "+VERSIE+" – "+VERSIE_DATUM;
-document.title=KLANT.appNaam+" v"+VERSIE;document.querySelectorAll(".naamtekst").forEach(x=>x.textContent=KLANT.appNaam);
+document.title=KLANT.appNaam+" v"+VERSIE;document.querySelectorAll(".naamtekst").forEach(x=>x.textContent=KLANT.appNaam);try{const ic=document.querySelector('link[rel=icon]').href;document.querySelectorAll(".logoic").forEach(x=>x.src=ic)}catch(e){}
 
 /* Rechtermuisknop doet hetzelfde als linkermuisknop (behalve in invulvakjes) */
 /* Rechtermuisknop: nooit het menu van de browser (behalve in tekstvakken, voor knippen/plakken).
