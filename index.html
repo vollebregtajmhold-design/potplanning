@@ -944,7 +944,7 @@ body.sales .navMidden>.mknop.groot{display:none!important}body.kijkmodus #btnPri
 
 <script>
 "use strict";
-const VERSIE="42.5";
+const VERSIE="42.6";
 const VERSIE_DATUM="03-11-2026";
 /* ---------- Basis ---------- */
 const PALET=["#2d6a4f","#1B5EBE","#E8007D","#c77d1a","#7a4fa0","#0f8b8d","#5b6b2f","#3d5a80","#a0522d","#7AB648"];
@@ -4783,9 +4783,24 @@ function orderForm(naam,t){const kk=klantVan(naam)||{naam},nu=+dezeWeek();if(t!=
     for(const k of rijen){const[pr,so]=k.split("|");if(pr!==vor){h+=`<tr class="kkweek"><td colspan="5">${esc(pr)}</td></tr>`;vor=pr}
       const vrij=per.get(k)-verkSom(k,ofWeek),al=verkVan(k,ofWeek).filter(x=>(x.klant||"").toLowerCase()===String(kk.naam||naam).toLowerCase()).reduce((a,x)=>a+ +x.n,0),ras=vkRasVan(k),pv=ras?vkPrijs(kk.id,ras.id):null;
       h+=`<tr data-k="${esc(k)}"><td>${esc(so)}</td><td class="r ${vrij<0?"let":""}">${getal(vrij)}</td><td class="r">${al?getal(al):""}</td><td><input class="ofn" inputmode="numeric" placeholder="0" oninput="ofTel()"></td><td><input class="ofp" inputmode="decimal" value="${pv!=null?pF(pv):""}" placeholder="€"></td></tr>`}
-    h+=`</table><div class="rij" style="gap:8px;margin-top:12px;align-items:center;flex-wrap:wrap"><span class="status" id="ofTot">0 planten</span><button class="btn" style="margin-left:auto" onclick="orderOpslaan(this.dataset.k)" data-k="${esc(kk.naam||naam)}">✔ Opslaan</button></div>`}
+    h+=`</table><div class="rij" style="gap:8px;margin-top:12px;align-items:center;flex-wrap:wrap"><span class="status" id="ofTot">0 planten</span><span class="noprint" style="margin-left:auto;display:flex;gap:6px;align-items:center">${kk.email&&!/Android|iPhone|iPad/i.test(navigator.userAgent)?`<span class="status">aanbod</span><select id="ofPct" title="Welk deel van wat vrij is in de mail zetten (afgerond op 100)">${[100,90,80,70,60,50,40,30,20,10].map(x=>`<option value="${x}" ${x===ofPctVan()?"selected":""}>${x}%</option>`).join("")}</select><button class="btn licht" onclick="orderMail(this.dataset.k)" data-k="${esc(kk.naam||naam)}" title="Gmail met het aanbod van deze week voor deze klant (Ctrl + V om te plakken)">✉ Gmail aanbod</button>`:""}<button class="btn" onclick="orderOpslaan(this.dataset.k)" data-k="${esc(kk.naam||naam)}">✔ Opslaan</button></span></div>`}
   toonPop("🧾 Order · "+esc(kk.naam||naam),h);const m=document.querySelector("#mobPop .mpop");if(m)m.classList.add("breed");
   const e=document.querySelector(".oftab .ofn");if(e&&!/Android|iPhone|iPad/i.test(navigator.userAgent))e.focus()}
+/* aanbod van één week voor één klant als opgemaakte Gmail: soort, beschikbaar (xx% naar beneden op 100), prijs */
+const ofPctVan=()=>{try{return +localStorage.getItem("potplanning-ofpct")||80}catch(e){return 80}};
+function orderMail(naam){const kk=klantVan(naam)||{naam},pct=+(document.getElementById("ofPct")||{}).value||80;try{localStorage.setItem("potplanning-ofpct",pct)}catch(e){}
+  const wk=isoWeek(new Date(ofWeek)).w,rijen=[];document.querySelectorAll(".oftab tr[data-k]").forEach(tr=>{const k=tr.dataset.k,[pr,so]=k.split("|"),vrij=+String(tr.children[1].textContent).replace(/\D/g,"")*(tr.children[1].classList.contains("let")?-1:1),
+    n=Math.floor(Math.max(0,vrij)*pct/100/100)*100,pv=prijsLees(tr.querySelector(".ofp").value);if(n>0)rijen.push({pr,so,n,pv})});
+  if(!rijen.length){alert("Er is deze week niets om aan te bieden.");return}
+  const G="#2d6a4f",F="font-family:Arial,Helvetica,sans-serif;",td="padding:4px 12px;border-bottom:1px solid #e6e0d4;font-size:14px;",th=`background:${G};color:#fff;padding:5px 12px;font-size:14px;`;
+  let h=`<div style="${F}color:#222"><p>Beste ${esc(kk.contact||kk.naam)},</p><p>Hierbij ons aanbod voor week ${wk}:</p><table style="border-collapse:collapse;${F}min-width:420px"><tr><th style="${th}text-align:left">Soort</th><th style="${th}text-align:right">Beschikbaar</th><th style="${th}text-align:right">Prijs</th></tr>`,t=`Beste ${kk.contact||kk.naam},\n\nHierbij ons aanbod voor week ${wk}:\n`,vor="";
+  for(const r of rijen){if(r.pr!==vor){h+=`<tr><td colspan="3" style="${td}background:#eef6f1;font-weight:bold;color:#1f4d39;padding-top:8px">${esc(r.pr)}</td></tr>`;t+=`\n${r.pr}\n`;vor=r.pr}
+    h+=`<tr><td style="${td}">${esc(r.so)}</td><td style="${td}text-align:right">${getal(r.n)}</td><td style="${td}text-align:right">${r.pv!=null?prijsTxt(r.pv):""}</td></tr>`;t+=`- ${r.so}: ${getal(r.n)}${r.pv!=null?" à "+prijsTxt(r.pv):""}\n`}
+  h+=`</table><p style="font-size:12px;color:#555">Onder voorbehoud van tussentijdse verkoop.</p><p>Met vriendelijke groet,</p></div>`;t+="\nOnder voorbehoud van tussentijdse verkoop.\n\nMet vriendelijke groet,\n";
+  const su=`Aanbod week ${wk}`+(KLANT.appNaam?" – "+KLANT.appNaam:""),w=window.open("about:blank","_blank");
+  (async()=>{let ok=false;try{await navigator.clipboard.write([new ClipboardItem({"text/html":new Blob([h],{type:"text/html"}),"text/plain":new Blob([t],{type:"text/plain"})})]);ok=true}catch(e){}
+    const u=`https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(kk.email||"")}&su=${encodeURIComponent(su)}${ok?"":"&body="+encodeURIComponent(t)}`;
+    if(w)w.location.href=u;else window.open(u,"_blank");melding(ok?"✉ Gmail gaat open · klik in de mail en druk op Ctrl + V: het aanbod komt erin":"✉ Gmail gaat open met het aanbod als tekst","#2d6a4f")})()}
 function ofTel(){let n=0,r=0;document.querySelectorAll(".oftab .ofn").forEach(i=>{const v=Math.round(+String(i.value).replace(/[.\s]/g,"").replace(",",".")||0);if(v>0){n+=v;r++}});const el=document.getElementById("ofTot");if(el)el.textContent=`${getal(n)} planten · ${r} soort${r===1?"":"en"}`}
 function orderOpslaan(naam){const kk=klantVan(naam),code=wkCode(ofWeek);let r=0,n=0;data.verkoop=data.verkoop||{};
   document.querySelectorAll(".oftab tr[data-k]").forEach(tr=>{let v=Math.round(+String(tr.querySelector(".ofn").value).replace(/[.\s]/g,"").replace(",",".")||0);if(v<=0)return;
