@@ -783,6 +783,9 @@ body.sales .navMidden>.mknop.groot{display:none!important}body.kijkmodus #btnPri
 .oftab .ofvk{width:26px;text-align:center;padding:2px 4px}.oftab .ofvk input{width:17px;height:17px;accent-color:#2d6a4f;cursor:pointer}@media print{.oftab .ofvk{display:none}}
 
 .oftab td.ofaan{color:#a59d90}.oftab th.ofaan{font-weight:400;opacity:.85}
+
+.klgform{display:grid;grid-template-columns:180px 1fr;gap:8px 14px;align-items:center}.klgform label{font-weight:600;color:#333}.klgform input{font:inherit;padding:7px 10px;border:1px solid #cfc6b4;border-radius:8px;width:100%;box-sizing:border-box}
+@media (max-width:600px){.klgform{grid-template-columns:1fr;gap:4px}.klgform label{margin-top:6px}}
 </style>
 </head>
 <body>
@@ -949,7 +952,7 @@ body.sales .navMidden>.mknop.groot{display:none!important}body.kijkmodus #btnPri
 
 <script>
 "use strict";
-const VERSIE="43.2";
+const VERSIE="43.3";
 const VERSIE_DATUM="03-11-2026";
 /* ---------- Basis ---------- */
 const PALET=["#2d6a4f","#1B5EBE","#E8007D","#c77d1a","#7a4fa0","#0f8b8d","#5b6b2f","#3d5a80","#a0522d","#7AB648"];
@@ -4002,10 +4005,17 @@ function klantErbij(naam){const k={id:uid(),naam:naam||"",plaats:"",contact:"",t
 function klantWeg(id){const k=data.klanten.find(x=>x.id===id);if(!k)return;const n=klantVerkocht(k.naam);
   if(!confirm(`Klant '${k.naam||"(geen naam)"}' verwijderen?${n?`\nDe reserveringen (${getal(n)} planten) blijven staan.`:""}`))return;data.klanten=data.klanten.filter(x=>x.id!==id);wijzig()}
 $("#inhoud").addEventListener("change",e=>{const el=e.target;if(!el.dataset.kl)return;const k=data.klanten.find(x=>x.id===el.dataset.kl);if(!k)return;
-  const v=el.value.trim(),veld=el.dataset.kk;
+  klantVeldZet(k,el.dataset.kk,el)});
+function klantVeldZet(k,veld,el){const v=el.value.trim();
   if(veld==="naam"&&k.naam&&v!==k.naam){for(const l of Object.values(data.verkoop||{}))for(const x of l)if(x.klant===k.naam)x.klant=v} /* nieuwe naam ook bij de verkopen */
   if(veld==="perFust"){const n=Math.round(+v.replace(/[.\s]/g,"").replace(",","."));k.perFust=n>0?n:"";el.value=k.perFust;opslaanLater();return}
-  k[veld]=v;if(veld==="naam")el.classList.toggle("mist",!v);opslaanLater()});
+  k[veld]=v;if(veld==="naam")el.classList.toggle("mist",!v);opslaanLater()}
+/* klantgegevens als formulier (uit het klantmenu) */
+function klantGegevens(id){const k=data.klanten.find(x=>x.id===id);if(!k)return;
+  const h=`<div class="klgform">${KL_VELDEN.map(([v,lab])=>`<label>${v==="fust"?"Traymaat (standaard)":v==="perFust"?"Per tray (standaard)":lab}</label><input data-klg="${v}" value="${esc(k[v]??"")}" ${v==="email"?'type="email"':v==="telefoon"?'type="tel"':v==="perFust"?'inputmode="numeric" placeholder="bijv. 8"':v==="fust"?'placeholder="bijv. 498"':""} onchange="klantVeldZet(data.klanten.find(x=>x.id==='${k.id}'),'${v}',this)">`).join("")}
+    <label>Per teelt</label><div><a href="#" onclick="klantPerTeelt('${k.id}');return false">Traymaat en aantal per teelt ✎</a>${k.perTeelt?` <span class="status">(${Object.keys(k.perTeelt).length} teelten)</span>`:""}</div></div>
+    <div class="rij" style="margin-top:14px"><span class="status">Wordt meteen opgeslagen.</span><button class="btn" style="margin-left:auto" onclick="sluitMobSoort();render()">Klaar</button></div>`;
+  toonPop("Klantgegevens · "+esc(k.naam||""),h)}
 /* ---------- Oppotoverzicht: per week wat er wordt opgepot (zoals een orderoverzicht) ---------- */
 let ovKostLeeg=false,ovGroep="soort",ovEenheid="planten",ovWSig="",ovStart=null,ovEind=null,ovJaar=0;
 const fustAantal=f=>{const m=String(f||"").match(/(\d+)/);return m?+m[1]:0};
@@ -4743,6 +4753,7 @@ function klantMenu(naam,el){sluitKlantMenu();const k=klantVan(naam)||{naam},r=el
   const it=(ic,t,f)=>`<button type="button" onclick="sluitKlantMenu();${f}">${t}</button>`,N=JSON.stringify(k.naam||naam).replace(/"/g,"&quot;");
   m.innerHTML=`<div class="klmkop">${esc(k.naam||naam)}</div>
     <div class="klmtel">☎ ${k.telefoon?esc(k.telefoon):'<span class="status">geen telefoonnummer</span>'}</div>
+    ${k.id?it("","Klantgegevens",`klantGegevens('${k.id}')`):""}
     ${k.email?it("✉",mailNaam(),`klantMail(${N})`):`<div class="klmtel status">${mailNaam()} (geen e-mailadres)</div>`}
     ${it("🧾","Orderformulier",`orderForm(${N})`)}
     ${niveau()>1&&k.id?it("💶","Prijzen",`prijsTabel('${k.id}')`):""}
