@@ -794,11 +794,14 @@ body.sales .navMidden>.mknop.groot{display:none!important}body.kijkmodus #btnPri
 @media (max-width:600px){.klgform{grid-template-columns:1fr;gap:4px}.klgform label{margin-top:6px}}
 
 .logoic{width:32px;height:32px;border-radius:9px;border:2px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,.45);vertical-align:middle;margin:-4px 4px -4px 0;background:#5a3484}
+
+.ondertitel{font-style:italic;color:#7a4fa8;font-weight:600;margin:-4px 0 10px}.naamblok{display:inline-flex;flex-direction:column;line-height:1.1;vertical-align:middle}.naamsub{font-size:10.5px;font-style:italic;font-weight:500;opacity:.8;letter-spacing:.2px}
+@media (max-width:900px){.naamsub{display:none}}
 </style>
 </head>
 <body>
 <div id="balk">
-  <span class="titel" title="Pijltje links = terug · pijltje rechts = vooruit (max. 10 stappen)"><img class="logoic" alt=""> <span class="naamtekst"></span> <span class="versie" id="versie"></span></span>
+  <span class="titel" title="Pijltje links = terug · pijltje rechts = vooruit (max. 10 stappen)"><img class="logoic" alt=""> <span class="naamblok"><span class="naamtekst"></span><span class="naamsub">Planning · voorraad · verkoop</span></span> <span class="versie" id="versie"></span></span>
   <span id="kwekerijNaam" hidden></span>
   <button type="button" id="btnStip" title="Toon alles waar u op kunt klikken (nog een keer klikken = weg)" onclick="document.body.classList.toggle('toonKlik');this.classList.toggle('aan')"></button>
   <button type="button" id="btnUitleg" title="Uitleg van de tabel (met plaatje)" onclick="toonTabelUitleg()">?</button>
@@ -960,7 +963,7 @@ body.sales .navMidden>.mknop.groot{display:none!important}body.kijkmodus #btnPri
 
 <script>
 "use strict";
-const VERSIE="43.7";
+const VERSIE="43.9";
 const VERSIE_DATUM="03-11-2026";
 /* ---------- Basis ---------- */
 const PALET=["#2d6a4f","#1B5EBE","#E8007D","#c77d1a","#7a4fa0","#0f8b8d","#5b6b2f","#3d5a80","#a0522d","#7AB648"];
@@ -1600,7 +1603,7 @@ const kanWolk=()=>!!window.firebase&&/^https?:$/.test(location.protocol)&&!!FB_C
 function toonLogin(fout){let m=document.getElementById("login");
   if(!m){m=document.createElement("div");m.id="login";document.body.appendChild(m)}
   const ic=(document.querySelector('link[rel=apple-touch-icon]')||{}).href||"";
-  m.innerHTML=`<div class="kaart">${ic?`<img src="${ic}" alt="">`:""}<h2>${esc(KLANT.appNaam)}</h2><div class="status">Log in om uw planning te openen.</div>
+  m.innerHTML=`<div class="kaart">${ic?`<img src="${ic}" alt="">`:""}<h2>${esc(KLANT.appNaam)}</h2><div class="ondertitel">Planning · voorraad · verkoop</div><div class="status">Log in om uw planning te openen.</div>
     <button type="button" onclick="wolkLogin()">Inloggen met Google</button>${fout?`<div class="fout">${esc(fout)}</div>`:""}${KLANT.code?`<div class="vwregel">Door in te loggen gaat u akkoord met de <a href="#" onclick="toonVoorwaarden();return false">voorwaarden</a>.</div>`:""}</div>`;m.hidden=false}
 async function wolkLogin(){const p=new firebase.auth.GoogleAuthProvider();p.setCustomParameters({prompt:"select_account"});
   try{await firebase.auth().signInWithPopup(p)}
@@ -5417,7 +5420,7 @@ document.addEventListener("contextmenu",e=>{const t=e.target;
   t.dispatchEvent(new MouseEvent("click",{bubbles:true,cancelable:true,view:window,clientX:e.clientX,clientY:e.clientY}))});
 /* ---------- Welkom: korte uitleg bij het openen (1 keer per sessie, uit te zetten) ---------- */
 function toonWelkom(){const st=(t,n,tab,uitleg)=>`<button type="button" class="welstap" onclick="sluitMobSoort();naar('${tab}')"><span class="welnr">${n}</span><span><b>${t}</b><br><span class="status">${uitleg}</span></span></button>`;
-  toonPop("🌱 Welkom bij "+KLANT.appNaam,`<p style="margin:0 0 10px">Met deze app plant u de teelt: van <b>inkoop</b> tot <b>aflevering</b>.</p>
+  toonPop("🌱 Welkom bij "+KLANT.appNaam,`<p class="ondertitel" style="margin:0 0 10px;font-size:17px">Planning · voorraad · verkoop</p><p style="margin:0 0 10px">Met deze app plant u de teelt: van <b>inkoop</b> tot <b>aflevering</b>.</p>
     ${st("Parameters",1,"soorten","teelten en soorten: teeltduur, fust, levertijd")}
     ${st("Inkoop / opzetten",2,"oppot","per week invullen wat u opzet · ziet direct de ruimte in de kas")}
     ${st("Opzetplanning",3,"oppotov","overzicht per week: planten, trays, m², bestelweek")}
