@@ -750,7 +750,7 @@ body.mobiel #aanbodKnop{display:block}@media (max-width:900px),(pointer:coarse){
 .vkvast{background:#fff3c4;border:1px solid #e0c060;border-radius:20px;padding:1px 4px 1px 10px;font-size:13px;display:inline-flex;align-items:center;gap:4px}.vkvast button{border:0;background:transparent;cursor:pointer;font-size:13px;padding:0 4px;color:#7a5c00}
 
 .oftab input{width:80px;padding:4px 6px;text-align:right;font:inherit;font-size:15px;border:1px solid #cfc6b4;border-radius:6px;box-sizing:border-box}.oftab .ofp{width:70px}.oftab td.let{color:#b00020}
-@media (max-width:600px){.kktab.oftab th:nth-child(3),.kktab.oftab tr:not(.kkweek) td:nth-child(3),.kktab.oftab th:nth-child(5),.kktab.oftab tr:not(.kkweek) td:nth-child(5){display:table-cell}.oftab th:nth-child(4),.oftab tr:not(.kkweek) td:nth-child(4){display:none!important}.oftab input{width:64px}.oftab .ofp{width:56px}}
+@media (max-width:600px){.kktab.oftab th:nth-child(4),.kktab.oftab tr:not(.kkweek) td:nth-child(4),.kktab.oftab th:nth-child(6),.kktab.oftab tr:not(.kkweek) td:nth-child(6),.kktab.oftab th:nth-child(7),.kktab.oftab tr:not(.kkweek) td:nth-child(7){display:table-cell}.oftab th:nth-child(3),.oftab tr:not(.kkweek) td:nth-child(3),.oftab th:nth-child(5),.oftab tr:not(.kkweek) td:nth-child(5){display:none!important}.oftab input{width:64px}.oftab .ofp{width:56px}}
 
 .pbbew .pbin{width:76px;padding:4px 6px;text-align:right;font:inherit;border:1px solid #cfc6b4;border-radius:6px;box-sizing:border-box}.pbbew .pbpr{width:64px}.pbklik{cursor:pointer;text-decoration:underline dotted #aaa}.pbbew tr.pbtot td{border-top:2px solid #2d6a4f;padding-top:6px}
 .pberbij{display:flex;gap:6px;margin-top:10px;flex-wrap:wrap}.pberbij select{flex:1;min-width:180px;padding:5px;font:inherit}.pberbij .pbin{width:80px;padding:5px;text-align:right;font:inherit;border:1px solid #cfc6b4;border-radius:6px}
@@ -781,6 +781,8 @@ body.sales .navMidden>.mknop.groot{display:none!important}body.kijkmodus #btnPri
 .zoeksnel{display:flex;gap:8px;align-items:center;margin:8px 2px 4px}.zoeksnel .btn{padding:4px 12px}
 
 .oftab .ofvk{width:26px;text-align:center;padding:2px 4px}.oftab .ofvk input{width:17px;height:17px;accent-color:#2d6a4f;cursor:pointer}@media print{.oftab .ofvk{display:none}}
+
+.oftab td.ofaan{color:#a59d90}.oftab th.ofaan{font-weight:400;opacity:.85}
 </style>
 </head>
 <body>
@@ -947,7 +949,7 @@ body.sales .navMidden>.mknop.groot{display:none!important}body.kijkmodus #btnPri
 
 <script>
 "use strict";
-const VERSIE="43.1";
+const VERSIE="43.2";
 const VERSIE_DATUM="03-11-2026";
 /* ---------- Basis ---------- */
 const PALET=["#2d6a4f","#1B5EBE","#E8007D","#c77d1a","#7a4fa0","#0f8b8d","#5b6b2f","#3d5a80","#a0522d","#7AB648"];
@@ -4782,14 +4784,16 @@ function orderForm(naam,t){const kk=klantVan(naam)||{naam},nu=+dezeWeek();if(t!=
   const rijen=[...per.keys()].sort((a,b)=>a.localeCompare(b,"nl"));let vor="",h=`<div class="rij" style="gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:10px"><b>Week</b><select onchange="orderForm(this.dataset.k,+this.value)" data-k="${esc(kk.naam||naam)}">${wks.map(w=>`<option value="${w}" ${w===ofWeek?"selected":""}>wk ${isoWeek(new Date(w)).w}${w===nu?" (deze week)":""}</option>`).join("")}</select>
     ${kk.fust||+kk.perFust>1||kk.perTeelt?`<span class="status">📦 ${esc(kk.fust||"fust")} · aantallen worden afgerond op hele fusten</span>`:""}</div>`;
   if(!rijen.length)h+=`<p class="status">In deze week wordt niets afgeleverd.</p>`;
-  else{h+=`<table class="kktab oftab"><tr><th class="ofvk"><input type="checkbox" checked title="Alles aan / uit (uitgevinkt = niet in de mail)" onchange="document.querySelectorAll('.oftab .ofmee').forEach(c=>c.checked=this.checked)"></th><th>Soort</th><th class="r">Nog vrij</th><th class="r">Al besteld</th><th>Aantal</th><th>€ /st</th></tr>`;
-    for(const k of rijen){const[pr,so]=k.split("|");if(pr!==vor){h+=`<tr class="kkweek"><td colspan="6">${esc(pr)}</td></tr>`;vor=pr}
+  else{h+=`<table class="kktab oftab"><tr><th class="ofvk"><input type="checkbox" checked title="Alles aan / uit (uitgevinkt = niet in de mail)" onchange="document.querySelectorAll('.oftab .ofmee').forEach(c=>c.checked=this.checked)"></th><th>Soort</th><th class="r ofaan" title="Wat er in de mail komt (aanbod-% van nog vrij, afgerond op 100)">In mail</th><th class="r">Nog vrij</th><th class="r">Al besteld</th><th>Aantal</th><th>€ /st</th></tr>`;
+    for(const k of rijen){const[pr,so]=k.split("|");if(pr!==vor){h+=`<tr class="kkweek"><td colspan="7">${esc(pr)}</td></tr>`;vor=pr}
       const vrij=per.get(k)-verkSom(k,ofWeek),al=verkVan(k,ofWeek).filter(x=>(x.klant||"").toLowerCase()===String(kk.naam||naam).toLowerCase()).reduce((a,x)=>a+ +x.n,0),ras=vkRasVan(k),pv=ras?vkPrijs(kk.id,ras.id):null;
-      h+=`<tr data-k="${esc(k)}"><td class="ofvk"><input type="checkbox" class="ofmee" checked title="Uitgevinkt = niet in de mail"></td><td>${esc(so)}</td><td class="r ofvrij ${vrij<0?"let":""}">${getal(vrij)}</td><td class="r">${al?getal(al):""}</td><td><input class="ofn" inputmode="numeric" placeholder="0" oninput="ofTel()"></td><td><input class="ofp" inputmode="decimal" value="${pv!=null?pF(pv):""}" placeholder="€"></td></tr>`}
-    h+=`</table><div class="rij" style="gap:8px;margin-top:12px;align-items:center;flex-wrap:wrap"><span class="status" id="ofTot">0 planten</span><span class="noprint" style="margin-left:auto;display:flex;gap:6px;align-items:center">${kk.email&&!/Android|iPhone|iPad/i.test(navigator.userAgent)?`<span class="status">aanbod</span><select id="ofPct" title="Welk deel van wat vrij is in de mail zetten (afgerond op 100)">${[100,90,80,70,60,50,40,30,20,10].map(x=>`<option value="${x}" ${x===ofPctVan()?"selected":""}>${x}%</option>`).join("")}</select><button class="btn licht" onclick="orderMail(this.dataset.k)" data-k="${esc(kk.naam||naam)}" title="Gmail met het aanbod van deze week voor deze klant (Ctrl + V om te plakken)">✉ ${mailNaam()} aanbod</button>`:""}<button class="btn" onclick="orderOpslaan(this.dataset.k)" data-k="${esc(kk.naam||naam)}">✔ Opslaan</button></span></div>`}
+      h+=`<tr data-k="${esc(k)}"><td class="ofvk"><input type="checkbox" class="ofmee" checked title="Uitgevinkt = niet in de mail"></td><td>${esc(so)}</td><td class="r ofaan" data-v="${vrij}">${ofAanTxt(vrij,ofPctVan())}</td><td class="r ofvrij ${vrij<0?"let":""}">${getal(vrij)}</td><td class="r">${al?getal(al):""}</td><td><input class="ofn" inputmode="numeric" placeholder="0" oninput="ofTel()"></td><td><input class="ofp" inputmode="decimal" value="${pv!=null?pF(pv):""}" placeholder="€"></td></tr>`}
+    h+=`</table><div class="rij" style="gap:8px;margin-top:12px;align-items:center;flex-wrap:wrap"><span class="status" id="ofTot">0 planten</span><span class="noprint" style="margin-left:auto;display:flex;gap:6px;align-items:center">${kk.email&&!/Android|iPhone|iPad/i.test(navigator.userAgent)?`<span class="status">aanbod</span><select id="ofPct" title="Welk deel van wat vrij is in de mail zetten (afgerond op 100)" onchange="ofAanbod(+this.value)">${[100,90,80,70,60,50,40,30,20,10].map(x=>`<option value="${x}" ${x===ofPctVan()?"selected":""}>${x}%</option>`).join("")}</select><button class="btn licht" onclick="orderMail(this.dataset.k)" data-k="${esc(kk.naam||naam)}" title="Gmail met het aanbod van deze week voor deze klant (Ctrl + V om te plakken)">✉ ${mailNaam()} aanbod</button>`:""}<button class="btn" onclick="orderOpslaan(this.dataset.k)" data-k="${esc(kk.naam||naam)}">✔ Opslaan</button></span></div>`}
   toonPop("🧾 Order · "+esc(kk.naam||naam),h);const m=document.querySelector("#mobPop .mpop");if(m)m.classList.add("breed");
   const e=document.querySelector(".oftab .ofn");if(e&&!/Android|iPhone|iPad/i.test(navigator.userAgent))e.focus()}
 /* aanbod van één week voor één klant als opgemaakte Gmail: soort, beschikbaar (xx% naar beneden op 100), prijs */
+const ofAanTxt=(v,p)=>{const n=Math.floor(Math.max(0,v)*p/100/100)*100;return n>0?`(${getal(n)})`:"(–)"};
+function ofAanbod(p){try{localStorage.setItem("potplanning-ofpct",p)}catch(e){}document.querySelectorAll(".oftab td.ofaan").forEach(td=>td.textContent=ofAanTxt(+td.dataset.v,p))}
 const ofPctVan=()=>{try{return +localStorage.getItem("potplanning-ofpct")||80}catch(e){return 80}};
 function orderMail(naam){const kk=klantVan(naam)||{naam},pct=+(document.getElementById("ofPct")||{}).value||80;try{localStorage.setItem("potplanning-ofpct",pct)}catch(e){}
   const wk=isoWeek(new Date(ofWeek)).w,rijen=[];document.querySelectorAll(".oftab tr[data-k]").forEach(tr=>{if(!tr.querySelector(".ofmee").checked)return;const vc=tr.querySelector(".ofvrij"),k=tr.dataset.k,[pr,so]=k.split("|"),vrij=+String(vc.textContent).replace(/\D/g,"")*(vc.classList.contains("let")?-1:1),
