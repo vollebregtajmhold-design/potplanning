@@ -227,6 +227,7 @@ tr.nieuwsoort select{width:100%;font-style:italic;border:1px dashed #2d6a4f;back
 body.rolTeler .nivVerk,body.rolTeler .zoeksnel,body.rolTeler [data-tab="klanten"],body.rolTeler [data-tab="verkoop"]{display:none!important}
 .mwrol{font:inherit;font-size:13px;padding:4px;border:1px solid #cfc6b4;border-radius:6px;max-width:130px}
 body.geenPrijs .zoeksnel,body.geenPrijs .kostrij,body.geenPrijs .prk,body.geenPrijs #abPr,body.geenPrijs #btnPrijzen,body.geenPrijs .kostknop{display:none!important}
+body.klantApp #balk .alleenEigen,body.klantApp .alleenEigen.wolkAlleen{display:none!important}
 .mwKnop{display:none!important}body.wolk.magMw .mwKnop{display:block!important}
 #login form{margin:0}#login input{width:100%;box-sizing:border-box;margin-top:8px;padding:11px 12px;border:1px solid #ccc;border-radius:10px;font-size:16px}#login .lgof{margin-top:18px;font-size:13px;color:#777;display:flex;align-items:center;gap:8px}#login .lgof:before,#login .lgof:after{content:"";flex:1;border-top:1px solid #ddd}#login .lgvg{display:inline-block;margin-top:10px;font-size:13px;color:#4b2a6e}
 .mwrij{display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid #eee}@media(max-width:520px){.mwrij{flex-wrap:wrap}.mwrij .mwnm{flex:1 1 100%!important}.mwrij small{white-space:nowrap}}.mwrij .mwnm{flex:1;min-width:0}.mwrij small{color:#666;display:block;overflow:hidden;text-overflow:ellipsis}
@@ -883,7 +884,7 @@ body.sales .navMidden>.mknop.groot{display:none!important}body.kijkmodus #btnPri
       <div class="zvkeus" title="Het afleverseizoen loopt van deze week t/m de week ervoor in het volgende jaar"><span>Seizoen begint wk</span><input type="number" id="seizIn" min="1" max="52" style="width:56px;font-size:13px;padding:3px 5px" onclick="event.stopPropagation()" onchange="data.instellingen.seizoenStart=Math.max(1,Math.min(52,Math.round(+this.value||11)));aflS=null;wijzig();melding('✓ Seizoen begint nu in week '+data.instellingen.seizoenStart,'#2d6a4f')"></div>
       <button id="btnInlezen" class="wolkAlleen" type="button" title="Een json-bestand inlezen in de online planning">📥 Json-bestand inlezen</button>
       <button type="button" class="wolkAlleen alleenKlantApp" onclick="document.querySelectorAll('#balk .menu.open').forEach(m=>m.classList.remove('open'));toonDelen()">👥 Wie mag wat zien</button>
-      <button type="button" class="wolkAlleen" onclick="document.querySelectorAll('#balk .menu.open').forEach(m=>m.classList.remove('open'));fotoMapPop()" title="Foto's per teelt die niet bij één soort horen">📁 Foto-mappen</button>
+      <button type="button" class="wolkAlleen alleenEigen" onclick="document.querySelectorAll('#balk .menu.open').forEach(m=>m.classList.remove('open'));fotoMapPop()" title="Foto's per teelt die niet bij één soort horen">📁 Foto-mappen</button>
       <button type="button" class="mwKnop" onclick="document.querySelectorAll('#balk .menu.open').forEach(m=>m.classList.remove('open'));toonMedewerkers()" title="Medewerkers die inloggen met e-mail en wachtwoord">👷 Medewerkers</button>
       <button id="btnUitlog" class="wolkAlleen" type="button">🚪 Uitloggen</button>
       <button type="button" class="alleenBeheer" onclick="document.querySelectorAll('#balk .menu.open').forEach(m=>m.classList.remove('open'));naar('beheer')">🛠 Beheer klanten</button>
@@ -994,7 +995,7 @@ body.sales .navMidden>.mknop.groot{display:none!important}body.kijkmodus #btnPri
 
 <script>
 "use strict";
-const VERSIE="46.8";
+const VERSIE="46.9";
 const VERSIE_DATUM="03-11-2026";
 /* ---------- Basis ---------- */
 const PALET=["#2d6a4f","#1B5EBE","#E8007D","#c77d1a","#7a4fa0","#0f8b8d","#5b6b2f","#3d5a80","#a0522d","#7AB648"];
@@ -2856,7 +2857,7 @@ function toonSoorten(){
           <td style="width:110px;white-space:nowrap;font-size:12px"><span class="status">uitval</span> <input type="number" min="0" max="100" step="0.5" style="width:48px" data-alle="uitval" data-teelt="${t.id}" placeholder="–"> <span class="status">%</span></td>
           <td style="width:118px;white-space:nowrap;font-size:12px"><span class="status">levertijd</span> <input type="number" min="0" max="52" style="width:46px" data-alle="levertijd" data-teelt="${t.id}" placeholder="–"> <span class="status">wk</span></td>
           <td style="font-size:12px"><select data-alle="duur" data-teelt="${t.id}" style="max-width:150px"><option value="">— kies teeltduur —</option><option value="__std">Standaard duur</option>${srt.filter(eigenDuur).map(r=>`<option value="${r.id}">Zoals ${esc(r.naam)}</option>`).join("")}</select></td>
-          <td></td><td></td></tr>`:""}${srt.map(r=>`<tr><td style="width:32%"><div class="naamfoto"><span class="fotocel ${(data.fotos||{})[r.id]?"heeft":""}" data-foto="${r.id}" onclick="fotoPop('${r.id}')" title="Foto van deze soort">📷</span><input data-ras="${r.id}" data-rk="naam" value="${esc(r.naam)}" placeholder="bijv. Wit" class="${r.naam?"":"mist"}"></div></td>
+          <td></td><td></td></tr>`:""}${srt.map(r=>`<tr><td style="width:32%"><div class="naamfoto">${fotoMag()?`<span class="fotocel ${(data.fotos||{})[r.id]?"heeft":""}" data-foto="${r.id}" onclick="fotoPop('${r.id}')" title="Foto van deze soort">📷</span>`:""}<input data-ras="${r.id}" data-rk="naam" value="${esc(r.naam)}" placeholder="bijv. Wit" class="${r.naam?"":"mist"}"></div></td>
           <td class="uitgebreid"><select data-ras="${r.id}" data-rk="leverancierId" style="width:100%">${levOpties(r.leverancierId)}</select></td>
           <td style="width:70px"><input data-ras="${r.id}" data-rk="nr" value="${esc(r.nr||"")}" placeholder="nr." title="Soortnummer (bijv. artikelnummer van de leverancier)" style="width:100%;font-size:12px"></td>
           <td style="width:84px"><input data-ras="${r.id}" data-rk="fust" value="${esc(r.fust)}" placeholder="fust" title="Fust, bijv. Tray 260" style="width:100%;font-size:12px"></td>
@@ -3774,7 +3775,7 @@ function mobSoort(k,start){const t=+dezeWeek(),l=afleverRegels().filter(r=>r.pro
   const j0=isoWeek(new Date(t)).y,rij=Array.from({length:mobDeelWk()},(_,i)=>+plusWeken(new Date(t),i)).map(tt=>{const n=per.get(tt)||0,{w,y}=isoWeek(new Date(tt)),r=vk?verkSom(vk,tt):0,b=n-r;
     return`<div class="mrij"><span>wk ${w}${y!==j0?" ("+y+")":""}${r?`<br><span class="status noshot" style="font-size:12px">plan ${getal(n)} · gereserveerd ${getal(r)}</span>`:""}</span>${n||r?`<b class="${b<0?"let":""}" data-n="${b}">${b?getal(b):"—"}</b>`:`<b class="status">—</b>`}</div>`}).join("");
   const[kp,ks]=k.split(" · "),ras=data.rassen.find(r=>r.naam===ks&&teeltLabel(data.teeltduren.find(t=>t.id===r.teeltId)||{})===kp),fid=ras&&(data.fotos||{})[ras.id]?ras.id:"";
-  const h=`<div id="mobDeel"><div class="mpopKop"><b>${esc(k)}</b><button class="noshot" onclick="sluitMobSoort()">✕</button></div><div class="mpopIn">${ras?mobFotoVak(ras.id):""}${ras&&modNr()>=2?mobInfo(ras,k):""}${rij?`<div class="mweken"><div class="status" style="font-size:12px;text-align:right;margin-bottom:2px">nog beschikbaar</div>${rij}</div>`:""}${rij?"":'<div class="status" style="padding:8px 0">Niets gepland.</div>'}</div></div>
+  const h=`<div id="mobDeel"><div class="mpopKop"><b>${esc(k)}</b><button class="noshot" onclick="sluitMobSoort()">✕</button></div><div class="mpopIn">${ras&&fotoMag()?mobFotoVak(ras.id):""}${ras&&modNr()>=2?mobInfo(ras,k):""}${rij?`<div class="mweken"><div class="status" style="font-size:12px;text-align:right;margin-bottom:2px">nog beschikbaar</div>${rij}</div>`:""}${rij?"":'<div class="status" style="padding:8px 0">Niets gepland.</div>'}</div></div>
     ${rij&&mod4()?`<div class="mpopIn" style="padding-top:0"><div style="display:flex;align-items:center;gap:8px;margin-top:4px;flex-wrap:wrap"><label class="status" style="display:flex;align-items:center;gap:8px"><input type="checkbox" style="width:20px;height:20px" ${mobAantDelen()?"checked":""} onchange="try{localStorage.setItem('potplanning-deelaant',this.checked?'1':'0')}catch(e){};document.getElementById('mobPctVak').style.display=this.checked?'':'none'"> beschikbaarheid meesturen</label>
       <span id="mobPctVak" class="status" style="margin-left:auto;${mobAantDelen()?"":"display:none"}"><input type="number" min="1" max="26" inputmode="numeric" value="${mobDeelWk()}" style="width:50px;padding:3px 6px;text-align:right;font:inherit;border:1px solid #cfc6b4;border-radius:6px" onchange="try{localStorage.setItem('potplanning-deelwk',Math.max(1,Math.min(26,+this.value||5)))}catch(e){};mobSoort(this.dataset.k)" data-k="${esc(k)}" title="Aantal weken, vanaf deze week"> wkn · voor <input id="mobPct" type="number" min="1" max="100" inputmode="numeric" value="${mobDeelPct()}" style="width:58px;padding:3px 6px;text-align:right;font:inherit;border:1px solid #cfc6b4;border-radius:6px" onchange="try{localStorage.setItem('potplanning-deelpct',Math.max(1,Math.min(100,+this.value||80)))}catch(e){}"> %</span></div><button class="btn" style="width:100%;margin-top:6px" onclick="mobDelen(this.dataset.k)" data-k="${esc(k)}">📤 Delen (WhatsApp)</button></div>`:""}`;
   let m=document.getElementById("mobPop");if(!m){m=document.createElement("div");m.id="mobPop";m.onclick=e=>{if(e.target===m)sluitMobSoort()};document.body.appendChild(m)}
@@ -4656,7 +4657,7 @@ async function fotoLaad(id){if(id in fotoCache)return fotoCache[id];if(!(data.fo
   try{const d=await wolkDoc.parent.doc("foto_"+id).get();fotoCache[id]=d.exists?d.data().img:null}catch(e){return null}return fotoCache[id]}
 function fotoVul(){document.querySelectorAll("[data-foto]").forEach(async el=>{const id=el.dataset.foto;if(!(data.fotos||{})[id])return;const img=await fotoLaadS(id,el.dataset.fs||"");
   if(img&&el.isConnected&&!el.querySelector("img"))el.insertAdjacentHTML("afterbegin",`<img src="${img}" alt="">`)})}
-async function fotoPop(id){const r=data.rassen.find(x=>x.id===id);if(!r)return;const L=fotoLijst(id),mag=!kijker&&!!wolkDoc;
+async function fotoPop(id){if(!fotoMag())return;const r=data.rassen.find(x=>x.id===id);if(!r)return;const L=fotoLijst(id),mag=!kijker&&!!wolkDoc;
   let i=Math.min(fotoIdx[id]||0,Math.max(0,L.length-1));fotoIdx[id]=i;const suf=L[i],img=L.length?await fotoLaadS(id,suf):null,N=`'${id}'`,her=`fotoPop(${N})`;
   const duim=await Promise.all(L.map(x=>fotoLaadS(id,x)));
   toonPop("📷 "+esc(r.naam||"soort"),`<div class="fotogroot">${img?`<img src="${img}" alt="">`:`<div class="status" style="padding:30px;text-align:center">Nog geen foto.</div>`}</div>
@@ -4707,7 +4708,7 @@ const fmapLijst=tid=>((data.fotoMap||{})[tid])||[];
 async function fmapLaad(tid,s){const c="fmap|"+tid+"|"+s;if(c in fotoCache)return fotoCache[c];if(!wolkDoc)return null;try{const d=await fmapDoc(tid,s).get();fotoCache[c]=d.exists?d.data().img:null}catch(e){return null}return fotoCache[c]}
 const fmapTeelt=t=>{const L=data.teeltduren||[];if(t&&L.some(x=>x.id===t))return t;let v="";try{v=localStorage.getItem("potplanning-fmap")||""}catch(e){}return L.some(x=>x.id===v)?v:(L[0]||{}).id||""};
 let fmapKies=false;
-async function fotoMapPop(tid,kies){if(kies!=null)fmapKies=!!kies;tid=fmapTeelt(tid);try{localStorage.setItem("potplanning-fmap",tid)}catch(e){}
+async function fotoMapPop(tid,kies){if(!fotoMag())return;if(kies!=null)fmapKies=!!kies;tid=fmapTeelt(tid);try{localStorage.setItem("potplanning-fmap",tid)}catch(e){}
   if(!wolkDoc){alert("Foto's werken alleen als u online bent ingelogd.");return}
   const L=fmapLijst(tid),mag=!kijker,T=data.teeltduren||[];
   toonPop("📁 Foto-map",`<select class="mwveld" onchange="fotoMapPop(this.value)">${T.map(t=>`<option value="${t.id}" ${t.id===tid?"selected":""}>${esc(teeltLabel(t))} (${fmapLijst(t.id).length})</option>`).join("")}</select>
@@ -4903,6 +4904,8 @@ document.addEventListener("keydown",e=>{if(e.code!=="KeyZ"||e.ctrlKey||e.metaKey
 /* 2 modules: module 1 = intern niveau 2 (planning + reserveringen), module 2 = intern niveau 3 (plus kosten, afd en vloer) */
 /* module 3 (niveau 4) voorlopig alleen in de eigen app, niet bij klanten (MOD3_KLANT=false) */
 const MOD3_KLANT=false,mod3Mag=()=>MOD3_KLANT||!KLANT.code;
+/* foto's (per soort en foto-mappen): nog niet voor klanten. Zet FOTO_KLANT op true om het voor klanten aan te zetten */
+const FOTO_KLANT=false,fotoMag=()=>FOTO_KLANT||!KLANT.code;
 /* modules (per apparaat): 1 basis · 2 + prijzen · 3 + vloervulling (afd, vloer, ruimte, kosten) · 4 + verkoop en delen.
    intern: niveau() 2 = zonder vloervulling, 3 = met vloervulling, 4 = module 4 */
 /* op de telefoon een eigen keuze; in de eigen app (beheerder) standaard module 4 */
