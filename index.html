@@ -726,6 +726,10 @@ table.oppot th.jaarstart,table.oppot td.jaarstart{border-left:3px solid #4b2a6e!
 .blfoto{display:inline-block;width:44px;height:44px;vertical-align:middle;margin-right:8px;border-radius:6px;overflow:hidden;background:#f3efe6}.blfoto img{width:100%;height:100%;object-fit:cover}.blfoto:not([data-foto]){background:transparent}
 
 .mfoto{margin:0 0 8px;border-radius:10px;overflow:hidden;background:#f3efe6;min-height:60px}.mfoto img{display:block;width:100%;max-height:260px;object-fit:cover}
+.mfotos{position:relative}.mfpijl{position:absolute;top:50%;transform:translateY(-50%);width:36px;height:36px;border-radius:50%;border:0;background:rgba(255,255,255,.85);font-size:24px;line-height:1;cursor:pointer;color:#333}.mfpijl.l{left:6px}.mfpijl.r{right:6px}
+.mfdots{position:absolute;bottom:6px;left:0;right:0;display:flex;justify-content:center;gap:5px}.mfdots i{width:8px;height:8px;border-radius:50%;background:rgba(255,255,255,.6);box-shadow:0 0 2px rgba(0,0,0,.4)}.mfdots i.aan{background:#fff}
+.mfotobalk{display:flex;align-items:center;gap:6px;margin:-2px 0 8px;flex-wrap:wrap}.mfotobalk .btn.klein{padding:5px 10px;font-size:14px}
+.fotoduimen{display:flex;gap:6px;margin-top:8px;flex-wrap:wrap}.fotoduimen button{position:relative;width:64px;height:64px;padding:0;border:2px solid #ddd;border-radius:8px;overflow:hidden;background:#f3efe6;cursor:pointer}.fotoduimen button.aan{border-color:#2d6a4f}.fotoduimen img{width:100%;height:100%;object-fit:cover;display:block}.fotoduimen b{position:absolute;top:1px;left:2px;font-size:12px}
 
 .catgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(135px,1fr));gap:10px}.catkaart{border:1px solid #e6e0d4;border-radius:10px;overflow:hidden;background:#fff;break-inside:avoid;page-break-inside:avoid}
 .catfoto{aspect-ratio:4/3;background:#f3efe6;display:flex;align-items:center;justify-content:center;font-size:34px;overflow:hidden}.catfoto img{width:100%;height:100%;object-fit:cover;display:block}
@@ -988,7 +992,7 @@ body.sales .navMidden>.mknop.groot{display:none!important}body.kijkmodus #btnPri
 
 <script>
 "use strict";
-const VERSIE="46.5";
+const VERSIE="46.6";
 const VERSIE_DATUM="03-11-2026";
 /* ---------- Basis ---------- */
 const PALET=["#2d6a4f","#1B5EBE","#E8007D","#c77d1a","#7a4fa0","#0f8b8d","#5b6b2f","#3d5a80","#a0522d","#7AB648"];
@@ -3768,7 +3772,7 @@ function mobSoort(k,start){const t=+dezeWeek(),l=afleverRegels().filter(r=>r.pro
   const j0=isoWeek(new Date(t)).y,rij=Array.from({length:mobDeelWk()},(_,i)=>+plusWeken(new Date(t),i)).map(tt=>{const n=per.get(tt)||0,{w,y}=isoWeek(new Date(tt)),r=vk?verkSom(vk,tt):0,b=n-r;
     return`<div class="mrij"><span>wk ${w}${y!==j0?" ("+y+")":""}${r?`<br><span class="status noshot" style="font-size:12px">plan ${getal(n)} · gereserveerd ${getal(r)}</span>`:""}</span>${n||r?`<b class="${b<0?"let":""}" data-n="${b}">${b?getal(b):"—"}</b>`:`<b class="status">—</b>`}</div>`}).join("");
   const[kp,ks]=k.split(" · "),ras=data.rassen.find(r=>r.naam===ks&&teeltLabel(data.teeltduren.find(t=>t.id===r.teeltId)||{})===kp),fid=ras&&(data.fotos||{})[ras.id]?ras.id:"";
-  const h=`<div id="mobDeel"><div class="mpopKop"><b>${esc(k)}</b><button class="noshot" onclick="sluitMobSoort()">✕</button></div><div class="mpopIn">${fid?`<div class="mfoto" data-foto="${fid}"></div>`:""}${ras&&modNr()>=2?mobInfo(ras,k):""}${rij?`<div class="mweken"><div class="status" style="font-size:12px;text-align:right;margin-bottom:2px">nog beschikbaar</div>${rij}</div>`:""}${rij?"":'<div class="status" style="padding:8px 0">Niets gepland.</div>'}</div></div>
+  const h=`<div id="mobDeel"><div class="mpopKop"><b>${esc(k)}</b><button class="noshot" onclick="sluitMobSoort()">✕</button></div><div class="mpopIn">${ras?mobFotoVak(ras.id):""}${ras&&modNr()>=2?mobInfo(ras,k):""}${rij?`<div class="mweken"><div class="status" style="font-size:12px;text-align:right;margin-bottom:2px">nog beschikbaar</div>${rij}</div>`:""}${rij?"":'<div class="status" style="padding:8px 0">Niets gepland.</div>'}</div></div>
     ${rij&&mod4()?`<div class="mpopIn" style="padding-top:0"><div style="display:flex;align-items:center;gap:8px;margin-top:4px;flex-wrap:wrap"><label class="status" style="display:flex;align-items:center;gap:8px"><input type="checkbox" style="width:20px;height:20px" ${mobAantDelen()?"checked":""} onchange="try{localStorage.setItem('potplanning-deelaant',this.checked?'1':'0')}catch(e){};document.getElementById('mobPctVak').style.display=this.checked?'':'none'"> beschikbaarheid meesturen</label>
       <span id="mobPctVak" class="status" style="margin-left:auto;${mobAantDelen()?"":"display:none"}"><input type="number" min="1" max="26" inputmode="numeric" value="${mobDeelWk()}" style="width:50px;padding:3px 6px;text-align:right;font:inherit;border:1px solid #cfc6b4;border-radius:6px" onchange="try{localStorage.setItem('potplanning-deelwk',Math.max(1,Math.min(26,+this.value||5)))}catch(e){};mobSoort(this.dataset.k)" data-k="${esc(k)}" title="Aantal weken, vanaf deze week"> wkn · voor <input id="mobPct" type="number" min="1" max="100" inputmode="numeric" value="${mobDeelPct()}" style="width:58px;padding:3px 6px;text-align:right;font:inherit;border:1px solid #cfc6b4;border-radius:6px" onchange="try{localStorage.setItem('potplanning-deelpct',Math.max(1,Math.min(100,+this.value||80)))}catch(e){}"> %</span></div><button class="btn" style="width:100%;margin-top:6px" onclick="mobDelen(this.dataset.k)" data-k="${esc(k)}">📤 Delen (WhatsApp)</button></div>`:""}`;
   let m=document.getElementById("mobPop");if(!m){m=document.createElement("div");m.id="mobPop";m.onclick=e=>{if(e.target===m)sluitMobSoort()};document.body.appendChild(m)}
@@ -4648,19 +4652,63 @@ async function beschPlaatje(kopie){const bron=document.getElementById("blLijst")
 const fotoCache={};
 async function fotoLaad(id){if(id in fotoCache)return fotoCache[id];if(!(data.fotos||{})[id]||!wolkDoc)return null;
   try{const d=await wolkDoc.parent.doc("foto_"+id).get();fotoCache[id]=d.exists?d.data().img:null}catch(e){return null}return fotoCache[id]}
-function fotoVul(){document.querySelectorAll("[data-foto]").forEach(async el=>{const id=el.dataset.foto;if(!(data.fotos||{})[id])return;const img=await fotoLaad(id);
-  if(img&&el.isConnected&&!el.querySelector("img"))el.innerHTML=`<img src="${img}" alt="">`})}
-async function fotoPop(id){const r=data.rassen.find(x=>x.id===id);if(!r)return;const img=await fotoLaad(id),mag=!kijker&&!!wolkDoc;
+function fotoVul(){document.querySelectorAll("[data-foto]").forEach(async el=>{const id=el.dataset.foto;if(!(data.fotos||{})[id])return;const img=await fotoLaadS(id,el.dataset.fs||"");
+  if(img&&el.isConnected&&!el.querySelector("img"))el.insertAdjacentHTML("afterbegin",`<img src="${img}" alt="">`)})}
+async function fotoPop(id){const r=data.rassen.find(x=>x.id===id);if(!r)return;const L=fotoLijst(id),mag=!kijker&&!!wolkDoc;
+  let i=Math.min(fotoIdx[id]||0,Math.max(0,L.length-1));fotoIdx[id]=i;const suf=L[i],img=L.length?await fotoLaadS(id,suf):null,N=`'${id}'`,her=`fotoPop(${N})`;
+  const duim=await Promise.all(L.map(x=>fotoLaadS(id,x)));
   toonPop("📷 "+esc(r.naam||"soort"),`<div class="fotogroot">${img?`<img src="${img}" alt="">`:`<div class="status" style="padding:30px;text-align:center">Nog geen foto.</div>`}</div>
-    ${mag?`<div class="rij" style="margin-top:10px;gap:8px">${img?`<button class="btn rood" onclick="fotoWeg('${id}')">Foto weghalen</button>`:""}<span style="flex:1"></span>
-      <label class="btn" style="cursor:pointer">${img?"Andere foto kiezen":"Foto kiezen"}<input type="file" accept="image/*" hidden onchange="fotoZet('${id}',this.files[0])"></label></div>
-      <p class="status" style="margin:6px 0 0;font-size:12px">Op de telefoon kunt u ook meteen een foto maken. De foto wordt verkleind bewaard.</p>`:wolkDoc?"":`<p class="status">Foto's werken alleen als u online bent ingelogd.</p>`}`)}
+    ${L.length>1?`<div class="fotoduimen">${duim.map((u,j)=>`<button class="${j===i?"aan":""}" onclick="fotoIdx[${N}]=${j};${her}" title="Foto ${j+1}${j===0?" (hoofdfoto)":""}">${u?`<img src="${u}" alt="">`:j+1}${j===0?"<b>⭐</b>":""}</button>`).join("")}</div>`:""}
+    ${mag?`<div class="rij" style="margin-top:10px;gap:8px;flex-wrap:wrap">${L.length?`<span class="status">Foto ${i+1} van ${L.length}${i===0?" · ⭐ hoofdfoto":""}</span>`:""}<span style="flex:1"></span>
+      ${i>0?`<button class="btn licht" onclick="fotoHoofd(${N},'${suf}',()=>{${her};render()})">⭐ Maak hoofdfoto</button>`:""}
+      ${img?`<button class="btn rood" onclick="fotoWegS(${N},'${suf}',()=>{${her};render()})">🗑 Weghalen</button>`:""}
+      ${L.length<FOTO_MAX?`<label class="btn" style="cursor:pointer">➕ Foto toevoegen<input type="file" accept="image/*" hidden onchange="fotoErbij(${N},this.files[0],()=>{${her};render()})"></label>`:""}</div>
+      <p class="status" style="margin:6px 0 0;font-size:12px">Maximaal ${FOTO_MAX} foto's per soort. De hoofdfoto (⭐) komt in de aanbodlijst en de catalogus.</p>`:wolkDoc?"":`<p class="status">Foto's werken alleen als u online bent ingelogd.</p>`}`)}
 function fotoKlein(file,max=480){return new Promise((ok,nee)=>{const u=URL.createObjectURL(file),im=new Image();im.onload=()=>{const f=Math.min(1,max/Math.max(im.width,im.height)),c=document.createElement("canvas");
     c.width=Math.round(im.width*f);c.height=Math.round(im.height*f);c.getContext("2d").drawImage(im,0,0,c.width,c.height);URL.revokeObjectURL(u);ok(c.toDataURL("image/jpeg",0.72))};im.onerror=()=>nee(new Error("Dit is geen foto"));im.src=u})}
 async function fotoZet(id,file,na,max){if(!file)return;try{melding("Foto bewaren…");let img=await fotoKlein(file,max||480);if(img.length>700000)img=await fotoKlein(file,320);
     await wolkDoc.parent.doc("foto_"+id).set({img,t:new Date().toISOString(),door:wolkMail});fotoCache[id]=img;(data.fotos=data.fotos||{})[id]=Date.now();opslaanLater();
     melding("📷 Foto bewaard","#2d6a4f");if(na)na();else{fotoPop(id);render()}}catch(e){alert("Foto bewaren lukt niet: "+e.message)}}
-async function fotoWeg(id){if(!confirm("Foto weghalen?"))return;try{await wolkDoc.parent.doc("foto_"+id).delete()}catch(e){}delete fotoCache[id];if(data.fotos)delete data.fotos[id];opslaanLater();sluitMobSoort();render()}
+async function fotoWeg(id){await fotoWegS(id,"",()=>{sluitMobSoort();render()})}
+/* ---------- Meer foto's per soort (max 5). Foto 1 = hoofdfoto = planning/foto_<id> (aanbodlijst, catalogus).
+   De andere staan in planning/foto_<id>_<code>; welke er zijn staat in data.fotoExtra[id] = [code, …] ---------- */
+const FOTO_MAX=5;
+const fotoLijst=id=>((data.fotos||{})[id]?[""]:[]).concat(((data.fotoExtra||{})[id])||[]);
+const fotoDocS=(id,suf)=>wolkDoc.parent.doc("foto_"+id+(suf?"_"+suf:""));
+async function fotoLaadS(id,suf){if(!suf)return fotoLaad(id);const c=id+"|"+suf;if(c in fotoCache)return fotoCache[c];if(!wolkDoc)return null;
+  try{const d=await fotoDocS(id,suf).get();fotoCache[c]=d.exists?d.data().img:null}catch(e){return null}return fotoCache[c]}
+async function fotoErbij(id,file,na){if(!file)return;if(!wolkDoc){alert("Foto's werken alleen als u online bent ingelogd.");return}
+  const L=fotoLijst(id);if(L.length>=FOTO_MAX){alert(`Er zijn al ${FOTO_MAX} foto's. Haal er eerst één weg.`);return}
+  if(!L.length)return fotoZet(id,file,na,800);
+  try{melding("Foto bewaren…");let img=await fotoKlein(file,800);if(img.length>700000)img=await fotoKlein(file,480);
+    const suf=Date.now().toString(36);await fotoDocS(id,suf).set({img,t:new Date().toISOString(),door:wolkMail});fotoCache[id+"|"+suf]=img;
+    const E=data.fotoExtra=data.fotoExtra||{};(E[id]=E[id]||[]).push(suf);fotoIdx[id]=fotoLijst(id).length-1;opslaanLater();melding("📷 Foto bewaard","#2d6a4f");if(na)na()}
+  catch(e){alert("Foto bewaren lukt niet: "+e.message)}}
+/* deze foto wordt foto 1 (de hoofdfoto): de plaatjes wisselen van plek */
+async function fotoHoofd(id,suf,na){if(!suf)return;try{melding("Even wachten…");const a=await fotoLaad(id),b=await fotoLaadS(id,suf);if(!b)return;
+    const t=new Date().toISOString();await fotoDocS(id,"").set({img:b,t,door:wolkMail});if(a)await fotoDocS(id,suf).set({img:a,t,door:wolkMail});
+    fotoCache[id]=b;fotoCache[id+"|"+suf]=a;fotoIdx[id]=0;(data.fotos=data.fotos||{})[id]=Date.now();opslaanLater();melding("⭐ Dit is nu de hoofdfoto","#2d6a4f");if(na)na()}
+  catch(e){alert("Lukt niet: "+e.message)}}
+async function fotoWegS(id,suf,na){if(!confirm("Deze foto weghalen?"))return;const E=data.fotoExtra=data.fotoExtra||{},X=E[id]||[];
+  try{if(suf){await fotoDocS(id,suf).delete().catch(()=>{});E[id]=X.filter(x=>x!==suf);delete fotoCache[id+"|"+suf]}
+    else if(X.length){/* hoofdfoto weg: de volgende foto schuift op naar plek 1 */const n=X[0],img=await fotoLaadS(id,n);
+      if(img){await fotoDocS(id,"").set({img,t:new Date().toISOString(),door:wolkMail});fotoCache[id]=img}await fotoDocS(id,n).delete().catch(()=>{});E[id]=X.slice(1);delete fotoCache[id+"|"+n]}
+    else{await fotoDocS(id,"").delete().catch(()=>{});delete fotoCache[id];if(data.fotos)delete data.fotos[id]}
+    if(E[id]&&!E[id].length)delete E[id];fotoIdx[id]=0;opslaanLater();melding("Foto weggehaald","#2d6a4f");if(na)na()}
+  catch(e){alert("Lukt niet: "+e.message)}}
+const fotoIdx={};
+function fotoStap(id,d,na){const n=fotoLijst(id).length;if(n<2)return;fotoIdx[id]=((fotoIdx[id]||0)+d+n)%n;na()}
+/* mobiel: foto(s) bovenin de popup. De foto die u ziet, gaat mee bij Delen */
+function mobFotoVak(id){const L=fotoLijst(id),mag=!kijker&&!!wolkDoc;if(!L.length&&!mag)return"";
+  let i=Math.min(fotoIdx[id]||0,Math.max(0,L.length-1));fotoIdx[id]=i;const suf=L[i],N=`'${id}'`,her=`mobSoort(document.getElementById('mobPop').dataset.k)`;
+  if(!L.length)return`<div class="mfotobalk noshot"><label class="btn licht" style="cursor:pointer;flex:1;text-align:center">📷 Foto toevoegen<input type="file" accept="image/*" hidden onchange="fotoErbij(${N},this.files[0],()=>${her})"></label></div>`;
+  return`<div class="mfoto mfotos" data-foto="${id}" ${suf?`data-fs="${suf}"`:""} ontouchstart="mfX=event.touches[0].clientX" ontouchend="const d=event.changedTouches[0].clientX-mfX;if(Math.abs(d)>40)fotoStap(${N},d<0?1:-1,()=>${her})">
+      ${L.length>1?`<button class="mfpijl l noshot" onclick="fotoStap(${N},-1,()=>${her})">‹</button><button class="mfpijl r noshot" onclick="fotoStap(${N},1,()=>${her})">›</button><div class="mfdots noshot">${L.map((_,j)=>`<i class="${j===i?"aan":""}"></i>`).join("")}</div>`:""}</div>
+    ${mag?`<div class="mfotobalk noshot"><span class="status">Foto ${i+1} van ${L.length}${i===0?" · ⭐ hoofdfoto":""}</span><span style="flex:1"></span>
+      ${i>0?`<button class="btn licht klein" onclick="fotoHoofd(${N},'${suf}',()=>${her})" title="Maak dit de hoofdfoto (voor de aanbodlijst en catalogus)">⭐</button>`:""}
+      <button class="btn licht klein" onclick="fotoWegS(${N},'${suf}',()=>${her})" title="Deze foto weghalen">🗑</button>
+      ${L.length<FOTO_MAX?`<label class="btn licht klein" style="cursor:pointer" title="Foto toevoegen (camera of galerij)">➕ Foto<input type="file" accept="image/*" hidden onchange="fotoErbij(${N},this.files[0],()=>${her})"></label>`:""}</div>`:""}`}
+let mfX=0;
 /* Mobiel: tik op een aantal → op welke vloer staan ze */
 function mobRaap(e,k,t){e.stopPropagation();const l=afleverRegels().filter(r=>r.t===t&&r.aantal>0&&r.product+" · "+r.soort===k);
   if(!l.length)return;raapPop(l[0].product+"|"+l[0].soort,t,l,true)}
