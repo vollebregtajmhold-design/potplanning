@@ -776,7 +776,7 @@ body.sales .navMidden>.mknop.groot{display:none!important}body.kijkmodus #btnPri
 
 .prtab tr.pralle td{background:#fff8dc;position:sticky;top:31px;z-index:2;border-bottom:2px solid #e0c060}.prtab tr.pralle td.prsoort{z-index:3;background:#fff3c4;font-weight:700;color:#7a5c00}.prtab tr.pralle .prin{border-color:#e0c060}
 
-#klMenu{position:fixed;z-index:200;background:#fff;border:2px solid #2b5fb4;border-radius:8px;box-shadow:0 8px 24px rgba(0,0,0,.25);min-width:260px;overflow:hidden;font-size:15px;font-family:system-ui,Segoe UI,Arial,sans-serif}
+#klMenu{position:fixed;z-index:10001;background:#fff;border:2px solid #2b5fb4;border-radius:8px;box-shadow:0 8px 24px rgba(0,0,0,.25);min-width:260px;overflow:hidden;font-size:15px;font-family:system-ui,Segoe UI,Arial,sans-serif}
 #klMenu .klmkop{background:#f1ece2;font-weight:700;padding:12px 20px;font-size:16px;border-bottom:1px solid #d6d6d6}#klMenu .klmtel{padding:12px 20px;border-bottom:1px solid #d6d6d6;color:#222}
 #klMenu button{display:block;width:100%;text-align:left;border:0;border-bottom:1px solid #d6d6d6;background:#fff;padding:12px 20px;font:inherit;font-weight:500;cursor:pointer;color:#222}#klMenu button:hover{background:#eef6f1}#klMenu button:last-child{border-bottom:0}
 
@@ -980,7 +980,7 @@ body.sales .navMidden>.mknop.groot{display:none!important}body.kijkmodus #btnPri
 
 <script>
 "use strict";
-const VERSIE="45.4";
+const VERSIE="45.5";
 const VERSIE_DATUM="03-11-2026";
 /* ---------- Basis ---------- */
 const PALET=["#2d6a4f","#1B5EBE","#E8007D","#c77d1a","#7a4fa0","#0f8b8d","#5b6b2f","#3d5a80","#a0522d","#7AB648"];
@@ -5402,7 +5402,7 @@ function zoekItemsE(q){q=q.trim().toLowerCase();const r=[],woorden=q.split(/\s+/
     let si=0;for(const x of data.rassen)if(x.naam&&past(x.naam)){const sb=score(x.naam)+.65+(si++)*.01,t=data.teeltduren.find(y=>y.id===x.teeltId),pr=t?(t.product||"")+(t.potmaat?" "+t.potmaat+" cm":""):"";
       r.push({ic:"🏷️",naam:x.naam,sub:t?teeltNaam(t):"",grp:"Soort",f:()=>naarSoort(x.id),s:sb,
         knop:[["Parameters",()=>naarSoort(x.id)],["Inkoop",()=>naarInkoopSoort(x.id)],["Komende weken",()=>{naar("aflever");mobSoort(pr+" · "+x.naam,nu)}]]})}
-    for(const k of data.klanten)if(k.naam&&past(k.naam,k.plaats,k.contact))r.push({ic:"👤",naam:k.naam+(k.plaats?" · "+k.plaats:""),grp:"Klant",f:()=>{naar("klanten");const el=document.querySelector(`[data-kl="${k.id}"][data-kk="naam"]`);if(el){el.scrollIntoView({block:"center"});el.focus()}},s:score(k.naam)+.8})}
+    zoekKlanten(r,past,score)}
   return r.sort((a,b)=>a.s-b.s).slice(0,40)}
 function zoekItems(q){if(data.instellingen.eenvoudig)return zoekItemsE(q);q=q.trim().toLowerCase();const r=[];
   const woorden=q.split(/\s+/).filter(Boolean);
@@ -5419,8 +5419,12 @@ function zoekItems(q){if(data.instellingen.eenvoudig)return zoekItemsE(q);q=q.tr
     for(const v of data.vloeren)if(past(v.naam))r.push({ic:"🏠",naam:v.naam,grp:"Vloer",f:()=>naar("kappen"),s:score(v.naam)+.8});
     for(const p of data.partijen)if(past(partijNr(p),p.product,p.ras,p.klant)){const f=fasen(p);
       r.push({ic:"🔖",naam:`${partijNr(p)} · ${p.product}${p.potmaat?" "+p.potmaat+" cm":""} · ${wkJaar(f.s)}`,grp:"Partij",f:()=>{naar("plan");bewerk(p.id)},s:score(partijNr(p))+.9})}
+    zoekKlanten(r,past,score);
   }
   return r.sort((a,b)=>a.s-b.s).slice(0,40)}
+function zoekKlanten(r,past,score){if(niveau()<2)return;
+  for(const k of data.klanten||[])if(k.naam&&past(k.naam,k.plaats||"",k.contact||""))r.push({ic:"👤",naam:k.naam,sub:k.plaats||"",grp:"Klant",s:score(k.naam)+.3,
+    f:()=>{const b=Math.min(300,innerWidth-16),x=Math.max(8,innerWidth/2-b/2-20);klantMenu(k.naam,{getBoundingClientRect:()=>({left:x,right:x+b,top:70,bottom:90,width:b,height:20})})}})}
 let zoekSel=0,zoekLijst=[];
 function zoekToon(){zoekLijst=zoekItems($("#zoekInvoer").value);zoekSel=Math.min(zoekSel,Math.max(0,zoekLijst.length-1));
   $("#zoekLijst").innerHTML=zoekLijst.length?zoekLijst.map((x,i)=>x.knop?`<div class="zr zrknop ${i===zoekSel?"sel":""}" data-i="${i}"><span class="ic">${x.ic}</span><span class="zrnaam">${esc(x.naam)}${x.sub?` <span class="status">· ${esc(x.sub)}</span>`:""}</span><span class="zk">${x.knop.map((k,j)=>`<button type="button" class="ovk ovlink" data-k="${j}">${k[0]} ›</button>`).join("")}</span></div>`
