@@ -228,7 +228,7 @@ body.rolTeler .nivVerk,body.rolTeler .zoeksnel,body.rolTeler [data-tab="klanten"
 .mwrol{font:inherit;font-size:13px;padding:4px;border:1px solid #cfc6b4;border-radius:6px;max-width:130px}
 .mwKnop{display:none!important}body.wolk.magMw .mwKnop{display:block!important}
 #login form{margin:0}#login input{width:100%;box-sizing:border-box;margin-top:8px;padding:11px 12px;border:1px solid #ccc;border-radius:10px;font-size:16px}#login .lgof{margin-top:18px;font-size:13px;color:#777;display:flex;align-items:center;gap:8px}#login .lgof:before,#login .lgof:after{content:"";flex:1;border-top:1px solid #ddd}#login .lgvg{display:inline-block;margin-top:10px;font-size:13px;color:#4b2a6e}
-.mwrij{display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid #eee}.mwrij .mwnm{flex:1;min-width:0}.mwrij small{color:#666;display:block;overflow:hidden;text-overflow:ellipsis}
+.mwrij{display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid #eee}@media(max-width:520px){.mwrij{flex-wrap:wrap}.mwrij .mwnm{flex:1 1 100%!important}.mwrij small{white-space:nowrap}}.mwrij .mwnm{flex:1;min-width:0}.mwrij small{color:#666;display:block;overflow:hidden;text-overflow:ellipsis}
 .mwveld{width:100%;box-sizing:border-box;font:inherit;font-size:16px;padding:9px 10px;border:1px solid #cfc6b4;border-radius:8px;margin-bottom:8px}
 .bhkaart{background:#fff;border:1px solid #c9c2b6;border-radius:8px;padding:12px 14px;margin:0 0 12px}.bhkaart.eigen{border-left:5px solid #2d6a4f}
 .bhkop{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:8px;cursor:pointer;user-select:none}.bhkaart.dicht .bhkop{margin-bottom:0}.bhkaart.dicht .bhgrid,.bhkaart.dicht .bhknop{display:none}.bhpijl{font-size:16px;color:#2d6a4f;width:14px}.bhkop .ovk{font-size:13px;padding:4px 10px}.bhkop h3{margin:0;font-size:18px}
@@ -987,7 +987,7 @@ body.sales .navMidden>.mknop.groot{display:none!important}body.kijkmodus #btnPri
 
 <script>
 "use strict";
-const VERSIE="45.8";
+const VERSIE="45.9";
 const VERSIE_DATUM="03-11-2026";
 /* ---------- Basis ---------- */
 const PALET=["#2d6a4f","#1B5EBE","#E8007D","#c77d1a","#7a4fa0","#0f8b8d","#5b6b2f","#3d5a80","#a0522d","#7AB648"];
@@ -1642,6 +1642,7 @@ const isTeler=()=>mwRol==="teler";
 const TELER_WEG=["klanten","verkoop","beheer"];
 /* rol van de ingelogde medewerker lezen en toepassen */
 function mwRolStart(u){if(mwStop){mwStop();mwStop=null}mwRol="";if(!wolkWw)return mwRolZet("");
+  try{firebase.firestore().collection("planning").doc("login").set({[u.uid]:new Date().toISOString()},{merge:true}).catch(()=>{})}catch(e){}
   mwStop=mwDoc().onSnapshot(d=>{const x=((d.exists&&d.data().lijst)||{})[u.uid];mwRolZet(x?(x.rol||"alles"):"")},()=>{})}
 function mwRolZet(r){const oud=mwRol;mwRol=r;document.body.classList.toggle("rolTeler",r==="teler");document.body.classList.toggle("rolVast",!!r);
   if(r==="kijk"){zetKijker(true);const b=document.getElementById("kijkLabel");if(b){b.textContent="👁 Alleen kijken";b.title="Uw account mag alles bekijken, maar niets veranderen."}}
@@ -1656,10 +1657,12 @@ async function wwVergeten(){const x=document.getElementById("lgMail"),m=(x&&x.va
 const MW_KLANT=false,mwAan=()=>MW_KLANT||!KLANT.code;
 const magMw=()=>mwAan()&&kanWolk()&&!!wolkMail&&!wolkWw&&!kijker&&(KLANT.code?!!deelBaas()&&String(wolkMail).toLowerCase()===deelBaas():isBeheerder());
 const mwDoc=()=>firebase.firestore().collection("planning").doc("medewerkers");
-let mwData=null;
+let mwData=null,mwLogin={};
+const mwMax=()=>KLANT.code?(toegang.maxMw==null?0:toegang.maxMw):Infinity;
+const mwLaatst=t=>{if(!t)return"nog nooit ingelogd";const d=new Date(t),n=Math.floor((Date.now()-d)/864e5);return"laatst ingelogd: "+(n<1?"vandaag":n===1?"gisteren":n+" dagen geleden")};
 async function toonMedewerkers(){if(!magMw()){alert("Alleen de baas van deze app kan medewerkers beheren.");return}
   toonPop("👷 Medewerkers",`<div class="status">Laden…</div>`);
-  try{const d=await mwDoc().get();mwData=d.exists?d.data():{}}catch(e){toonPop("👷 Medewerkers",`<div class="let">Kan de lijst niet laden: ${esc(e.code==="permission-denied"?"de regels in Firebase zijn nog niet bijgewerkt.":e.message)}</div>${mwUitleg()}`);return}
+  try{const d=await mwDoc().get();mwData=d.exists?d.data():{};try{const l=await firebase.firestore().collection("planning").doc("login").get();mwLogin=l.exists?l.data():{}}catch(e){mwLogin={}}}catch(e){toonPop("👷 Medewerkers",`<div class="let">Kan de lijst niet laden: ${esc(e.code==="permission-denied"?"de regels in Firebase zijn nog niet bijgewerkt.":e.message)}</div>${mwUitleg()}`);return}
   mwToon()}
 function mwUitleg(){return`<details style="margin-top:12px"><summary class="status" style="cursor:pointer">Eenmalig instellen in Firebase</summary><ol class="status" style="padding-left:18px;margin:6px 0">
   <li>Firebase → <b>Authentication</b> → <b>Sign-in method</b> → <b>E-mail/wachtwoord</b> aanzetten → Opslaan.</li>
@@ -1668,7 +1671,8 @@ setTimeout(()=>{for(const f of["prijsTabel","klantMenu","orderForm","klantKaart"
 function mwToon(){const L=Object.entries((mwData&&mwData.lijst)||{}).sort((a,b)=>String(a[1].naam||a[1].mail).localeCompare(String(b[1].naam||b[1].mail)));
   toonPop("👷 Medewerkers",`<p class="status" style="margin:0 0 8px">Medewerkers loggen in met <b>e-mail + wachtwoord</b>. Ze hebben geen Google-account nodig. Kies per medewerker wat hij mag:</p>
     <div class="status" style="font-size:12px;margin:0 0 8px;line-height:1.5">🌱💶 <b>Alles</b>: alles, behalve Beheer en Medewerkers<br>🌱 <b>Teler</b>: teelt en planning, geen klanten en geen prijzen<br>💶 <b>Verkoper</b>: zoeken, afleverplanning, klanten en orders<br>👁 <b>Alleen kijken</b>: alles zien, niets veranderen</div>
-    ${L.length?L.map(([uid,x])=>`<div class="mwrij"><span class="mwnm"><b>${esc(x.naam||"–")}</b><small>${esc(x.mail||"")}</small></span><select class="mwrol" onchange="mwRolKies('${uid}',this.value)" title="Wat mag deze medewerker?">${MW_ROLLEN.map(([k,n])=>`<option value="${k}" ${(x.rol||"alles")===k?"selected":""}>${n}</option>`).join("")}</select><button class="ovk ovlink" onclick="mwMail('${uid}')" title="Stuur een mail om een nieuw wachtwoord te maken">✉ Nieuw wachtwoord</button><button class="ovk ovlink" onclick="mwWeg('${uid}')" title="Toegang weghalen">🗑</button></div>`).join(""):`<div class="status" style="padding:6px 0">Nog geen medewerkers.</div>`}
+    ${L.length?L.map(([uid,x])=>`<div class="mwrij"><span class="mwnm"><b>${esc(x.naam||"–")}</b><small>${esc(x.mail||"")}</small><small>${mwLaatst(mwLogin[uid])}</small></span><select class="mwrol" onchange="mwRolKies('${uid}',this.value)" title="Wat mag deze medewerker?">${MW_ROLLEN.map(([k,n])=>`<option value="${k}" ${(x.rol||"alles")===k?"selected":""}>${n}</option>`).join("")}</select><button class="ovk ovlink" onclick="mwMail('${uid}')" title="Stuur een mail om een nieuw wachtwoord te maken">✉ Nieuw wachtwoord</button><button class="ovk ovlink" onclick="mwWeg('${uid}')" title="Toegang weghalen">🗑</button></div>`).join(""):`<div class="status" style="padding:6px 0">Nog geen medewerkers.</div>`}
+    ${KLANT.code?`<p class="status" style="margin:10px 0 0">U gebruikt <b>${L.length}</b> van de <b>${mwMax()}</b> medewerkers.${L.length>=mwMax()?" Meer nodig? Neem contact op met "+esc(KLANT.leverancier||"Vollebregt")+".":""}</p>`:""}
     <h4 style="margin:14px 0 6px">➕ Medewerker toevoegen</h4>
     <input id="mwNaam" class="mwveld" placeholder="Naam">
     <input id="mwMail" class="mwveld" type="email" placeholder="E-mailadres" autocomplete="off">
@@ -1680,6 +1684,7 @@ async function mwToevoegen(){const rol=(document.getElementById("mwRolN")||{}).v
   if(!naam||!mail){f.textContent="Vul een naam en e-mailadres in.";return}
   const oud=Object.entries((mwData&&mwData.oud)||{}).find(([u,x])=>x.mail===mail);
   if(Object.values((mwData&&mwData.lijst)||{}).some(x=>x.mail===mail)){f.textContent="Deze medewerker staat al in de lijst.";return}
+  if(Object.keys((mwData&&mwData.lijst)||{}).length>=mwMax()){f.textContent="U heeft het maximum aantal medewerkers bereikt. Neem contact op met "+(KLANT.leverancier||"Vollebregt")+".";return}
   k.disabled=true;f.textContent="";
   try{let uid;
     if(oud){uid=oud[0]}
@@ -1712,7 +1717,7 @@ async function wolkStart(){
     wolkMail=u.email||"";wolkWw=(u.providerData||[]).some(x=>x.providerId==="password")&&!(u.providerData||[]).some(x=>x.providerId==="google.com");const lg=document.getElementById("login");if(lg)lg.hidden=true;mwRolStart(u);
     wolkDoc=db.collection("planning").doc("hoofd");wolkEerste=true;wolkStatus("Verbinden…");
     if(KLANT.code)bevLuister(db);
-    if(KLANT.code)db.collection("planning").doc("toegang").onSnapshot(t=>{const v=t.exists?t.data():{};toegang={klant:lijstLaag(v.klant),meekijken:lijstLaag(v.meekijken),baas:String(v.baas||"").trim().toLowerCase(),geladen:true};setTimeout(deelOpslaan,1500)},()=>{});
+    if(KLANT.code)db.collection("planning").doc("toegang").onSnapshot(t=>{const v=t.exists?t.data():{};toegang={klant:lijstLaag(v.klant),meekijken:lijstLaag(v.meekijken),baas:String(v.baas||"").trim().toLowerCase(),maxMw:v.maxMw==null?null:+v.maxMw,geladen:true};setTimeout(deelOpslaan,1500)},()=>{});
     wolkStop=wolkDoc.onSnapshot(snap=>{
       if(!snap.exists){if(wolkEerste){wolkEerste=false;
           if(data.teeltduren.length){opslaan();melding("☁️ Uw planning staat nu online","#2d6a4f")}
@@ -5252,7 +5257,7 @@ function toonBeheer(){const B=beheerData(),ob=document.getElementById("ovBalk");
         ${veld("appUrl",i,"Webadres app","t","https://….github.io/naam/")}${veld("repo",i,"GitHub","t","https://github.com/…/naam")}
         ${veld("firebase",i,"firebaseConfig","ta","plak hier het stukje firebaseConfig = { … } uit Firebase")}${veld("emails",i,"E-mailadressen klant (1 per regel)","ta","naam@gmail.com")}${veld("notitie",i,"Notitie","t","")}</div>
       <div class="bhknop">${i?`<button class="ovk ovlink bhgroot" onclick="ghWizard(${i})" title="Maakt de GitHub-repository, zet index.html en klant.js erin en zet de website (Pages) aan">🧙 GitHub klaarzetten</button>`:""}<button class="ovk ovlink" onclick="bhOpen(${i},'repo')">GitHub ›</button><button class="ovk ovlink" onclick="bhOpen(${i},'fb')">Firebase ›</button>
-        <button class="ovk ovlink" onclick="bhVersie(${i})">↻ Versie</button>${i?`<button class="ovk ovlink" onclick="bhActief(${i})" title="Wanneer heeft deze klant voor het laatst in de app gewerkt? (eerste keer: inloggen bij deze klant)">🕒 Laatst actief</button>`:""}<button class="ovk ovlink" onclick="bhKlantJs(${i})">⬇ klant.js</button><button class="ovk ovlink" onclick="bhRegels(${i})">Regels Firebase</button></div></div>`}).join("")}
+        <button class="ovk ovlink" onclick="bhVersie(${i})">↻ Versie</button>${i?`<button class="ovk ovlink" onclick="bhActief(${i})" title="Wanneer heeft deze klant voor het laatst in de app gewerkt? (eerste keer: inloggen bij deze klant)">🕒 Laatst actief</button>`:""}<button class="ovk ovlink" onclick="bhKlantJs(${i})">⬇ klant.js</button><button class="ovk ovlink" onclick="bhRegels(${i})">Regels Firebase</button><button class="ovk ovlink" onclick="bhMw(${i})" title="Wie heeft toegang bij deze klant, en hoeveel medewerkers mag de klant maken">👷 Medewerkers${i&&k.maxMw!=null&&k.maxMw!==""?" (max "+esc(k.maxMw)+")":""}</button></div></div>`}).join("")}
 $("#inhoud").addEventListener("change",e=>{const el=e.target;if(!el.dataset||el.dataset.bk==null||tab!=="beheer")return;const B=beheerData(),k=B.klanten[+el.dataset.bi];if(!k)return;
   k[el.dataset.bk]=el.value.trim();opslaanLater();if(["naam","firebase"].includes(el.dataset.bk))render()});
 function bhNieuw(){const nid=uid();bhOpen1.add(nid);beheerData().klanten.push({id:nid,naam:"",appNaam:"",code:"",appUrl:"",repo:"",firebase:"",emails:"vollebregt.a@gmail.com",notitie:""});wijzig();setTimeout(()=>{const l=[...document.querySelectorAll('input[data-bk="naam"]')].pop();if(l){l.scrollIntoView({block:"center"});l.focus()}},80)}
@@ -5281,9 +5286,29 @@ window.KLANT={
   firebase:${JSON.stringify(f)}
 };
 `;return t}
+/* Beheer: per klant zien wie er toegang heeft, en het maximum aantal medewerkers instellen (staat in planning/toegang, alleen de beheerder mag dat) */
+async function bhMw(i){const k=beheerData().klanten[i];if(!k)return;const app=i?bhFbApp(k):(window.firebase&&firebase.apps.length?firebase.app():null);
+  if(!app){alert(i?"Vul eerst de firebaseConfig in.":"Dit werkt alleen online.");return}
+  toonPop("👷 Medewerkers · "+esc(k.naam||""),`<div class="status">Laden…</div>`);
+  let u=await bhAuthKlaar(app);
+  if(!u){try{const p=new firebase.auth.GoogleAuthProvider();p.setCustomParameters({prompt:"select_account"});u=(await app.auth().signInWithPopup(p)).user}catch(e){toonPop("👷 Medewerkers",`<div class="let">Inloggen lukt niet: ${esc(e.message)}</div>`);return}}
+  const col=app.firestore().collection("planning"),lees=async n=>{const d=await col.doc(n).get();return d.exists?d.data():{}};
+  let T={},M={},LG={};
+  try{[T,M,LG]=await Promise.all([i?lees("toegang"):Promise.resolve({}),lees("medewerkers"),lees("login").catch(()=>({}))])}
+  catch(e){toonPop("👷 Medewerkers · "+esc(k.naam||""),`<div class="let">${e.code==="permission-denied"?"Geen toegang. Plak eerst de nieuwe <b>Regels Firebase</b> bij deze klant (en log in met "+esc(wolkMail)+").":esc(e.message)}</div>`);return}
+  window.__bhMw={i,col};const L=Object.entries(M.lijst||{}).sort((a,b)=>String(a[1].naam).localeCompare(String(b[1].naam)));
+  if(i&&T.maxMw!=null&&String(k.maxMw)!==String(T.maxMw)){k.maxMw=T.maxMw;opslaanLater()}
+  toonPop("👷 Medewerkers · "+esc(k.naam||""),`${i?`<div class="rij" style="gap:8px;margin-bottom:10px"><label class="status">Maximum aantal medewerkers</label><input id="bhMwMax" type="number" min="0" step="1" value="${T.maxMw==null?0:+T.maxMw}" style="width:70px;font-size:16px;padding:5px"><button class="btn" onclick="bhMwMax()">Opslaan</button></div>
+      <p class="status" style="margin:0 0 8px">Gebruikt: <b>${L.length}</b> van de <b>${T.maxMw==null?0:+T.maxMw}</b>. De klant kan er niet meer maken dan dit maximum.</p>
+      ${T.baas?`<p class="status" style="margin:0 0 8px">Baas (beheert de medewerkers): <b>${esc(T.baas)}</b></p>`:`<p class="let" style="margin:0 0 8px">Er is nog geen baas ingesteld (planning/toegang → baas).</p>`}`:`<p class="status" style="margin:0 0 8px">Uw eigen app: geen maximum.</p>`}
+    ${L.length?L.map(([uid,x])=>`<div class="mwrij"><span class="mwnm"><b>${esc(x.naam||"–")}</b><small>${esc(x.mail||"")}</small><small>${mwLaatst(LG[uid])}</small></span><span class="status">${mwRolNaam(x.rol)}</span></div>`).join(""):`<div class="status" style="padding:6px 0">Nog geen medewerkers.</div>`}`)}
+async function bhMwMax(){const b=window.__bhMw;if(!b)return;const n=Math.max(0,Math.round(+document.getElementById("bhMwMax").value||0));
+  try{await b.col.doc("toegang").set({maxMw:n},{merge:true});const k=beheerData().klanten[b.i];k.maxMw=n;wijzig();melding("✓ Maximum: "+n+" medewerkers","#2d6a4f");bhMw(b.i)}
+  catch(e){alert(e.code==="permission-denied"?"Geen toestemming. Plak eerst de nieuwe Regels Firebase bij deze klant.":e.message)}}
 function bhRegels(i){const k=beheerData().klanten[i],eigen=i===0,lst=x=>"["+x.map(m=>JSON.stringify(m)).join(", ")+"]";
   const beh=[...new Set([String(wolkMail||"").trim().toLowerCase(),...(eigen?String(k.emails||"").split(/[\s,;]+/):[]).map(x=>x.trim().toLowerCase())].filter(x=>/@/.test(x)))];
-  if(eigen&&!beh.length){alert("Log eerst in met Google. Uw e-mailadres komt in de regels.");return}
+  if(!beh.length){alert("Log eerst in met Google. Uw e-mailadres komt in de regels.");return}
+  const bh1=String(wolkMail||"").trim().toLowerCase();
   const t=`rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
@@ -5294,7 +5319,8 @@ ${eigen?`    // EIGEN APP: deze Google-accounts mogen alles (en medewerkers behe
     //   klant      = e-mailadressen van de klant (alles lezen en veranderen)
     //   meekijken  = e-mailadressen die mogen meekijken (alleen wat de klant deelt)
     //   baas       = e-mailadres van de klant dat de vinkjes zet en medewerkers beheert
-    // planning/medewerkers = medewerkers met e-mail + wachtwoord (maakt de baas in de app)
+    // planning/medewerkers = medewerkers met e-mail + wachtwoord (maakt de baas in de app, maximaal toegang.maxMw)
+    // beheerder (${bh1}) mag planning/toegang veranderen en ziet wie er toegang heeft
     // planning/rechten maakt de app van de klant zelf (wie mag wijzigen)`}
     match /planning/{doc} {
       function ingelogd() { return request.auth != null; }
@@ -5307,21 +5333,30 @@ ${eigen?`    // EIGEN APP: deze Google-accounts mogen alles (en medewerkers behe
       // medewerker met de rol 'Alleen kijken' mag niets veranderen
       function mwKijk() { return isMw() && get(mPad()).data.lijst[request.auth.uid].get("rol", "alles") == "kijk"; }
 ${eigen?`      function isBaas() { return ingelogd() && google() && mail() in ${lst(beh)}; }
+      function isBeheer() { return isBaas(); }
+      function binnenMax() { return true; }
       function isKlant() { return isBaas() || isMw(); }
       function isKijker() { return false; }
       function magWijzigen() { return false; }`:
 `      function isBaas() { return ingelogd() && google() && mail() == toegang().get("baas", ""); }
+      function isBeheer() { return ingelogd() && google() && mail() == ${JSON.stringify(bh1)}; }
+      function aantal(d) { return d.get("lijst", {}).size(); }
+      function binnenMax() { return aantal(request.resource.data) <= toegang().get("maxMw", 0)
+        || (resource != null && aantal(request.resource.data) <= aantal(resource.data)); }
       function isKlant() { return (ingelogd() && google() && mail() in toegang().get("klant", [])) || isMw(); }
       function isKijker() { return ingelogd() && google() && mail() in toegang().get("meekijken", []); }
       function rechten() { return /databases/$(database)/documents/planning/rechten; }
       // meekijker mag ook veranderen zolang de klant 'Wijzigen' niet heeft uitgevinkt
       function magWijzigen() { return isKijker() && (!exists(rechten()) || mail() in get(rechten()).data.wijzigen); }`}
       allow read: if isKlant() || magWijzigen()
+        || (isBeheer() && doc in ["toegang", "medewerkers", "login"])
         || (isKijker() && (doc == "delen_" + mail() || doc == "bevestigd"));
       allow write: if (isKlant() && !mwKijk() && !(doc in ["toegang", "bevestigd", "medewerkers"]))
         || (magWijzigen() && !(doc in ["toegang", "rechten", "bevestigd", "medewerkers"]))
         || (isKijker() && doc == "bevestigd")   // alleen de beheerder bevestigt orders
-        || (doc == "medewerkers" && isBaas());
+        || (doc == "medewerkers" && isBaas() && binnenMax())
+        || (doc == "toegang" && isBeheer())
+        || (doc == "login" && isMw());
     }
   }
 }`;toonPop("Regels Firebase · "+(k.naam||""),`<p class="status" style="margin:0 0 6px">Firebase → Firestore → tabblad <b>Rules</b> → alles vervangen door deze tekst → <b>Publish</b>.</p><textarea id="bhRegelTxt" readonly style="width:100%;height:240px;font-family:monospace;font-size:13px;box-sizing:border-box">${esc(t)}</textarea>
