@@ -980,7 +980,7 @@ body.sales .navMidden>.mknop.groot{display:none!important}body.kijkmodus #btnPri
 
 <script>
 "use strict";
-const VERSIE="45.5";
+const VERSIE="45.6";
 const VERSIE_DATUM="03-11-2026";
 /* ---------- Basis ---------- */
 const PALET=["#2d6a4f","#1B5EBE","#E8007D","#c77d1a","#7a4fa0","#0f8b8d","#5b6b2f","#3d5a80","#a0522d","#7AB648"];
@@ -3719,8 +3719,8 @@ function aanbodZet(id,val){aanbod[id]=val;aanbodBewaar();const t=val.trim(),$=x=
 async function aanbodFoto(file){if(!file)return;try{melding("Foto klaarmaken…");aanbod.img=await fotoKlein(file,900);aanbodBewaar();aanbodOpen()}catch(e){alert("Foto lukt niet: "+e.message)}}
 function aanbodLeeg(){if(!confirm("Foto en tekst weghalen en opnieuw beginnen?"))return;aanbod=null;try{localStorage.removeItem("potplanning-aanbod")}catch(e){}aanbodOpen()}
 async function aanbodDelen(){const A=aanbod;if(!A.img&&!A.naam){alert("Maak eerst een foto of vul een naam in.");return}
-  const tx=String(A.tekst||"").trim(); /* naam, prijs en kar staan al op het plaatje */
-  await mobDelenIn(A.naam||"aanbod",false,tx)}
+  /* naam, prijs, kar en tekst staan al op het plaatje: geen extra tekst meesturen */
+  await mobDelenIn(A.naam||"aanbod",false,"")}
 /* mobiel oppotten: afdeling en vloer invullen voor één soort in één week */
 function mobOpPlek(rid,y,w,naam){const v=vloerEff(rid,y,w),eigen=vloerVan(rid,y,w)||{},st="width:100%;box-sizing:border-box;font:inherit;font-size:17px;padding:9px 10px;border:1px solid #cfc6b4;border-radius:8px";
   toonPop(`📍 ${esc(naam)} · wk ${w}`,`<label class="status">Afdeling</label><input id="mpAfd" style="${st}" value="${esc(eigen.opAfd||"")}" placeholder="${esc(v.opAfd||"bijv. 3")}">
