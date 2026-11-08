@@ -1001,7 +1001,7 @@ body.sales .navMidden>.mknop.groot{display:none!important}body.kijkmodus #btnPri
 
 <script>
 "use strict";
-const VERSIE="47.1";
+const VERSIE="47.2";
 const VERSIE_DATUM="03-11-2026";
 /* ---------- Basis ---------- */
 const PALET=["#2d6a4f","#1B5EBE","#E8007D","#c77d1a","#7a4fa0","#0f8b8d","#5b6b2f","#3d5a80","#a0522d","#7AB648"];
@@ -4265,7 +4265,7 @@ function toonOppotOv(){
   const sleutel={soort:r=>veelT?r.product+" · "+r.soort:r.soort,teelt:r=>r.product,fust:r=>r.fust||"(geen fust)",lev:r=>{const l=data.leveranciers.find(x=>x.id===r.levId);return l&&l.naam?l.naam:"(geen leverancier)"}}[ovGroep]||(r=>r.soort);
   zvKlaar();const trays=ovEenheid==="trays",tekstMod=["afdop","vlop","afduit","vluit"].includes(ovEenheid);let zonderFust=false;
   if(geenPrijs()&&(ovEenheid==="kost"||ovEenheid==="kosttot"))ovEenheid="planten";
-  const EH={planten:"planten",trays:"trays",m2op:"m² opgepot",m2uit:"m² uitgezet",wm2:"week·m² partij",wm2k:"week·m² per 1000 planten",kost:"kosten per plant (€)",kosttot:"totaal kosten (€)",afdop:"afd opgepot",vlop:"vloer opgepot",afduit:"afd uitgezet",vluit:"vloer uitgezet"},isKostEh=ovEenheid==="kost"||ovEenheid==="kosttot",ehNaam=(EH[ovEenheid]||"planten")+(isKostEh?(ovKostLeeg?" incl. leegloop":" excl. leegloop"):"");
+  const EH={planten:"planten",trays:"trays",m2op:"m² opgepot",m2uit:"m² uitgezet",wm2:"week·m² partij",wm2k:"week·m² per 1000 planten",kost:"kostprijs per plant (€)",kosttot:"week·m² kosten totaal (€)",afdop:"afd opgepot",vlop:"vloer opgepot",afduit:"afd uitgezet",vluit:"vloer uitgezet"},isKostEh=ovEenheid==="kost"||ovEenheid==="kosttot",ehNaam=(EH[ovEenheid]||"planten")+(isKostEh?(ovKostLeeg?" incl. leegloop":" excl. leegloop"):"");
   /* incl. leegloop: de kosten van de lege m² per week verdelen over wat er staat (naar m²) → factor bruto / bezet */
   const leegF=new Map();if(isKostEh&&ovKostLeeg){const bruto=+data.instellingen.brutoM2||0,{kaart}=ruimteBerekening();if(bruto)for(const[t,e]of kaart){const m=e.f1+e.f2+(e.vast||0);leegF.set(t,m>0?Math.max(1,bruto/m):1)}}
   /* week·m²: m² × weken, voor oppotfase + uitzetfase samen */
@@ -4286,7 +4286,7 @@ function toonOppotOv(){
     ob.innerHTML=`<span class="ovtitel">Opzetplanning</span>
     <select class="ovjaar" onchange="planJaar=+this.value;render()">${[-2,-1,0,1,2].map(d=>planJaar+d).map(j=>`<option value="${j}" ${j===jaar?"selected":""}>Jaar ${j}</option>`).join("")}</select>
     ${teeltKeuze()}
-    <select class="ovjaar" onchange="ovEenheid=this.value;render()" title="Wat ziet u in de cellen">${Object.entries(EH).filter(([v])=>(!ZV()||!["afdop","vlop","afduit","vluit","kost","kosttot"].includes(v))&&!(!opt("kosten")&&(v==="kost"||v==="kosttot"))).map(([v,n])=>`<option value="${v}" ${ovEenheid===v?"selected":""}>${n.startsWith("m²")?n:n[0].toUpperCase()+n.slice(1)}</option>`).join("")}</select>${isKostEh?`<select class="ovjaar" onchange="ovKostLeeg=this.value==='1';render()" title="Excl. leegloop: alleen de m² die de planten gebruiken. Incl. leegloop: de kosten van de lege m² worden ook over de planten verdeeld.${+data.instellingen.brutoM2?"":" (Vul bruto m² in bij Bestand.)"}"><option value="0" ${ovKostLeeg?"":"selected"}>excl. leegloop</option><option value="1" ${ovKostLeeg?"selected":""}>incl. leegloop</option></select>`:""}
+    <select class="ovjaar" onchange="ovEenheid=this.value;render()" title="Wat ziet u in de cellen">${Object.entries(EH).filter(([v])=>(!ZV()||!["afdop","vlop","afduit","vluit"].includes(v))&&!(!opt("kosten")&&(v==="kost"||v==="kosttot"))).map(([v,n])=>`<option value="${v}" ${ovEenheid===v?"selected":""}>${n.startsWith("m²")?n:n[0].toUpperCase()+n.slice(1)}</option>`).join("")}</select>${isKostEh?`<select class="ovjaar" onchange="ovKostLeeg=this.value==='1';render()" title="Excl. leegloop: alleen de m² die de planten gebruiken. Incl. leegloop: de kosten van de lege m² worden ook over de planten verdeeld.${+data.instellingen.brutoM2?"":" (Vul bruto m² in bij Bestand.)"}"><option value="0" ${ovKostLeeg?"":"selected"}>excl. leegloop</option><option value="1" ${ovKostLeeg?"selected":""}>incl. leegloop</option></select>`:""}
     ${extra||""}
     <span style="flex:1"></span>
     `;return""};
