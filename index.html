@@ -988,7 +988,7 @@ body.sales .navMidden>.mknop.groot{display:none!important}body.kijkmodus #btnPri
 
 <script>
 "use strict";
-const VERSIE="46.3";
+const VERSIE="46.4";
 const VERSIE_DATUM="03-11-2026";
 /* ---------- Basis ---------- */
 const PALET=["#2d6a4f","#1B5EBE","#E8007D","#c77d1a","#7a4fa0","#0f8b8d","#5b6b2f","#3d5a80","#a0522d","#7AB648"];
@@ -4813,7 +4813,9 @@ document.addEventListener("keydown",e=>{if(e.code!=="KeyZ"||e.ctrlKey||e.metaKey
 const MOD3_KLANT=false,mod3Mag=()=>MOD3_KLANT||!KLANT.code;
 /* modules (per apparaat): 1 basis · 2 + prijzen · 3 + vloervulling (afd, vloer, ruimte, kosten) · 4 + verkoop en delen.
    intern: niveau() 2 = zonder vloervulling, 3 = met vloervulling, 4 = module 4 */
-const modNr=()=>{let v=0;try{v=+localStorage.getItem("potplanning-module")||0;if(!v){const o=+localStorage.getItem("potplanning-niveau")||0;v=o||(localStorage.getItem("potplanning-zv")==="1"?2:3)}}catch(e){v=3}
+/* op de telefoon een eigen keuze; in de eigen app (beheerder) standaard module 4 */
+const modMob=()=>window.innerWidth<700;
+const modNr=()=>{let v=0;try{if(modMob()){v=+localStorage.getItem("potplanning-module-mob")||(mod3Mag()?4:0)}if(!v)v=+localStorage.getItem("potplanning-module")||0;if(!v){const o=+localStorage.getItem("potplanning-niveau")||0;v=o||(localStorage.getItem("potplanning-zv")==="1"?2:3)}}catch(e){v=3}
   return Math.max(1,Math.min(v,mod3Mag()&&!isTeler()?4:3))};
 const niveau=()=>Math.max(2,modNr());
 const mod4=()=>modNr()>=4;
@@ -4824,7 +4826,7 @@ function zvKlaar(){const bi=document.getElementById("brutoIn");if(bi&&document.a
   if(z&&["afdop","vlop","afduit","vluit","kost","kosttot"].includes(ovEenheid))ovEenheid="planten";
   if(n===1){aflMod="afl";aflRij="teelt";if(["klanten","verkoop","bestel","werk"].includes(tab))tab="aflever"}
   if(n<3&&tab==="ruimtegraf")tab="oppotov"}
-function zetModule(n){try{localStorage.setItem("potplanning-module",String(n))}catch(e){}zvKlaar();render();melding("Module "+modNr()+": "+MOD_UITLEG[modNr()],"#2d6a4f")}
+function zetModule(n){try{localStorage.setItem(modMob()?"potplanning-module-mob":"potplanning-module",String(n))}catch(e){}zvKlaar();render();melding("Module "+modNr()+": "+MOD_UITLEG[modNr()],"#2d6a4f")}
 const zetNiveau=n=>zetModule(n);
 /* ---------- Overzicht verkooporders + pakbon ---------- */
 let vkVanaf=true,vkKlant="",vkPlek=null,vkIsPop=false;
