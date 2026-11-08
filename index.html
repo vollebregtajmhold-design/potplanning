@@ -988,7 +988,7 @@ body.sales .navMidden>.mknop.groot{display:none!important}body.kijkmodus #btnPri
 
 <script>
 "use strict";
-const VERSIE="46.4";
+const VERSIE="46.5";
 const VERSIE_DATUM="03-11-2026";
 /* ---------- Basis ---------- */
 const PALET=["#2d6a4f","#1B5EBE","#E8007D","#c77d1a","#7a4fa0","#0f8b8d","#5b6b2f","#3d5a80","#a0522d","#7AB648"];
@@ -3775,9 +3775,9 @@ function mobSoort(k,start){const t=+dezeWeek(),l=afleverRegels().filter(r=>r.pro
   m.className=start?"midden":"";m.innerHTML=`<div class="mpop">${h}</div>`;m.hidden=false;if(fid)fotoVul()}
 /* prijs en max op kar bij de soort (mobiel). Tik om te veranderen. Lege vakjes komen niet op het plaatje */
 function mobInfo(ras,k){const pv=vkPrijs("",ras.id),mag=!kijker&&niveau()>1,K=esc(k).replace(/'/g,"&#39;");
-  const vak=(ic,naam,waarde,f)=>`<div class="minfo ${waarde?"":"noshot"}" ${mag?`onclick="${f}('${ras.id}',this.closest('#mobPop').dataset.k)"`:""}><span class="status">${ic} ${naam}</span><b>${waarde?esc(waarde):`<span class="status">+ invullen</span>`}</b></div>`;
+  const vak=(ic,naam,waarde,f,tx)=>`<div class="minfo ${waarde&&!tx?"":"noshot"}" ${tx&&waarde?`data-deeltxt="${esc(tx)}"`:""} ${mag?`onclick="${f}('${ras.id}',this.closest('#mobPop').dataset.k)"`:""}><span class="status">${ic} ${naam}</span><b>${waarde?esc(waarde):`<span class="status">+ invullen</span>`}</b></div>`;
   setTimeout(()=>{const m=document.getElementById("mobPop");if(m)m.dataset.k=k});
-  return`<div class="minfos">${geenPrijs()?"":vak("💶","Prijs",pv!=null?prijsTxt(pv):"","mobPrijs")}${vak("🛒","Max op kar",ras.kar||"","mobKar")}</div>`}
+  return`<div class="minfos">${geenPrijs()?"":vak("💶","Prijs",pv!=null?prijsTxt(pv):"","mobPrijs",pv!=null?"Prijs: "+prijsTxt(pv)+" per stuk":"")}${vak("🛒","Max op kar",ras.kar||"","mobKar")}</div>`}
 function mobPrijs(id,k){const P=data.vkPrijzen=data.vkPrijzen||{},o=P.std=P.std||{},v=prompt("Prijs per plant (standaard), bijv. 0,85 — leeg = weghalen:",o[id]!=null?pF(o[id]):"");if(v===null)return;
   const pr=prijsLees(v);if(pr==null)delete o[id];else o[id]=pr;opslaanLater();mobSoort(k)}
 function mobKar(id,k){const r=data.rassen.find(x=>x.id===id);if(!r)return;const v=prompt("Max op kar (bijv. 24 trays / 720 st) — leeg = weghalen:",r.kar||"");if(v===null)return;
@@ -3796,7 +3796,7 @@ function aanbodOpen(){if(kijker||!mod4())return;aanbod=aanbod||{img:"",naam:"",p
   const veld=(id,lab,ph,mode)=>`<label class="status" style="display:block;margin:6px 0 2px">${lab}</label><input id="ab_${id}" value="${v(A[id])}" placeholder="${ph}" ${mode?`inputmode="${mode}"`:""} oninput="aanbodZet('${id}',this.value)" class="abveld">`;
   const h=`<div id="mobDeel"><div class="mpopKop"><b id="abKop">${v(A.naam)||"Aanbod"}</b><button class="noshot" onclick="sluitMobSoort()">✕</button></div><div class="mpopIn">
       ${A.img?`<div class="mfoto"><img src="${A.img}" alt=""></div>`:""}
-      <div class="minfos"><div class="minfo ${A.prijs?"":"noshot"}" id="abPr"><span class="status">💶 Prijs</span><b>${A.prijs?esc(prijsTxt(prijsLees(A.prijs)??A.prijs)):"–"}</b></div><div class="minfo ${A.kar?"":"noshot"}" id="abKar"><span class="status">🛒 Max op kar</span><b>${v(A.kar)||"–"}</b></div></div>
+      <div class="minfos"><div class="minfo noshot" id="abPr" title="De prijs komt niet op het plaatje, maar als tekst eronder (die kunt u in WhatsApp nog aanpassen)"><span class="status">💶 Prijs</span><b>${A.prijs?esc(prijsTxt(prijsLees(A.prijs)??A.prijs)):"–"}</b></div><div class="minfo ${A.kar?"":"noshot"}" id="abKar"><span class="status">🛒 Max op kar</span><b>${v(A.kar)||"–"}</b></div></div>
       <div class="mtekst" id="abTekst" ${A.tekst&&A.tekst.trim()?"":"hidden"}>${v(A.tekst)}</div></div></div>
     <div class="mpopIn" style="padding-top:0">
       <label class="btn ${A.img?"licht":""}" style="width:100%;display:flex;justify-content:center;box-sizing:border-box">📷 ${A.img?"Nieuwe foto maken":"Foto maken"}<input type="file" accept="image/*" capture="environment" hidden onchange="aanbodFoto(this.files[0])"></label>
@@ -3813,8 +3813,9 @@ function aanbodZet(id,val){aanbod[id]=val;aanbodBewaar();const t=val.trim(),$=x=
 async function aanbodFoto(file){if(!file)return;try{melding("Foto klaarmaken…");aanbod.img=await fotoKlein(file,900);aanbodBewaar();aanbodOpen()}catch(e){alert("Foto lukt niet: "+e.message)}}
 function aanbodLeeg(){if(!confirm("Foto en tekst weghalen en opnieuw beginnen?"))return;aanbod=null;try{localStorage.removeItem("potplanning-aanbod")}catch(e){}aanbodOpen()}
 async function aanbodDelen(){const A=aanbod;if(!A.img&&!A.naam){alert("Maak eerst een foto of vul een naam in.");return}
-  /* naam, prijs, kar en tekst staan al op het plaatje: geen extra tekst meesturen */
-  await mobDelenIn(A.naam||"aanbod",false,"")}
+  /* naam, kar en tekst staan op het plaatje; de prijs gaat als tekst mee (dan kunt u hem in WhatsApp nog aanpassen) */
+  const pr=prijsLees(A.prijs),pt=geenPrijs()?"":pr!=null?prijsTxt(pr):String(A.prijs||"").trim();
+  await mobDelenIn(A.naam||"aanbod",false,pt?"Prijs: "+pt+" per stuk":"")}
 /* mobiel oppotten: afdeling en vloer invullen voor één soort in één week */
 function mobOpPlek(rid,y,w,naam){const v=vloerEff(rid,y,w),eigen=vloerVan(rid,y,w)||{},st="width:100%;box-sizing:border-box;font:inherit;font-size:17px;padding:9px 10px;border:1px solid #cfc6b4;border-radius:8px";
   toonPop(`📍 ${esc(naam)} · wk ${w}`,`<label class="status">Afdeling</label><input id="mpAfd" style="${st}" value="${esc(eigen.opAfd||"")}" placeholder="${esc(v.opAfd||"bijv. 3")}">
@@ -3826,7 +3827,8 @@ async function mobDelen(k){const zonder=!mobAantDelen(),pi=document.getElementBy
   /* op het plaatje: xx% van wat beschikbaar is, naar beneden afgerond op honderdtallen; weken met 0 gaan er niet op */
   if(!zonder)document.querySelectorAll("#mobDeel .mweken b[data-n]").forEach(b=>{const v=Math.floor(Math.max(0,+b.dataset.n)*pct/100/100)*100,rij=b.closest(".mrij");terug.push([b,b.textContent,rij]);
     b.textContent=v>0?getal(v):"—"});
-  try{await mobDelenIn(k,zonder)}finally{terug.forEach(([b,t,rij])=>{b.textContent=t;rij.classList.remove("noshot")})}}
+  const tx=[...document.querySelectorAll("#mobDeel [data-deeltxt]")].map(e=>e.dataset.deeltxt).join("\n");
+  try{await mobDelenIn(k,zonder,tx)}finally{terug.forEach(([b,t,rij])=>{b.textContent=t;rij.classList.remove("noshot")})}}
 /* html2canvas kent geen object-fit:cover en rekt foto's uit. Daarom: elke foto vooraf zelf bijsnijden op de maat van het vak */
 function fotoBijsnijd(el){return[...el.querySelectorAll("img")].map(img=>{try{const w=img.clientWidth,h=img.clientHeight,nw=img.naturalWidth,nh=img.naturalHeight;if(!w||!h||!nw||!nh)return null;
   const fit=getComputedStyle(img).objectFit;if(fit!=="cover")return null;const sc=Math.max(w/nw,h/nh),sw=w/sc,sh=h/sc,c=document.createElement("canvas");c.width=Math.round(w*2);c.height=Math.round(h*2);
