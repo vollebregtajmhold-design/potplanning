@@ -224,6 +224,10 @@ tr.nieuwsoort select{width:100%;font-style:italic;border:1px dashed #2d6a4f;back
 .zrknop .zk{display:grid;grid-template-columns:110px 90px 140px;gap:6px;flex:none}.zrknop .zk .ovk{font-size:13px;padding:4px 8px;border-radius:6px;border:1px solid #7fa9d1;text-align:center}
 .mob .wkkeuze b{white-space:nowrap}.mobteelt{font-size:16px;font-weight:700;padding:6px 8px;border-radius:8px;border:2px solid #fff;background:#fff;color:#1f4d39;max-width:58vw}
 .alleenBeheer{display:none!important}body.isBeheer .alleenBeheer{display:block!important}
+.mwKnop{display:none!important}body.wolk.magMw .mwKnop{display:block!important}
+#login form{margin:0}#login input{width:100%;box-sizing:border-box;margin-top:8px;padding:11px 12px;border:1px solid #ccc;border-radius:10px;font-size:16px}#login .lgof{margin-top:18px;font-size:13px;color:#777;display:flex;align-items:center;gap:8px}#login .lgof:before,#login .lgof:after{content:"";flex:1;border-top:1px solid #ddd}#login .lgvg{display:inline-block;margin-top:10px;font-size:13px;color:#4b2a6e}
+.mwrij{display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid #eee}.mwrij .mwnm{flex:1;min-width:0}.mwrij small{color:#666;display:block;overflow:hidden;text-overflow:ellipsis}
+.mwveld{width:100%;box-sizing:border-box;font:inherit;font-size:16px;padding:9px 10px;border:1px solid #cfc6b4;border-radius:8px;margin-bottom:8px}
 .bhkaart{background:#fff;border:1px solid #c9c2b6;border-radius:8px;padding:12px 14px;margin:0 0 12px}.bhkaart.eigen{border-left:5px solid #2d6a4f}
 .bhkop{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:8px;cursor:pointer;user-select:none}.bhkaart.dicht .bhkop{margin-bottom:0}.bhkaart.dicht .bhgrid,.bhkaart.dicht .bhknop{display:none}.bhpijl{font-size:16px;color:#2d6a4f;width:14px}.bhkop .ovk{font-size:13px;padding:4px 10px}.bhkop h3{margin:0;font-size:18px}
 .bhgrid{display:grid;grid-template-columns:150px 1fr;gap:6px 10px;align-items:center;font-size:14px}.bhgrid input,.bhgrid textarea{width:100%;font-size:14px;padding:5px 7px;box-sizing:border-box}
@@ -871,6 +875,7 @@ body.sales .navMidden>.mknop.groot{display:none!important}body.kijkmodus #btnPri
       <div class="zvkeus" title="Het afleverseizoen loopt van deze week t/m de week ervoor in het volgende jaar"><span>Seizoen begint wk</span><input type="number" id="seizIn" min="1" max="52" style="width:56px;font-size:13px;padding:3px 5px" onclick="event.stopPropagation()" onchange="data.instellingen.seizoenStart=Math.max(1,Math.min(52,Math.round(+this.value||11)));aflS=null;wijzig();melding('✓ Seizoen begint nu in week '+data.instellingen.seizoenStart,'#2d6a4f')"></div>
       <button id="btnInlezen" class="wolkAlleen" type="button" title="Een json-bestand inlezen in de online planning">📥 Json-bestand inlezen</button>
       <button type="button" class="wolkAlleen alleenKlantApp" onclick="document.querySelectorAll('#balk .menu.open').forEach(m=>m.classList.remove('open'));toonDelen()">👥 Wie mag wat zien</button>
+      <button type="button" class="mwKnop" onclick="document.querySelectorAll('#balk .menu.open').forEach(m=>m.classList.remove('open'));toonMedewerkers()" title="Medewerkers die inloggen met e-mail en wachtwoord">👷 Medewerkers</button>
       <button id="btnUitlog" class="wolkAlleen" type="button">🚪 Uitloggen</button>
       <button type="button" class="alleenBeheer" onclick="document.querySelectorAll('#balk .menu.open').forEach(m=>m.classList.remove('open'));naar('beheer')">🛠 Beheer klanten</button>
       <button type="button" class="alleenKlantVw" onclick="document.querySelectorAll('#balk .menu.open').forEach(m=>m.classList.remove('open'));toonVoorwaarden()">📄 Voorwaarden</button>
@@ -980,7 +985,7 @@ body.sales .navMidden>.mknop.groot{display:none!important}body.kijkmodus #btnPri
 
 <script>
 "use strict";
-const VERSIE="45.6";
+const VERSIE="45.7";
 const VERSIE_DATUM="03-11-2026";
 /* ---------- Basis ---------- */
 const PALET=["#2d6a4f","#1B5EBE","#E8007D","#c77d1a","#7a4fa0","#0f8b8d","#5b6b2f","#3d5a80","#a0522d","#7AB648"];
@@ -1361,7 +1366,7 @@ function deelZet(){if(!magDelen()){alert("Alleen "+deelBaas()+" mag dit verander
   const o=data.instellingen.deelOpt=data.instellingen.deelOpt||{};deelTmp.forEach(x=>o[x.mail]={...x.opt});deelTmp=null;sluitMobSoort();
   wijzig();melding("👥 Opgeslagen: wie mag wat zien","#2d6a4f")}
 /* geen toegang tot de hele planning → kijken of er voor dit e-mailadres iets gedeeld is */
-function probeerDelen(db){db.collection("planning").doc("delen_"+String(wolkMail).toLowerCase()).onSnapshot(snap=>{
+function probeerDelen(db){if(wolkWw){firebase.auth().signOut();setTimeout(()=>toonLogin("Dit account heeft (nog) geen toegang. Vraag het aan uw werkgever."),400);return}db.collection("planning").doc("delen_"+String(wolkMail).toLowerCase()).onSnapshot(snap=>{
     if(!snap.exists){wolkStatus("Geen toegang met dit account ("+wolkMail+")",false);melding("Met dit account ("+esc(wolkMail)+") is er niets gedeeld.","#6a3d9a");return}
     let o={};try{o=JSON.parse(snap.data().json)||{}}catch(e){}
     const g=snap.data().gemaakt||"";meekijk={delen:o.delen||{},besch:o.besch||null,gemaakt:g};zetKijker(true);
@@ -1621,11 +1626,61 @@ function toonLogin(fout){let m=document.getElementById("login");
   if(!m){m=document.createElement("div");m.id="login";document.body.appendChild(m)}
   const ic=(document.querySelector('link[rel=apple-touch-icon]')||{}).href||"";
   m.innerHTML=`<div class="kaart">${ic?`<img src="${ic}" alt="">`:""}<h2>${esc(KLANT.appNaam)}</h2><div class="ondertitel">Planning · voorraad · verkoop</div><div class="status">Log in om uw planning te openen.</div><div class="status" style="margin-top:6px">Nog geen account? <a href="?demo">Bekijk de demo</a></div>
-    <button type="button" onclick="wolkLogin()">Inloggen met Google</button>${fout?`<div class="fout">${esc(fout)}</div>`:""}${KLANT.code?`<div class="vwregel">Door in te loggen gaat u akkoord met de <a href="#" onclick="toonVoorwaarden();return false">voorwaarden</a>.</div>`:""}</div>`;m.hidden=false}
+    <button type="button" onclick="wolkLogin()">Inloggen met Google</button>
+    ${mwAan()?`<div class="lgof">of met e-mail en wachtwoord</div><form onsubmit="wwLogin(event)"><input id="lgMail" type="email" autocomplete="username" placeholder="e-mailadres" required><input id="lgWw" type="password" autocomplete="current-password" placeholder="wachtwoord" required><button type="submit">Inloggen</button></form><a href="#" class="lgvg" onclick="wwVergeten();return false">Wachtwoord vergeten?</a>`:""}${fout?`<div class="fout">${esc(fout)}</div>`:""}${KLANT.code?`<div class="vwregel">Door in te loggen gaat u akkoord met de <a href="#" onclick="toonVoorwaarden();return false">voorwaarden</a>.</div>`:""}</div>`;m.hidden=false}
 async function wolkLogin(){const p=new firebase.auth.GoogleAuthProvider();p.setCustomParameters({prompt:"select_account"});
   try{await firebase.auth().signInWithPopup(p)}
   catch(e){if(e.code==="auth/popup-blocked"||e.code==="auth/operation-not-supported-in-this-environment"){try{await firebase.auth().signInWithRedirect(p)}catch(x){toonLogin(x.message)}}
     else if(e.code!=="auth/popup-closed-by-user"&&e.code!=="auth/cancelled-popup-request")toonLogin(e.code==="auth/unauthorized-domain"?"Dit webadres staat nog niet bij 'Authorized domains' in Firebase.":e.message)}}
+/* ---------- Medewerkers: inloggen met e-mail + wachtwoord. De baas maakt de accounts in de app (planning/medewerkers) ---------- */
+let wolkWw=false;
+const wwFout=e=>({"auth/invalid-credential":"E-mail of wachtwoord klopt niet.","auth/wrong-password":"E-mail of wachtwoord klopt niet.","auth/user-not-found":"E-mail of wachtwoord klopt niet.","auth/invalid-email":"Dit e-mailadres klopt niet.","auth/too-many-requests":"Te vaak geprobeerd. Wacht even en probeer het opnieuw.","auth/operation-not-allowed":"Inloggen met e-mail staat nog niet aan in Firebase.","auth/email-already-in-use":"Dit e-mailadres heeft al een account.","auth/weak-password":"Het wachtwoord moet minstens 6 tekens hebben.","auth/missing-password":"Vul een wachtwoord in."})[e&&e.code]||(e&&e.message)||"Er ging iets mis.";
+async function wwLogin(ev){if(ev)ev.preventDefault();const m=(document.getElementById("lgMail").value||"").trim(),w=document.getElementById("lgWw").value||"";
+  try{await firebase.auth().signInWithEmailAndPassword(m,w)}catch(e){toonLogin(wwFout(e));const x=document.getElementById("lgMail");if(x)x.value=m}}
+async function wwVergeten(){const x=document.getElementById("lgMail"),m=(x&&x.value||"").trim();if(!m){toonLogin("Vul eerst uw e-mailadres in. Klik daarna op 'Wachtwoord vergeten?'.");return}
+  try{await firebase.auth().sendPasswordResetEmail(m);toonLogin();document.getElementById("lgMail").value=m;melding("✉ Als dit adres bekend is, krijgt u een mail om een nieuw wachtwoord te maken.","#2d6a4f")}catch(e){toonLogin(wwFout(e))}}
+/* eerst testen in de eigen app; bij klanten pas aanzetten als het goed werkt */
+const MW_KLANT=false,mwAan=()=>MW_KLANT||!KLANT.code;
+const magMw=()=>mwAan()&&kanWolk()&&!!wolkMail&&!wolkWw&&!kijker&&(KLANT.code?!!deelBaas()&&String(wolkMail).toLowerCase()===deelBaas():isBeheerder());
+const mwDoc=()=>firebase.firestore().collection("planning").doc("medewerkers");
+let mwData=null;
+async function toonMedewerkers(){if(!magMw()){alert("Alleen de baas van deze app kan medewerkers beheren.");return}
+  toonPop("👷 Medewerkers",`<div class="status">Laden…</div>`);
+  try{const d=await mwDoc().get();mwData=d.exists?d.data():{}}catch(e){toonPop("👷 Medewerkers",`<div class="let">Kan de lijst niet laden: ${esc(e.code==="permission-denied"?"de regels in Firebase zijn nog niet bijgewerkt.":e.message)}</div>${mwUitleg()}`);return}
+  mwToon()}
+function mwUitleg(){return`<details style="margin-top:12px"><summary class="status" style="cursor:pointer">Eenmalig instellen in Firebase</summary><ol class="status" style="padding-left:18px;margin:6px 0">
+  <li>Firebase → <b>Authentication</b> → <b>Sign-in method</b> → <b>E-mail/wachtwoord</b> aanzetten → Opslaan.</li>
+  <li>Beheer → <b>Regels Firebase</b> → de nieuwe tekst plakken bij Firestore → Rules → <b>Publish</b>.</li></ol></details>`}
+function mwToon(){const L=Object.entries((mwData&&mwData.lijst)||{}).sort((a,b)=>String(a[1].naam||a[1].mail).localeCompare(String(b[1].naam||b[1].mail)));
+  toonPop("👷 Medewerkers",`<p class="status" style="margin:0 0 8px">Medewerkers loggen in met <b>e-mail + wachtwoord</b>. Ze hebben geen Google-account nodig. Ze kunnen alles in de app, behalve Beheer en medewerkers.</p>
+    ${L.length?L.map(([uid,x])=>`<div class="mwrij"><span class="mwnm"><b>${esc(x.naam||"–")}</b><small>${esc(x.mail||"")}</small></span><button class="ovk ovlink" onclick="mwMail('${uid}')" title="Stuur een mail om een nieuw wachtwoord te maken">✉ Nieuw wachtwoord</button><button class="ovk ovlink" onclick="mwWeg('${uid}')" title="Toegang weghalen">🗑</button></div>`).join(""):`<div class="status" style="padding:6px 0">Nog geen medewerkers.</div>`}
+    <h4 style="margin:14px 0 6px">➕ Medewerker toevoegen</h4>
+    <input id="mwNaam" class="mwveld" placeholder="Naam">
+    <input id="mwMail" class="mwveld" type="email" placeholder="E-mailadres" autocomplete="off">
+    <input id="mwWw" class="mwveld" type="text" placeholder="Wachtwoord (minstens 6 tekens)" autocomplete="new-password">
+    <div class="rij"><span class="status" id="mwFout" style="color:#b00020;flex:1"></span><button class="btn" id="mwKnopT" onclick="mwToevoegen()">Toevoegen</button></div>
+    <p class="status" style="font-size:12px;margin:8px 0 0">Geef het wachtwoord zelf door aan de medewerker. De medewerker kan het later veranderen via 'Wachtwoord vergeten?'.</p>${mwUitleg()}`)}
+async function mwToevoegen(){const naam=document.getElementById("mwNaam").value.trim(),mail=document.getElementById("mwMail").value.trim().toLowerCase(),ww=document.getElementById("mwWw").value,f=document.getElementById("mwFout"),k=document.getElementById("mwKnopT");
+  if(!naam||!mail){f.textContent="Vul een naam en e-mailadres in.";return}
+  const oud=Object.entries((mwData&&mwData.oud)||{}).find(([u,x])=>x.mail===mail);
+  if(Object.values((mwData&&mwData.lijst)||{}).some(x=>x.mail===mail)){f.textContent="Deze medewerker staat al in de lijst.";return}
+  k.disabled=true;f.textContent="";
+  try{let uid;
+    if(oud){uid=oud[0]}
+    else{if(ww.length<6){f.textContent="Het wachtwoord moet minstens 6 tekens hebben.";k.disabled=false;return}
+      const a2=firebase.apps.find(a=>a.name==="mw")||firebase.initializeApp(FB_CONFIG,"mw");
+      try{await a2.auth().setPersistence(firebase.auth.Auth.Persistence.NONE)}catch(e){}
+      const c=await a2.auth().createUserWithEmailAndPassword(mail,ww);uid=c.user.uid;try{await a2.auth().signOut()}catch(e){}}
+    const FV=firebase.firestore.FieldValue,upd={["lijst."+uid]:{naam,mail,t:new Date().toISOString(),door:wolkMail}};if(oud)upd["oud."+uid]=FV.delete();
+    try{await mwDoc().update(upd)}catch(e){if(e.code!=="not-found")throw e;await mwDoc().set({lijst:{[uid]:{naam,mail,t:new Date().toISOString(),door:wolkMail}}})}
+    (mwData.lijst=mwData.lijst||{})[uid]={naam,mail};if(oud)delete mwData.oud[uid];mwToon();
+    melding(oud?`✓ ${esc(naam)} heeft weer toegang. Het oude wachtwoord werkt weer (of stuur een mail voor een nieuw wachtwoord).`:`✓ ${esc(naam)} toegevoegd. Geef het wachtwoord door.`,"#2d6a4f")}
+  catch(e){f.textContent=e.code==="auth/email-already-in-use"?"Dit e-mailadres heeft al een account (bijv. bij een andere app). Kies een ander e-mailadres.":e.code==="permission-denied"?"Geen toestemming: de regels in Firebase zijn nog niet bijgewerkt.":wwFout(e);k.disabled=false}}
+async function mwWeg(uid){const x=((mwData&&mwData.lijst)||{})[uid];if(!x||!confirm(`Toegang van ${x.naam||x.mail} weghalen?\nDeze medewerker kan dan niet meer in de app.`))return;
+  try{await mwDoc().update({["lijst."+uid]:firebase.firestore.FieldValue.delete(),["oud."+uid]:{naam:x.naam||"",mail:x.mail||""}});delete mwData.lijst[uid];(mwData.oud=mwData.oud||{})[uid]=x;mwToon();melding("Toegang weggehaald","#2d6a4f")}
+  catch(e){alert("Lukt niet: "+e.message)}}
+async function mwMail(uid){const x=((mwData&&mwData.lijst)||{})[uid];if(!x)return;
+  try{await firebase.auth().sendPasswordResetEmail(x.mail);melding("✉ Mail gestuurd naar "+esc(x.mail),"#2d6a4f")}catch(e){alert(wwFout(e))}}
 function wolkStatus(t,ok){$("#status").innerHTML="☁️ <b>Online</b>"+(wolkMail?" · "+esc(wolkMail):"")+"<br>"+esc(t);
   const d=$("#dot");d.classList.toggle("ok",ok!==false);d.title=t}
 async function wolkStart(){
@@ -1636,7 +1691,7 @@ async function wolkStart(){
   firebase.auth().onAuthStateChanged(u=>{
     if(wolkStop){wolkStop();wolkStop=null}
     if(!u){wolkDoc=null;wolkMail="";toonLogin();return}
-    wolkMail=u.email||"";const lg=document.getElementById("login");if(lg)lg.hidden=true;
+    wolkMail=u.email||"";wolkWw=(u.providerData||[]).some(x=>x.providerId==="password")&&!(u.providerData||[]).some(x=>x.providerId==="google.com");const lg=document.getElementById("login");if(lg)lg.hidden=true;
     wolkDoc=db.collection("planning").doc("hoofd");wolkEerste=true;wolkStatus("Verbinden…");
     if(KLANT.code)bevLuister(db);
     if(KLANT.code)db.collection("planning").doc("toegang").onSnapshot(t=>{const v=t.exists?t.data():{};toegang={klant:lijstLaag(v.klant),meekijken:lijstLaag(v.meekijken),baas:String(v.baas||"").trim().toLowerCase(),geladen:true};setTimeout(deelOpslaan,1500)},()=>{});
@@ -1779,7 +1834,7 @@ document.addEventListener("keydown",e=>{
   if(document.querySelector("dialog[open]"))return;
   e.preventDefault();bladeren(e.key==="ArrowLeft"?-1:1)});
 let vorigeTab="",houdOpen=false;
-function render(){document.body.classList.toggle("isBeheer",isBeheerder());if(tab==="beheer"&&!isBeheerder())tab="oppot";if(typeof postitTel==="function")postitTel();if(tab==="bestel")tab="oppotov";if(tab==="ruimtegraf")tab="oppot"; /* ruimte zit nu bij Inkoop / opzetten */ /* bestelplanning zit nu in Opzetplanning */
+function render(){document.body.classList.toggle("isBeheer",isBeheerder());document.body.classList.toggle("magMw",magMw());if(tab==="beheer"&&!isBeheerder())tab="oppot";if(typeof postitTel==="function")postitTel();if(tab==="bestel")tab="oppotov";if(tab==="ruimtegraf")tab="oppot"; /* ruimte zit nu bij Inkoop / opzetten */ /* bestelplanning zit nu in Opzetplanning */
   zvKlaar();
   if(tab==="rassen"||tab==="duren")tab="soorten";
   if(tab==="proef")tab="oppot"; /* proberen is teruggedraaid */
@@ -5052,7 +5107,7 @@ document.addEventListener("mouseup",()=>{if(!vul)return;const v=vul;vul=null;doc
 document.addEventListener("click",e=>{if(vulKlikWeg){e.stopPropagation();e.preventDefault();vulKlikWeg=false}},true);
 
 /* ---------- Beheer klanten: alleen voor de beheerder (eigen app) ---------- */
-const isBeheerder=()=>!!(KLANT.beheer===true||(KLANT.code===""&&FB_CONFIG&&FB_CONFIG.projectId==="potplanning-82fec"));
+const isBeheerder=()=>!wolkWw&&!!(KLANT.beheer===true||(KLANT.code===""&&FB_CONFIG&&FB_CONFIG.projectId==="potplanning-82fec"));
 function beheerData(){const b=data.beheer=data.beheer||{};if(!Array.isArray(b.klanten)){b.klanten=[
     {id:uid(),naam:"Vollebregt (eigen)",appNaam:KLANT.appNaam||"Cyclamen Planning",code:KLANT.code||"",appUrl:location.origin+location.pathname.replace(/index\.html$/,""),repo:"https://github.com/vollebregtajmhold-design/potplanning",firebase:JSON.stringify(FB_CONFIG),emails:"vollebregt.a@gmail.com",notitie:""},
     {id:uid(),naam:"Bolk",appNaam:"Bolkplan",code:"bolk",appUrl:"https://vollebregtajmhold-design.github.io/bolkplan/",repo:"https://github.com/vollebregtajmhold-design/bolkplan",firebase:"",emails:"martinbolk@gmail.com\nvollebregt.a@gmail.com",notitie:"Firebase-project 'Bolk planning' gemaakt; regels, Google-inlog en web-app nog doen."}]}
@@ -5208,28 +5263,45 @@ window.KLANT={
   firebase:${JSON.stringify(f)}
 };
 `;return t}
-function bhRegels(i){const k=beheerData().klanten[i];
+function bhRegels(i){const k=beheerData().klanten[i],eigen=i===0,lst=x=>"["+x.map(m=>JSON.stringify(m)).join(", ")+"]";
+  const beh=[...new Set([String(wolkMail||"").trim().toLowerCase(),...(eigen?String(k.emails||"").split(/[\s,;]+/):[]).map(x=>x.trim().toLowerCase())].filter(x=>/@/.test(x)))];
+  if(eigen&&!beh.length){alert("Log eerst in met Google. Uw e-mailadres komt in de regels.");return}
   const t=`rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Wie wat mag, staat in het document planning/toegang:
+${eigen?`    // EIGEN APP: deze Google-accounts mogen alles (en medewerkers beheren):
+    //   ${beh.join(", ")}
+    // planning/medewerkers = medewerkers met e-mail + wachtwoord (maakt u in de app: Bestand → Medewerkers)`:
+`    // Wie wat mag, staat in het document planning/toegang:
     //   klant      = e-mailadressen van de klant (alles lezen en veranderen)
     //   meekijken  = e-mailadressen die mogen meekijken (alleen wat de klant deelt)
-    //   baas       = e-mailadres van de klant dat de vinkjes mag zetten
-    // planning/rechten maakt de app van de klant zelf (wie mag wijzigen)
+    //   baas       = e-mailadres van de klant dat de vinkjes zet en medewerkers beheert
+    // planning/medewerkers = medewerkers met e-mail + wachtwoord (maakt de baas in de app)
+    // planning/rechten maakt de app van de klant zelf (wie mag wijzigen)`}
     match /planning/{doc} {
-      function toegang() { return get(/databases/$(database)/documents/planning/toegang).data; }
+      function ingelogd() { return request.auth != null; }
       function mail() { return request.auth.token.email.lower(); }
-      function isKlant() { return request.auth != null && mail() in toegang().klant; }
-      function isKijker() { return request.auth != null && mail() in toegang().meekijken; }
+      function google() { return request.auth.token.firebase.sign_in_provider == "google.com"; }
+      function tPad() { return /databases/$(database)/documents/planning/toegang; }
+      function mPad() { return /databases/$(database)/documents/planning/medewerkers; }
+      function toegang() { return exists(tPad()) ? get(tPad()).data : {}; }
+      function isMw() { return ingelogd() && exists(mPad()) && request.auth.uid in get(mPad()).data.get("lijst", {}); }
+${eigen?`      function isBaas() { return ingelogd() && google() && mail() in ${lst(beh)}; }
+      function isKlant() { return isBaas() || isMw(); }
+      function isKijker() { return false; }
+      function magWijzigen() { return false; }`:
+`      function isBaas() { return ingelogd() && google() && mail() == toegang().get("baas", ""); }
+      function isKlant() { return (ingelogd() && google() && mail() in toegang().get("klant", [])) || isMw(); }
+      function isKijker() { return ingelogd() && google() && mail() in toegang().get("meekijken", []); }
       function rechten() { return /databases/$(database)/documents/planning/rechten; }
       // meekijker mag ook veranderen zolang de klant 'Wijzigen' niet heeft uitgevinkt
-      function magWijzigen() { return isKijker() && (!exists(rechten()) || mail() in get(rechten()).data.wijzigen); }
+      function magWijzigen() { return isKijker() && (!exists(rechten()) || mail() in get(rechten()).data.wijzigen); }`}
       allow read: if isKlant() || magWijzigen()
         || (isKijker() && (doc == "delen_" + mail() || doc == "bevestigd"));
-      allow write: if (isKlant() && doc != "toegang" && doc != "bevestigd")
-        || (magWijzigen() && doc != "toegang" && doc != "rechten" && doc != "bevestigd")
-        || (isKijker() && doc == "bevestigd");   // alleen de beheerder bevestigt orders
+      allow write: if (isKlant() && !(doc in ["toegang", "bevestigd", "medewerkers"]))
+        || (magWijzigen() && !(doc in ["toegang", "rechten", "bevestigd", "medewerkers"]))
+        || (isKijker() && doc == "bevestigd")   // alleen de beheerder bevestigt orders
+        || (doc == "medewerkers" && isBaas());
     }
   }
 }`;toonPop("Regels Firebase · "+(k.naam||""),`<p class="status" style="margin:0 0 6px">Firebase → Firestore → tabblad <b>Rules</b> → alles vervangen door deze tekst → <b>Publish</b>.</p><textarea id="bhRegelTxt" readonly style="width:100%;height:240px;font-family:monospace;font-size:13px;box-sizing:border-box">${esc(t)}</textarea>
