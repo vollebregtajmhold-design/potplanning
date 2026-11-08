@@ -224,6 +224,8 @@ tr.nieuwsoort select{width:100%;font-style:italic;border:1px dashed #2d6a4f;back
 .zrknop .zk{display:grid;grid-template-columns:110px 90px 140px;gap:6px;flex:none}.zrknop .zk .ovk{font-size:13px;padding:4px 8px;border-radius:6px;border:1px solid #7fa9d1;text-align:center}
 .mob .wkkeuze b{white-space:nowrap}.mobteelt{font-size:16px;font-weight:700;padding:6px 8px;border-radius:8px;border:2px solid #fff;background:#fff;color:#1f4d39;max-width:58vw}
 .alleenBeheer{display:none!important}body.isBeheer .alleenBeheer{display:block!important}
+body.rolTeler .nivVerk,body.rolTeler .zoeksnel,body.rolTeler [data-tab="klanten"],body.rolTeler [data-tab="verkoop"]{display:none!important}
+.mwrol{font:inherit;font-size:13px;padding:4px;border:1px solid #cfc6b4;border-radius:6px;max-width:130px}
 .mwKnop{display:none!important}body.wolk.magMw .mwKnop{display:block!important}
 #login form{margin:0}#login input{width:100%;box-sizing:border-box;margin-top:8px;padding:11px 12px;border:1px solid #ccc;border-radius:10px;font-size:16px}#login .lgof{margin-top:18px;font-size:13px;color:#777;display:flex;align-items:center;gap:8px}#login .lgof:before,#login .lgof:after{content:"";flex:1;border-top:1px solid #ddd}#login .lgvg{display:inline-block;margin-top:10px;font-size:13px;color:#4b2a6e}
 .mwrij{display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid #eee}.mwrij .mwnm{flex:1;min-width:0}.mwrij small{color:#666;display:block;overflow:hidden;text-overflow:ellipsis}
@@ -985,7 +987,7 @@ body.sales .navMidden>.mknop.groot{display:none!important}body.kijkmodus #btnPri
 
 <script>
 "use strict";
-const VERSIE="45.7";
+const VERSIE="45.8";
 const VERSIE_DATUM="03-11-2026";
 /* ---------- Basis ---------- */
 const PALET=["#2d6a4f","#1B5EBE","#E8007D","#c77d1a","#7a4fa0","#0f8b8d","#5b6b2f","#3d5a80","#a0522d","#7AB648"];
@@ -1494,8 +1496,8 @@ function urlZet(){if(urlBezig||!TAB_URL[tab])return;const h="#"+TAB_URL[tab];if(
 window.addEventListener("popstate",()=>{const t=URL_TAB[location.hash.slice(1)]||(location.hash?"":"aflever");if(t&&t!==tab){urlBezig=true;try{tab=t;render()}finally{urlBezig=false}}});
 /* weergave Sales: bovenin alleen Zoeken, altijd Afleverplanning. Per apparaat onthouden */
 const SALES_TABS=["aflever","mobiel","klanten","verkoop","beheer","mkbesch"];
-function isSales(){try{return localStorage.getItem("potplanning-weergave")==="sales"}catch(e){return false}}
-function weergaveKnoppen(){const s=isSales();document.body.classList.toggle("sales",s);const a=document.getElementById("wgSales"),b=document.getElementById("wgAlles");if(a)a.classList.toggle("aan",s);if(b)b.classList.toggle("aan",!s)}
+function isSales(){if(mwRol==="verkoper")return true;if(mwRol)return false;try{return localStorage.getItem("potplanning-weergave")==="sales"}catch(e){return false}}
+function weergaveKnoppen(){const s=isSales(),wk=document.getElementById("wgSales");if(wk&&wk.parentElement)wk.parentElement.hidden=!!mwRol;document.body.classList.toggle("sales",s);const a=document.getElementById("wgSales"),b=document.getElementById("wgAlles");if(a)a.classList.toggle("aan",s);if(b)b.classList.toggle("aan",!s)}
 function zetWeergave(v){try{localStorage.setItem("potplanning-weergave",v)}catch(e){}weergaveKnoppen();
   if(v==="sales"){if(!SALES_TABS.includes(tab))naar(window.innerWidth<700?"mobiel":"aflever");else render();melding("Weergave Sales: alleen Zoeken en Afleverplanning","#2d6a4f")}else{render();melding("Weergave Alles: alle pagina's","#2d6a4f")}}
 setTimeout(weergaveKnoppen,0);
@@ -1633,7 +1635,18 @@ async function wolkLogin(){const p=new firebase.auth.GoogleAuthProvider();p.setC
   catch(e){if(e.code==="auth/popup-blocked"||e.code==="auth/operation-not-supported-in-this-environment"){try{await firebase.auth().signInWithRedirect(p)}catch(x){toonLogin(x.message)}}
     else if(e.code!=="auth/popup-closed-by-user"&&e.code!=="auth/cancelled-popup-request")toonLogin(e.code==="auth/unauthorized-domain"?"Dit webadres staat nog niet bij 'Authorized domains' in Firebase.":e.message)}}
 /* ---------- Medewerkers: inloggen met e-mail + wachtwoord. De baas maakt de accounts in de app (planning/medewerkers) ---------- */
-let wolkWw=false;
+let wolkWw=false,mwRol="",mwStop=null;
+const MW_ROLLEN=[["alles","🌱💶 Alles"],["teler","🌱 Teler"],["verkoper","💶 Verkoper"],["kijk","👁 Alleen kijken"]];
+const mwRolNaam=r=>(MW_ROLLEN.find(x=>x[0]===r)||MW_ROLLEN[0])[1];
+const isTeler=()=>mwRol==="teler";
+const TELER_WEG=["klanten","verkoop","beheer"];
+/* rol van de ingelogde medewerker lezen en toepassen */
+function mwRolStart(u){if(mwStop){mwStop();mwStop=null}mwRol="";if(!wolkWw)return mwRolZet("");
+  mwStop=mwDoc().onSnapshot(d=>{const x=((d.exists&&d.data().lijst)||{})[u.uid];mwRolZet(x?(x.rol||"alles"):"")},()=>{})}
+function mwRolZet(r){const oud=mwRol;mwRol=r;document.body.classList.toggle("rolTeler",r==="teler");document.body.classList.toggle("rolVast",!!r);
+  if(r==="kijk"){zetKijker(true);const b=document.getElementById("kijkLabel");if(b){b.textContent="👁 Alleen kijken";b.title="Uw account mag alles bekijken, maar niets veranderen."}}
+  else if(oud==="kijk")zetKijker(false);
+  try{weergaveKnoppen()}catch(e){}if(oud!==r&&typeof render==="function"&&data)render()}
 const wwFout=e=>({"auth/invalid-credential":"E-mail of wachtwoord klopt niet.","auth/wrong-password":"E-mail of wachtwoord klopt niet.","auth/user-not-found":"E-mail of wachtwoord klopt niet.","auth/invalid-email":"Dit e-mailadres klopt niet.","auth/too-many-requests":"Te vaak geprobeerd. Wacht even en probeer het opnieuw.","auth/operation-not-allowed":"Inloggen met e-mail staat nog niet aan in Firebase.","auth/email-already-in-use":"Dit e-mailadres heeft al een account.","auth/weak-password":"Het wachtwoord moet minstens 6 tekens hebben.","auth/missing-password":"Vul een wachtwoord in."})[e&&e.code]||(e&&e.message)||"Er ging iets mis.";
 async function wwLogin(ev){if(ev)ev.preventDefault();const m=(document.getElementById("lgMail").value||"").trim(),w=document.getElementById("lgWw").value||"";
   try{await firebase.auth().signInWithEmailAndPassword(m,w)}catch(e){toonLogin(wwFout(e));const x=document.getElementById("lgMail");if(x)x.value=m}}
@@ -1651,16 +1664,19 @@ async function toonMedewerkers(){if(!magMw()){alert("Alleen de baas van deze app
 function mwUitleg(){return`<details style="margin-top:12px"><summary class="status" style="cursor:pointer">Eenmalig instellen in Firebase</summary><ol class="status" style="padding-left:18px;margin:6px 0">
   <li>Firebase → <b>Authentication</b> → <b>Sign-in method</b> → <b>E-mail/wachtwoord</b> aanzetten → Opslaan.</li>
   <li>Beheer → <b>Regels Firebase</b> → de nieuwe tekst plakken bij Firestore → Rules → <b>Publish</b>.</li></ol></details>`}
+setTimeout(()=>{for(const f of["prijsTabel","klantMenu","orderForm","klantKaart","klantGegevens","verkoopOrder"])if(typeof window[f]==="function"){const o=window[f];window[f]=function(){if(isTeler()){melding("Dit is niet voor de rol Teler.","#6a3d9a");return}return o.apply(this,arguments)}}},0);
 function mwToon(){const L=Object.entries((mwData&&mwData.lijst)||{}).sort((a,b)=>String(a[1].naam||a[1].mail).localeCompare(String(b[1].naam||b[1].mail)));
-  toonPop("👷 Medewerkers",`<p class="status" style="margin:0 0 8px">Medewerkers loggen in met <b>e-mail + wachtwoord</b>. Ze hebben geen Google-account nodig. Ze kunnen alles in de app, behalve Beheer en medewerkers.</p>
-    ${L.length?L.map(([uid,x])=>`<div class="mwrij"><span class="mwnm"><b>${esc(x.naam||"–")}</b><small>${esc(x.mail||"")}</small></span><button class="ovk ovlink" onclick="mwMail('${uid}')" title="Stuur een mail om een nieuw wachtwoord te maken">✉ Nieuw wachtwoord</button><button class="ovk ovlink" onclick="mwWeg('${uid}')" title="Toegang weghalen">🗑</button></div>`).join(""):`<div class="status" style="padding:6px 0">Nog geen medewerkers.</div>`}
+  toonPop("👷 Medewerkers",`<p class="status" style="margin:0 0 8px">Medewerkers loggen in met <b>e-mail + wachtwoord</b>. Ze hebben geen Google-account nodig. Kies per medewerker wat hij mag:</p>
+    <div class="status" style="font-size:12px;margin:0 0 8px;line-height:1.5">🌱💶 <b>Alles</b>: alles, behalve Beheer en Medewerkers<br>🌱 <b>Teler</b>: teelt en planning, geen klanten en geen prijzen<br>💶 <b>Verkoper</b>: zoeken, afleverplanning, klanten en orders<br>👁 <b>Alleen kijken</b>: alles zien, niets veranderen</div>
+    ${L.length?L.map(([uid,x])=>`<div class="mwrij"><span class="mwnm"><b>${esc(x.naam||"–")}</b><small>${esc(x.mail||"")}</small></span><select class="mwrol" onchange="mwRolKies('${uid}',this.value)" title="Wat mag deze medewerker?">${MW_ROLLEN.map(([k,n])=>`<option value="${k}" ${(x.rol||"alles")===k?"selected":""}>${n}</option>`).join("")}</select><button class="ovk ovlink" onclick="mwMail('${uid}')" title="Stuur een mail om een nieuw wachtwoord te maken">✉ Nieuw wachtwoord</button><button class="ovk ovlink" onclick="mwWeg('${uid}')" title="Toegang weghalen">🗑</button></div>`).join(""):`<div class="status" style="padding:6px 0">Nog geen medewerkers.</div>`}
     <h4 style="margin:14px 0 6px">➕ Medewerker toevoegen</h4>
     <input id="mwNaam" class="mwveld" placeholder="Naam">
     <input id="mwMail" class="mwveld" type="email" placeholder="E-mailadres" autocomplete="off">
     <input id="mwWw" class="mwveld" type="text" placeholder="Wachtwoord (minstens 6 tekens)" autocomplete="new-password">
+    <select id="mwRolN" class="mwveld">${MW_ROLLEN.map(([k,n])=>`<option value="${k}">${n}</option>`).join("")}</select>
     <div class="rij"><span class="status" id="mwFout" style="color:#b00020;flex:1"></span><button class="btn" id="mwKnopT" onclick="mwToevoegen()">Toevoegen</button></div>
     <p class="status" style="font-size:12px;margin:8px 0 0">Geef het wachtwoord zelf door aan de medewerker. De medewerker kan het later veranderen via 'Wachtwoord vergeten?'.</p>${mwUitleg()}`)}
-async function mwToevoegen(){const naam=document.getElementById("mwNaam").value.trim(),mail=document.getElementById("mwMail").value.trim().toLowerCase(),ww=document.getElementById("mwWw").value,f=document.getElementById("mwFout"),k=document.getElementById("mwKnopT");
+async function mwToevoegen(){const rol=(document.getElementById("mwRolN")||{}).value||"alles",naam=document.getElementById("mwNaam").value.trim(),mail=document.getElementById("mwMail").value.trim().toLowerCase(),ww=document.getElementById("mwWw").value,f=document.getElementById("mwFout"),k=document.getElementById("mwKnopT");
   if(!naam||!mail){f.textContent="Vul een naam en e-mailadres in.";return}
   const oud=Object.entries((mwData&&mwData.oud)||{}).find(([u,x])=>x.mail===mail);
   if(Object.values((mwData&&mwData.lijst)||{}).some(x=>x.mail===mail)){f.textContent="Deze medewerker staat al in de lijst.";return}
@@ -1671,11 +1687,13 @@ async function mwToevoegen(){const naam=document.getElementById("mwNaam").value.
       const a2=firebase.apps.find(a=>a.name==="mw")||firebase.initializeApp(FB_CONFIG,"mw");
       try{await a2.auth().setPersistence(firebase.auth.Auth.Persistence.NONE)}catch(e){}
       const c=await a2.auth().createUserWithEmailAndPassword(mail,ww);uid=c.user.uid;try{await a2.auth().signOut()}catch(e){}}
-    const FV=firebase.firestore.FieldValue,upd={["lijst."+uid]:{naam,mail,t:new Date().toISOString(),door:wolkMail}};if(oud)upd["oud."+uid]=FV.delete();
-    try{await mwDoc().update(upd)}catch(e){if(e.code!=="not-found")throw e;await mwDoc().set({lijst:{[uid]:{naam,mail,t:new Date().toISOString(),door:wolkMail}}})}
-    (mwData.lijst=mwData.lijst||{})[uid]={naam,mail};if(oud)delete mwData.oud[uid];mwToon();
+    const FV=firebase.firestore.FieldValue,upd={["lijst."+uid]:{naam,mail,rol,t:new Date().toISOString(),door:wolkMail}};if(oud)upd["oud."+uid]=FV.delete();
+    try{await mwDoc().update(upd)}catch(e){if(e.code!=="not-found")throw e;await mwDoc().set({lijst:{[uid]:{naam,mail,rol,t:new Date().toISOString(),door:wolkMail}}})}
+    (mwData.lijst=mwData.lijst||{})[uid]={naam,mail,rol};if(oud)delete mwData.oud[uid];mwToon();
     melding(oud?`✓ ${esc(naam)} heeft weer toegang. Het oude wachtwoord werkt weer (of stuur een mail voor een nieuw wachtwoord).`:`✓ ${esc(naam)} toegevoegd. Geef het wachtwoord door.`,"#2d6a4f")}
   catch(e){f.textContent=e.code==="auth/email-already-in-use"?"Dit e-mailadres heeft al een account (bijv. bij een andere app). Kies een ander e-mailadres.":e.code==="permission-denied"?"Geen toestemming: de regels in Firebase zijn nog niet bijgewerkt.":wwFout(e);k.disabled=false}}
+async function mwRolKies(uid,rol){const x=((mwData&&mwData.lijst)||{})[uid];if(!x)return;
+  try{await mwDoc().update({["lijst."+uid+".rol"]:rol});x.rol=rol;melding(`✓ ${esc(x.naam||x.mail)}: ${mwRolNaam(rol)}`,"#2d6a4f")}catch(e){alert("Lukt niet: "+(e.code==="permission-denied"?"de regels in Firebase zijn nog niet bijgewerkt.":e.message));mwToon()}}
 async function mwWeg(uid){const x=((mwData&&mwData.lijst)||{})[uid];if(!x||!confirm(`Toegang van ${x.naam||x.mail} weghalen?\nDeze medewerker kan dan niet meer in de app.`))return;
   try{await mwDoc().update({["lijst."+uid]:firebase.firestore.FieldValue.delete(),["oud."+uid]:{naam:x.naam||"",mail:x.mail||""}});delete mwData.lijst[uid];(mwData.oud=mwData.oud||{})[uid]=x;mwToon();melding("Toegang weggehaald","#2d6a4f")}
   catch(e){alert("Lukt niet: "+e.message)}}
@@ -1691,7 +1709,7 @@ async function wolkStart(){
   firebase.auth().onAuthStateChanged(u=>{
     if(wolkStop){wolkStop();wolkStop=null}
     if(!u){wolkDoc=null;wolkMail="";toonLogin();return}
-    wolkMail=u.email||"";wolkWw=(u.providerData||[]).some(x=>x.providerId==="password")&&!(u.providerData||[]).some(x=>x.providerId==="google.com");const lg=document.getElementById("login");if(lg)lg.hidden=true;
+    wolkMail=u.email||"";wolkWw=(u.providerData||[]).some(x=>x.providerId==="password")&&!(u.providerData||[]).some(x=>x.providerId==="google.com");const lg=document.getElementById("login");if(lg)lg.hidden=true;mwRolStart(u);
     wolkDoc=db.collection("planning").doc("hoofd");wolkEerste=true;wolkStatus("Verbinden…");
     if(KLANT.code)bevLuister(db);
     if(KLANT.code)db.collection("planning").doc("toegang").onSnapshot(t=>{const v=t.exists?t.data():{};toegang={klant:lijstLaag(v.klant),meekijken:lijstLaag(v.meekijken),baas:String(v.baas||"").trim().toLowerCase(),geladen:true};setTimeout(deelOpslaan,1500)},()=>{});
@@ -1834,7 +1852,7 @@ document.addEventListener("keydown",e=>{
   if(document.querySelector("dialog[open]"))return;
   e.preventDefault();bladeren(e.key==="ArrowLeft"?-1:1)});
 let vorigeTab="",houdOpen=false;
-function render(){document.body.classList.toggle("isBeheer",isBeheerder());document.body.classList.toggle("magMw",magMw());if(tab==="beheer"&&!isBeheerder())tab="oppot";if(typeof postitTel==="function")postitTel();if(tab==="bestel")tab="oppotov";if(tab==="ruimtegraf")tab="oppot"; /* ruimte zit nu bij Inkoop / opzetten */ /* bestelplanning zit nu in Opzetplanning */
+function render(){document.body.classList.toggle("isBeheer",isBeheerder());document.body.classList.toggle("magMw",magMw());if(tab==="beheer"&&!isBeheerder())tab="oppot";if(isTeler()){if(TELER_WEG.includes(tab))tab="aflever";if(typeof aflRij!=="undefined"&&aflRij==="klant")aflRij="teelt"}if(mwRol==="verkoper"&&!SALES_TABS.includes(tab))tab="aflever";if(typeof postitTel==="function")postitTel();if(tab==="bestel")tab="oppotov";if(tab==="ruimtegraf")tab="oppot"; /* ruimte zit nu bij Inkoop / opzetten */ /* bestelplanning zit nu in Opzetplanning */
   zvKlaar();
   if(tab==="rassen"||tab==="duren")tab="soorten";
   if(tab==="proef")tab="oppot"; /* proberen is teruggedraaid */
@@ -3837,7 +3855,7 @@ function toonMobiel(){syncSoorten();
   mobWeekStart();const t=mobWeekStart().getTime();
   let tabs=[["week","📋 Deze week"],["vloer","🏠 Vloeren"],["aflever","🚛 Afleveren"],["zoek","🔍 Partij"]];
   if(data.instellingen.eenvoudig){tabs=[["aflever","Afleveren"],["oppot","Oppotten"]];if(mobTab!=="oppot"&&mobTab!=="klant")mobTab="aflever"}
-  if(niveau()>1&&!kijker)tabs.push(["klant","👥 Klanten"]);
+  if(niveau()>1&&!kijker&&!isTeler())tabs.push(["klant","👥 Klanten"]);
   if(isSales()){tabs=tabs.filter(([v])=>v!=="oppot");if(mobTab==="oppot")mobTab="aflever"}
   if(teeltFilter&&!data.teeltduren.some(x=>x.id===teeltFilter))teeltFilter="";
   let h=`<div class="mob"><div class="mkop"><select class="mobteelt" onchange="teeltFilter=this.value;render()" title="Filter op teelt"><option value="">Alle teelten</option>${data.teeltduren.map(x=>`<option value="${x.id}" ${x.id===teeltFilter?"selected":""}>${esc(teeltNaam(x))}</option>`).join("")}</select>
@@ -4767,7 +4785,7 @@ document.addEventListener("keydown",e=>{if(e.code!=="KeyZ"||e.ctrlKey||e.metaKey
 /* 2 modules: module 1 = intern niveau 2 (planning + reserveringen), module 2 = intern niveau 3 (plus kosten, afd en vloer) */
 /* module 3 (niveau 4) voorlopig alleen in de eigen app, niet bij klanten (MOD3_KLANT=false) */
 const MOD3_KLANT=false,mod3Mag=()=>MOD3_KLANT||!KLANT.code;
-const niveau=()=>{try{const v=localStorage.getItem("potplanning-niveau");if(v)return Math.min(mod3Mag()?4:3,Math.max(2,+v));return localStorage.getItem("potplanning-zv")==="1"?2:3}catch(e){return 3}};
+const niveau=()=>{try{const v=localStorage.getItem("potplanning-niveau");if(v)return Math.min(mod3Mag()&&!isTeler()?4:3,Math.max(2,+v));return localStorage.getItem("potplanning-zv")==="1"?2:3}catch(e){return 3}};
 const ZV=()=>niveau()<3;
 const NIV_UITLEG={2:"Planning met reserveringen",3:"Plus kosten per week·m², afd en vloer",4:"Plus aanbodlijst, prijzen en delen"};const MODNR={2:1,3:2,4:3};
 function zvKlaar(){const bi=document.getElementById("brutoIn");if(bi&&document.activeElement!==bi)bi.value=(data.instellingen&&data.instellingen.brutoM2)||"";const li=document.getElementById("levIn");if(li&&document.activeElement!==li)li.value=(data.instellingen&&data.instellingen.levertijd)||0;const si=document.getElementById("seizIn");if(si&&document.activeElement!==si)si.value=(data.instellingen&&data.instellingen.seizoenStart)||11;const n=niveau(),z=n<3;document.body.classList.toggle("zv",z);{const b4=document.getElementById("niv4");if(b4)b4.hidden=!mod3Mag()}[1,2,3,4].forEach(i=>{document.body.classList.toggle("niv"+i,i===n);const b=document.getElementById("niv"+i);if(b)b.classList.toggle("aan",i===n)});
@@ -5286,6 +5304,8 @@ ${eigen?`    // EIGEN APP: deze Google-accounts mogen alles (en medewerkers behe
       function mPad() { return /databases/$(database)/documents/planning/medewerkers; }
       function toegang() { return exists(tPad()) ? get(tPad()).data : {}; }
       function isMw() { return ingelogd() && exists(mPad()) && request.auth.uid in get(mPad()).data.get("lijst", {}); }
+      // medewerker met de rol 'Alleen kijken' mag niets veranderen
+      function mwKijk() { return isMw() && get(mPad()).data.lijst[request.auth.uid].get("rol", "alles") == "kijk"; }
 ${eigen?`      function isBaas() { return ingelogd() && google() && mail() in ${lst(beh)}; }
       function isKlant() { return isBaas() || isMw(); }
       function isKijker() { return false; }
@@ -5298,7 +5318,7 @@ ${eigen?`      function isBaas() { return ingelogd() && google() && mail() in ${
       function magWijzigen() { return isKijker() && (!exists(rechten()) || mail() in get(rechten()).data.wijzigen); }`}
       allow read: if isKlant() || magWijzigen()
         || (isKijker() && (doc == "delen_" + mail() || doc == "bevestigd"));
-      allow write: if (isKlant() && !(doc in ["toegang", "bevestigd", "medewerkers"]))
+      allow write: if (isKlant() && !mwKijk() && !(doc in ["toegang", "bevestigd", "medewerkers"]))
         || (magWijzigen() && !(doc in ["toegang", "rechten", "bevestigd", "medewerkers"]))
         || (isKijker() && doc == "bevestigd")   // alleen de beheerder bevestigt orders
         || (doc == "medewerkers" && isBaas());
@@ -5465,7 +5485,7 @@ const PAGINAS_E=[
 ];
 function zoekItemsE(q){q=q.trim().toLowerCase();const r=[],woorden=q.split(/\s+/).filter(Boolean);
   const past=(...v)=>{const t=v.join(" ").toLowerCase();return woorden.every(w=>t.includes(w))},score=t=>String(t).toLowerCase().startsWith(q)?0:1;
-  const nivWeg=n=>(/^Beheer/.test(n)&&!isBeheerder())||(niveau()===1&&/verkoop|klant|bestel|werk|pakbon/i.test(n))||(niveau()<3&&/ruimte/i.test(n));
+  const nivWeg=n=>(/^Beheer/.test(n)&&!isBeheerder())||(isTeler()&&/verkoop|klant|reserver|pakbon|order/i.test(n))||(niveau()===1&&/verkoop|klant|bestel|werk|pakbon/i.test(n))||(niveau()<3&&/ruimte/i.test(n));
   for(const[ic,naam,grp,w,f]of PAGINAS_E)if(!nivWeg(naam)&&past(naam,w))r.push({ic,naam,grp,f,s:score(naam)});
   if(q){const nu=+maandagIso(isoWeek(new Date()).y,isoWeek(new Date()).w);
     for(const t of data.teeltduren)if(past(t.product,t.potmaat,"cm")){
@@ -5494,7 +5514,7 @@ function zoekItems(q){if(data.instellingen.eenvoudig)return zoekItemsE(q);q=q.tr
     zoekKlanten(r,past,score);
   }
   return r.sort((a,b)=>a.s-b.s).slice(0,40)}
-function zoekKlanten(r,past,score){if(niveau()<2)return;
+function zoekKlanten(r,past,score){if(niveau()<2||isTeler())return;
   for(const k of data.klanten||[])if(k.naam&&past(k.naam,k.plaats||"",k.contact||""))r.push({ic:"👤",naam:k.naam,sub:k.plaats||"",grp:"Klant",s:score(k.naam)+.3,
     f:()=>{const b=Math.min(300,innerWidth-16),x=Math.max(8,innerWidth/2-b/2-20);klantMenu(k.naam,{getBoundingClientRect:()=>({left:x,right:x+b,top:70,bottom:90,width:b,height:20})})}})}
 let zoekSel=0,zoekLijst=[];
