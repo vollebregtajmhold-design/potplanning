@@ -992,7 +992,7 @@ body.sales .navMidden>.mknop.groot{display:none!important}body.kijkmodus #btnPri
 
 <script>
 "use strict";
-const VERSIE="46.6";
+const VERSIE="46.7";
 const VERSIE_DATUM="03-11-2026";
 /* ---------- Basis ---------- */
 const PALET=["#2d6a4f","#1B5EBE","#E8007D","#c77d1a","#7a4fa0","#0f8b8d","#5b6b2f","#3d5a80","#a0522d","#7AB648"];
@@ -4659,6 +4659,7 @@ async function fotoPop(id){const r=data.rassen.find(x=>x.id===id);if(!r)return;c
   const duim=await Promise.all(L.map(x=>fotoLaadS(id,x)));
   toonPop("📷 "+esc(r.naam||"soort"),`<div class="fotogroot">${img?`<img src="${img}" alt="">`:`<div class="status" style="padding:30px;text-align:center">Nog geen foto.</div>`}</div>
     ${L.length>1?`<div class="fotoduimen">${duim.map((u,j)=>`<button class="${j===i?"aan":""}" onclick="fotoIdx[${N}]=${j};${her}" title="Foto ${j+1}${j===0?" (hoofdfoto)":""}">${u?`<img src="${u}" alt="">`:j+1}${j===0?"<b>⭐</b>":""}</button>`).join("")}</div>`:""}
+    ${img?`<div class="rij" style="margin-top:10px;gap:8px;flex-wrap:wrap"><button class="btn licht" onclick="fotoDown(${N},'${suf}',${i+1})" title="Deze foto op de computer bewaren">⬇ Download</button>${L.length>1?`<button class="btn licht" onclick="fotoDownAlle(${N})" title="Alle foto's van deze soort bewaren">⬇ Alle ${L.length} foto's</button>`:""}</div>`:""}
     ${mag?`<div class="rij" style="margin-top:10px;gap:8px;flex-wrap:wrap">${L.length?`<span class="status">Foto ${i+1} van ${L.length}${i===0?" · ⭐ hoofdfoto":""}</span>`:""}<span style="flex:1"></span>
       ${i>0?`<button class="btn licht" onclick="fotoHoofd(${N},'${suf}',()=>{${her};render()})">⭐ Maak hoofdfoto</button>`:""}
       ${img?`<button class="btn rood" onclick="fotoWegS(${N},'${suf}',()=>{${her};render()})">🗑 Weghalen</button>`:""}
@@ -4697,6 +4698,10 @@ async function fotoWegS(id,suf,na){if(!confirm("Deze foto weghalen?"))return;con
     if(E[id]&&!E[id].length)delete E[id];fotoIdx[id]=0;opslaanLater();melding("Foto weggehaald","#2d6a4f");if(na)na()}
   catch(e){alert("Lukt niet: "+e.message)}}
 const fotoIdx={};
+/* foto bewaren op de computer (de verkleinde foto zoals die in de app staat) */
+async function fotoDown(id,suf,nr){const img=await fotoLaadS(id,suf);if(!img)return;const r=data.rassen.find(x=>x.id===id)||{},t=data.teeltduren.find(x=>x.id===r.teeltId)||{};
+  const a=document.createElement("a");a.href=img;a.download=(teeltLabel(t)+" "+(r.naam||"soort")+" foto "+nr).replace(/[^\w .-]+/g," ").replace(/\s+/g," ").trim()+".jpg";document.body.appendChild(a);a.click();a.remove()}
+async function fotoDownAlle(id){const L=fotoLijst(id);for(let j=0;j<L.length;j++){await fotoDown(id,L[j],j+1);await new Promise(r=>setTimeout(r,400))}}
 function fotoStap(id,d,na){const n=fotoLijst(id).length;if(n<2)return;fotoIdx[id]=((fotoIdx[id]||0)+d+n)%n;na()}
 /* mobiel: foto(s) bovenin de popup. De foto die u ziet, gaat mee bij Delen */
 function mobFotoVak(id){const L=fotoLijst(id),mag=!kijker&&!!wolkDoc;if(!L.length&&!mag)return"";
