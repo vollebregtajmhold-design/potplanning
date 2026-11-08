@@ -743,7 +743,7 @@ table.oppot th.jaarstart,table.oppot td.jaarstart{border-left:3px solid #4b2a6e!
 .mtekst{background:#fff7e0;border-left:4px solid #e0a800;border-radius:8px;padding:7px 10px;margin:0 0 10px;white-space:pre-wrap;font-size:15px}
 
 #aanbodKnop{display:none;position:fixed;right:16px;bottom:18px;z-index:60;width:58px;height:58px;border-radius:50%;border:0;background:#2d6a4f;color:#fff;font-size:26px;box-shadow:0 4px 14px rgba(0,0,0,.3);cursor:pointer}
-body.mobiel #aanbodKnop{display:block}@media (max-width:900px),(pointer:coarse){#aanbodKnop{display:block}}body:not(.niv4) #aanbodKnop{display:none!important}body.mobiel{padding-bottom:84px}
+body.mobiel #aanbodKnop{display:block}@media (max-width:900px),(pointer:coarse){#aanbodKnop{display:block}}body:not(.niv4) #aanbodKnop{display:none!important}body:not(.niv4) .mod4{display:none!important}body.mobiel{padding-bottom:84px}
 .abveld{width:100%;box-sizing:border-box;font:inherit;font-size:16px;padding:7px 9px;border:1px solid #cfc6b4;border-radius:8px}
 
 @media (max-width:600px){.verkrij{flex-wrap:wrap}.verkrij input:first-child{flex:1 1 100%}.verkrij input.verkn{flex:1 1 0;width:auto}}
@@ -772,7 +772,7 @@ body.mobiel #aanbodKnop{display:block}@media (max-width:900px),(pointer:coarse){
 .ordring{display:inline-block;border:2px solid #d0103a;border-radius:999px;padding:0 7px;line-height:1.35;margin:-2px -9px}
 
 body.sales .navMidden>.mknop.groot{display:none!important}body.kijkmodus #btnPrijzen{display:none}body.sales .navMidden>.menu.uitgebreid{display:none!important}
-#wgSales.aan,#wgAlles.aan,#prJa.aan,#prNee.aan,#mp_gmail.aan,#mp_outlook.aan,#mp_standaard.aan{background:#2d6a4f;color:#fff;border-color:#2d6a4f}
+#wgSales.aan,#wgAlles.aan,#mod1.aan,#mod2.aan,#mod3.aan,#mod4.aan,#mp_gmail.aan,#mp_outlook.aan,#mp_standaard.aan{background:#2d6a4f;color:#fff;border-color:#2d6a4f}
 
 #btnUitleg{width:22px;height:22px;flex:none;border-radius:50%;background:#2d9d5a;color:#fff;border:3px solid #fff;cursor:pointer;padding:0;font:bold 12px/1 Arial,sans-serif;box-shadow:0 1px 3px rgba(0,0,0,.4);margin-left:2px}
 
@@ -870,10 +870,9 @@ body.sales .navMidden>.mknop.groot{display:none!important}body.kijkmodus #btnPri
       <button id="btnNieuw" type="button" title="Nieuw bestand">💾 Nieuw bestand</button>
       <button id="btnOpen" type="button" title="Open bestand">📂 Open bestand</button>
       <button id="btnTerugDoen" type="button" onclick="ongedaan()" disabled title="Laatste wijziging ongedaan maken (Ctrl + Z)">↶ Ongedaan maken</button>
-      <div class="zvkeus" title="Welke module ziet u op dit apparaat"><span>Module:</span><button type="button" id="niv2" onclick="zetNiveau(2)" title="Planning met reserveringen">1</button><button type="button" id="niv3" onclick="zetNiveau(3)" title="Plus kosten per week·m², afd en vloer">2</button><button type="button" id="niv4" onclick="zetNiveau(4)" title="Plus aanbodlijst, prijzen en delen">3</button></div>
+      <div class="zvkeus" title="Welke module ziet u op dit apparaat"><span>Module:</span><button type="button" id="mod1" onclick="zetModule(1)" title="Basis: parameters, inkoop, klanten, opzetplan, afleverplan">1</button><button type="button" id="mod2" onclick="zetModule(2)" title="Plus prijzen">2</button><button type="button" id="mod3" onclick="zetModule(3)" title="Plus vloervulling: afd, vloer, ruimte en kosten">3</button><button type="button" id="mod4" onclick="zetModule(4)" title="Plus verkoop en delen: aanbodlijst, foto's, WhatsApp, orderformulier">4</button></div>
       <div class="status" id="nivUitleg" style="padding:0 10px 6px;font-size:11px"></div>
       <div class="zvkeus" title="Sales: alleen Zoeken en de Afleverplanning. Alles: alle pagina's."><span>Weergave:</span><button type="button" id="wgSales" onclick="event.stopPropagation();zetWeergave('sales')">Sales</button><button type="button" id="wgAlles" onclick="event.stopPropagation();zetWeergave('alles')">Alles</button></div>
-      <div class="zvkeus" title="Nee: prijzen en bedragen niet in beeld (invoer en uitvoer). Per apparaat."><span>Prijzen:</span><button type="button" id="prJa" onclick="event.stopPropagation();zetPrijzen('ja')">Ja</button><button type="button" id="prNee" onclick="event.stopPropagation();zetPrijzen('nee')">Nee</button></div>
       <div class="zvkeus" title="Met welk mailprogramma de mailknoppen openen (per apparaat)"><span>Mail:</span><button type="button" id="mp_gmail" onclick="event.stopPropagation();zetMailProg('gmail')">Gmail</button><button type="button" id="mp_outlook" onclick="event.stopPropagation();zetMailProg('outlook')">Outlook</button><button type="button" id="mp_standaard" onclick="event.stopPropagation();zetMailProg('standaard')" title="Het mailprogramma dat op dit apparaat is ingesteld">Standaard</button></div>
       <div class="zvkeus" title="Totale oppervlakte van de kas (bruto). Komt als lijn in de Ruimte-grafiek."><span>Bruto kasruimte</span><input type="number" id="brutoIn" min="0" step="1" style="width:80px;font-size:13px;padding:3px 5px" onclick="event.stopPropagation()" onchange="data.instellingen.brutoM2=Math.max(0,Math.round(+this.value||0));wijzig();melding('✓ Bruto kasruimte: '+getal(data.instellingen.brutoM2)+' m²','#2d6a4f')"><span>m²</span></div>
       <div class="zvkeus" title="Het afleverseizoen loopt van deze week t/m de week ervoor in het volgende jaar"><span>Seizoen begint wk</span><input type="number" id="seizIn" min="1" max="52" style="width:56px;font-size:13px;padding:3px 5px" onclick="event.stopPropagation()" onchange="data.instellingen.seizoenStart=Math.max(1,Math.min(52,Math.round(+this.value||11)));aflS=null;wijzig();melding('✓ Seizoen begint nu in week '+data.instellingen.seizoenStart,'#2d6a4f')"></div>
@@ -989,7 +988,7 @@ body.sales .navMidden>.mknop.groot{display:none!important}body.kijkmodus #btnPri
 
 <script>
 "use strict";
-const VERSIE="46.0";
+const VERSIE="46.1";
 const VERSIE_DATUM="03-11-2026";
 /* ---------- Basis ---------- */
 const PALET=["#2d6a4f","#1B5EBE","#E8007D","#c77d1a","#7a4fa0","#0f8b8d","#5b6b2f","#3d5a80","#a0522d","#7AB648"];
@@ -1446,7 +1445,7 @@ const HULP={
   soorten:["Parameters","<li>Hier staan uw <b>teelten</b> en <b>soorten</b>.</li><li>Per teelt: potmaat, planten per m² en de <b>teeltduur</b> per opzetweek.</li><li>Per soort: fust, raaptijd, uitval en levertijd.</li><li>Een soort met een andere teeltduur? Klik op <b>standaard duur</b> om een eigen duur te maken.</li><li>Het vinkje <b>klopt</b> zet u aan als de planning van die soort klopt met de praktijk.</li><li><b>📷</b> naast de naam: een foto bij de soort. Die ziet u op de mobiel en in de Aanbodlijst.</li><li><b>Toetsen</b>: 1 = Parameters, 2 = Inkoop, 3 = Opzetplanning, 4 = Afleverplanning.</li>"],
   oppot:["Inkoop / opzetten","<li>Vul per <b>soort</b> en per <b>week</b> in hoeveel planten u opzet.</li><li>De <b>grafiek</b> laat zien hoe vol de kas wordt. De rode lijn is de bruto kasruimte.</li><li>Rij <b>Verschil m²</b>: wat er verandert door uw invoer.</li><li><b>Rechtermuisknop</b> op een vakje: Max, Proberen of leeg maken.</li><li>Sleep het <b>groene blokje</b> rechtsonder in een vakje om te kopiëren, net als in Excel.</li><li><b>🪴 Lege ruimte</b>: hoeveel er nog bij past. <b>⬇ Excel</b>: alles naar Excel.</li>"],
   oppotov:["Opzetplanning","<li>Wat er <b>per week</b> wordt opgezet, per soort.</li><li>De rode week onder het weeknummer is de <b>uiterste bestelweek</b>.</li><li>Kies bij <b>Eenheid</b>: planten, trays, m² of kosten.</li><li>Met de <b>schuif</b> kiest u welke weken u ziet.</li><li>Klik op een soort om naar de Parameters te gaan.</li>"],
-  aflever:["Afleverplanning","<li>Bovenin kiest u: <b>Beschikbaar</b> of <b>👥 Klantoverzicht</b>.</li><li><b>Beschikbaar</b>: links in de tabel kiest u <b>Nog beschikbaar</b>, <b>Afleverplan</b> of <b>Gereserveerd</b>. Het is steeds dezelfde tabel.</li><li>Een <b>rode cirkel</b> om een getal: daar zit een order in.</li><li>Klik op een <b>vakje</b>: reservering maken (klant, aantal, prijs). Met <b>🖨️ Pakbon</b> opent u de pakbon. Die kunt u nog wijzigen en afdrukken.</li><li><b>👥 Klantoverzicht</b>: de klanten onder elkaar, de weken naast elkaar. Klik op een <b>klant</b> voor de klantkaart: bellen, mailen, <b>🧾 orderformulier</b>. Klik op een <b>getal</b> voor de pakbon.</li><li>Klik op een <b>weeknummer</b>: alle reserveringen van die week.</li><li><b>📄 Aanbodlijst</b> (module 3): lijst of fotocatalogus met prijzen, om te printen, als plaatje of via Gmail.</li><li>Toets <b>R</b>: snel een reservering maken.</li>"],
+  aflever:["Afleverplanning","<li>Bovenin kiest u: <b>Beschikbaar</b> of <b>👥 Klantoverzicht</b>.</li><li><b>Beschikbaar</b>: links in de tabel kiest u <b>Nog beschikbaar</b>, <b>Afleverplan</b> of <b>Gereserveerd</b>. Het is steeds dezelfde tabel.</li><li>Een <b>rode cirkel</b> om een getal: daar zit een order in.</li><li>Klik op een <b>vakje</b>: reservering maken (klant, aantal, prijs). Met <b>🖨️ Pakbon</b> opent u de pakbon. Die kunt u nog wijzigen en afdrukken.</li><li><b>👥 Klantoverzicht</b>: de klanten onder elkaar, de weken naast elkaar. Klik op een <b>klant</b> voor de klantkaart: bellen, mailen, <b>🧾 orderformulier</b>. Klik op een <b>getal</b> voor de pakbon.</li><li>Klik op een <b>weeknummer</b>: alle reserveringen van die week.</li><li><b>📄 Aanbodlijst</b> (module 4): lijst of fotocatalogus met prijzen, om te printen, als plaatje of via Gmail.</li><li>Toets <b>R</b>: snel een reservering maken.</li>"],
   verkoop:["Reserveringen","<li>Alle reserveringen, per week en per klant.</li><li>Klik op een regel voor de <b>pakbon</b>.</li><li>Met <b>+ Reservering</b> of toets <b>R</b> maakt u een nieuwe.</li>"],
   mkbesch:["Beschikbaar","<li>Hoeveel er per week <b>nog beschikbaar</b> is: afleverplan min reserveringen.</li><li>Deze gegevens zijn gedeeld door de klant.</li>"],
   beheer:["Beheer klanten","<li>Elke klant heeft een eigen <b>GitHub</b> (de app) en een eigen <b>Firebase</b> (de gegevens).</li><li><b>⬆ Alles bijwerken</b>: nieuwe versie bij alle klanten.</li><li><b>🧙 GitHub klaarzetten</b>: nieuwe klant in één keer online.</li><li><b>🕒 Laatst actief</b>: wanneer de klant voor het laatst werkte.</li>"]};
@@ -1498,10 +1497,9 @@ function urlZet(){if(urlBezig||!TAB_URL[tab])return;const h="#"+TAB_URL[tab];if(
 window.addEventListener("popstate",()=>{const t=URL_TAB[location.hash.slice(1)]||(location.hash?"":"aflever");if(t&&t!==tab){urlBezig=true;try{tab=t;render()}finally{urlBezig=false}}});
 /* weergave Sales: bovenin alleen Zoeken, altijd Afleverplanning. Per apparaat onthouden */
 const SALES_TABS=["aflever","mobiel","klanten","verkoop","beheer","mkbesch"];
-/* Prijzen Ja/Nee (per apparaat; rol Teler = altijd Nee): prijzen en bedragen niet in beeld */
-function geenPrijs(){if(typeof mwRol!=="undefined"&&mwRol==="teler")return true;try{return localStorage.getItem("potplanning-prijzen")==="nee"}catch(e){return false}}
-function zetPrijzen(v){try{localStorage.setItem("potplanning-prijzen",v)}catch(e){}prijsKnoppen();render();melding(v==="nee"?"Prijzen: Nee · prijzen en bedragen zijn verborgen":"Prijzen: Ja","#2d6a4f")}
-function prijsKnoppen(){const g=geenPrijs();document.body.classList.toggle("geenPrijs",g);const a=document.getElementById("prJa"),b=document.getElementById("prNee");if(a)a.classList.toggle("aan",!g);if(b)b.classList.toggle("aan",g);if(a&&a.parentElement)a.parentElement.hidden=typeof mwRol!=="undefined"&&mwRol==="teler"}
+/* prijzen en bedragen pas vanaf module 2 (rol Teler: nooit) */
+function geenPrijs(){if(typeof mwRol!=="undefined"&&mwRol==="teler")return true;return modNr()<2}
+function prijsKnoppen(){document.body.classList.toggle("geenPrijs",geenPrijs())}
 const PRK_RE=/^(prijs|bedrag|€ ?\/ ?st|kosten leeg|prijs per plant)$/i;
 /* kolommen met prijs/bedrag in tabellen: verbergen (scherm) of weghalen (mail) */
 function prijsKolWeg(root,weg){if(!root||!geenPrijs())return;
@@ -3768,8 +3766,8 @@ function mobSoort(k,start){const t=+dezeWeek(),l=afleverRegels().filter(r=>r.pro
   const j0=isoWeek(new Date(t)).y,rij=Array.from({length:mobDeelWk()},(_,i)=>+plusWeken(new Date(t),i)).map(tt=>{const n=per.get(tt)||0,{w,y}=isoWeek(new Date(tt)),r=vk?verkSom(vk,tt):0,b=n-r;
     return`<div class="mrij"><span>wk ${w}${y!==j0?" ("+y+")":""}${r?`<br><span class="status noshot" style="font-size:12px">plan ${getal(n)} · gereserveerd ${getal(r)}</span>`:""}</span>${n||r?`<b class="${b<0?"let":""}" data-n="${b}">${b?getal(b):"—"}</b>`:`<b class="status">—</b>`}</div>`}).join("");
   const[kp,ks]=k.split(" · "),ras=data.rassen.find(r=>r.naam===ks&&teeltLabel(data.teeltduren.find(t=>t.id===r.teeltId)||{})===kp),fid=ras&&(data.fotos||{})[ras.id]?ras.id:"";
-  const h=`<div id="mobDeel"><div class="mpopKop"><b>${esc(k)}</b><button class="noshot" onclick="sluitMobSoort()">✕</button></div><div class="mpopIn">${fid?`<div class="mfoto" data-foto="${fid}"></div>`:""}${ras&&niveau()>=4?mobInfo(ras,k):""}${rij?`<div class="mweken"><div class="status" style="font-size:12px;text-align:right;margin-bottom:2px">nog beschikbaar</div>${rij}</div>`:""}${rij?"":'<div class="status" style="padding:8px 0">Niets gepland.</div>'}</div></div>
-    ${rij&&niveau()>=4?`<div class="mpopIn" style="padding-top:0"><div style="display:flex;align-items:center;gap:8px;margin-top:4px;flex-wrap:wrap"><label class="status" style="display:flex;align-items:center;gap:8px"><input type="checkbox" style="width:20px;height:20px" ${mobAantDelen()?"checked":""} onchange="try{localStorage.setItem('potplanning-deelaant',this.checked?'1':'0')}catch(e){};document.getElementById('mobPctVak').style.display=this.checked?'':'none'"> beschikbaarheid meesturen</label>
+  const h=`<div id="mobDeel"><div class="mpopKop"><b>${esc(k)}</b><button class="noshot" onclick="sluitMobSoort()">✕</button></div><div class="mpopIn">${fid?`<div class="mfoto" data-foto="${fid}"></div>`:""}${ras&&modNr()>=2?mobInfo(ras,k):""}${rij?`<div class="mweken"><div class="status" style="font-size:12px;text-align:right;margin-bottom:2px">nog beschikbaar</div>${rij}</div>`:""}${rij?"":'<div class="status" style="padding:8px 0">Niets gepland.</div>'}</div></div>
+    ${rij&&mod4()?`<div class="mpopIn" style="padding-top:0"><div style="display:flex;align-items:center;gap:8px;margin-top:4px;flex-wrap:wrap"><label class="status" style="display:flex;align-items:center;gap:8px"><input type="checkbox" style="width:20px;height:20px" ${mobAantDelen()?"checked":""} onchange="try{localStorage.setItem('potplanning-deelaant',this.checked?'1':'0')}catch(e){};document.getElementById('mobPctVak').style.display=this.checked?'':'none'"> beschikbaarheid meesturen</label>
       <span id="mobPctVak" class="status" style="margin-left:auto;${mobAantDelen()?"":"display:none"}"><input type="number" min="1" max="26" inputmode="numeric" value="${mobDeelWk()}" style="width:50px;padding:3px 6px;text-align:right;font:inherit;border:1px solid #cfc6b4;border-radius:6px" onchange="try{localStorage.setItem('potplanning-deelwk',Math.max(1,Math.min(26,+this.value||5)))}catch(e){};mobSoort(this.dataset.k)" data-k="${esc(k)}" title="Aantal weken, vanaf deze week"> wkn · voor <input id="mobPct" type="number" min="1" max="100" inputmode="numeric" value="${mobDeelPct()}" style="width:58px;padding:3px 6px;text-align:right;font:inherit;border:1px solid #cfc6b4;border-radius:6px" onchange="try{localStorage.setItem('potplanning-deelpct',Math.max(1,Math.min(100,+this.value||80)))}catch(e){}"> %</span></div><button class="btn" style="width:100%;margin-top:6px" onclick="mobDelen(this.dataset.k)" data-k="${esc(k)}">📤 Delen (WhatsApp)</button></div>`:""}`;
   let m=document.getElementById("mobPop");if(!m){m=document.createElement("div");m.id="mobPop";m.onclick=e=>{if(e.target===m)sluitMobSoort()};document.body.appendChild(m)}
   m.className=start?"midden":"";m.innerHTML=`<div class="mpop">${h}</div>`;m.hidden=false;if(fid)fotoVul()}
@@ -3792,7 +3790,7 @@ let mobTekstT=0;function mobTekstZet(id,v){const o=data.deelTekst=data.deelTekst
 /* 📷 Snel aanbod (mobiel): foto maken, naam / prijs / max op kar / tekst erbij en delen. Los van de soorten; alleen op dit toestel onthouden */
 let aanbod=null;try{aanbod=JSON.parse(localStorage.getItem("potplanning-aanbod")||"null")}catch(e){}
 const aanbodBewaar=()=>{try{localStorage.setItem("potplanning-aanbod",JSON.stringify(aanbod))}catch(e){try{localStorage.setItem("potplanning-aanbod",JSON.stringify({...aanbod,img:""}))}catch(e2){}}};
-function aanbodOpen(){if(kijker||niveau()<4)return;aanbod=aanbod||{img:"",naam:"",prijs:"",kar:"",tekst:""};const A=aanbod,v=x=>esc(x||"");
+function aanbodOpen(){if(kijker||!mod4())return;aanbod=aanbod||{img:"",naam:"",prijs:"",kar:"",tekst:""};const A=aanbod,v=x=>esc(x||"");
   const veld=(id,lab,ph,mode)=>`<label class="status" style="display:block;margin:6px 0 2px">${lab}</label><input id="ab_${id}" value="${v(A[id])}" placeholder="${ph}" ${mode?`inputmode="${mode}"`:""} oninput="aanbodZet('${id}',this.value)" class="abveld">`;
   const h=`<div id="mobDeel"><div class="mpopKop"><b id="abKop">${v(A.naam)||"Aanbod"}</b><button class="noshot" onclick="sluitMobSoort()">✕</button></div><div class="mpopIn">
       ${A.img?`<div class="mfoto"><img src="${A.img}" alt=""></div>`:""}
@@ -4462,7 +4460,7 @@ function toonAflever(){syncSoorten();
         <input type="range" id="ovLo" min="0" max="${M}" value="${aflS.start}" oninput="ovSchuifLive()" onchange="ovSchuifLive()">
         <input type="range" id="ovHi" min="0" max="${M}" value="${aflS.eind}" oninput="ovSchuifLive()" onchange="ovSchuifLive()"></div>
       <span id="ovSchuifTxt" class="ovinfo"></span></div>
-    <button class="ovk ${aflRij!=="klant"?"aan":""}" onclick="aflRij='teelt';aflMod='vers';render()" title="Tabel per teelt · soort (kies links in de tabel: nog beschikbaar, afleverplan of gereserveerd)">Beschikbaar</button><button class="ovk nivVerk ${aflRij==="klant"?"aan":""}" onclick="aflRij='klant';aflMod='verk';render()" title="Per klant de reserveringen per week">👥 Klantoverzicht</button>${niveau()>=4?`<button class="ovk inkcsv" onclick="beschLijst()" title="Lijst 'nog beschikbaar' om te printen, als PDF te bewaren of als plaatje te versturen">📄 Aanbodlijst</button>`:""}
+    <button class="ovk ${aflRij!=="klant"?"aan":""}" onclick="aflRij='teelt';aflMod='vers';render()" title="Tabel per teelt · soort (kies links in de tabel: nog beschikbaar, afleverplan of gereserveerd)">Beschikbaar</button><button class="ovk nivVerk ${aflRij==="klant"?"aan":""}" onclick="aflRij='klant';aflMod='verk';render()" title="Per klant de reserveringen per week">👥 Klantoverzicht</button>${mod4()?`<button class="ovk inkcsv" onclick="beschLijst()" title="Lijst 'nog beschikbaar' om te printen, als PDF te bewaren of als plaatje te versturen">📄 Aanbodlijst</button>`:""}
 
 `;
   const mistAfl=ruimteBerekening().fouten;
@@ -4569,7 +4567,7 @@ function catHtml(wk,rijen,wc,vk){const een=wk.length===1,datum=new Date().toLoca
   return h+`</div><div class="blvoet">Onder voorbehoud van tussentijdse verkoop.</div>${logoVoet()}`}
 /* één week delen als catalogus (vanaf de mobiele weekkop) */
 function weekDelen(t){blVanaf=Math.round((t-+dezeWeek())/(7*864e5));blWeken=1;blWeerg="cat";beschLijst()}
-function beschLijst(){if(niveau()<4){melding("De aanbodlijst zit in module 3 (Bestand → Module 3)");return}const sel=(id,opt,v,f)=>`<select id="${id}" onchange="${f}">${opt.map(([a,b])=>`<option value="${a}" ${String(a)===String(v)?"selected":""}>${b}</option>`).join("")}</select>`;
+function beschLijst(){if(!mod4()){melding("De aanbodlijst zit in module 4 (Bestand → Module 4)");return}const sel=(id,opt,v,f)=>`<select id="${id}" onchange="${f}">${opt.map(([a,b])=>`<option value="${a}" ${String(a)===String(v)?"selected":""}>${b}</option>`).join("")}</select>`;
   toonPop("📄 Aanbodlijst",`<div class="rij" style="gap:8px;flex-wrap:wrap;margin-bottom:10px">
       ${sel("blWg",[["lijst","📄 Lijst"],["cat","🖼 Fotocatalogus"]],blWeerg,"blWeerg=this.value;beschLijst()")}
       ${sel("blVan",[[0,"vanaf deze week"],[1,"vanaf volgende week"],[2,"vanaf over 2 weken"],...(blVanaf<0||blVanaf>2?[[blVanaf,"vanaf week "+isoWeek(plusWeken(new Date(+dezeWeek()),blVanaf)).w]]:[])],blVanaf,"blVanaf=+this.value;beschLijst()")}
@@ -4809,15 +4807,21 @@ document.addEventListener("keydown",e=>{if(e.code!=="KeyZ"||e.ctrlKey||e.metaKey
 /* 2 modules: module 1 = intern niveau 2 (planning + reserveringen), module 2 = intern niveau 3 (plus kosten, afd en vloer) */
 /* module 3 (niveau 4) voorlopig alleen in de eigen app, niet bij klanten (MOD3_KLANT=false) */
 const MOD3_KLANT=false,mod3Mag=()=>MOD3_KLANT||!KLANT.code;
-const niveau=()=>{try{const v=localStorage.getItem("potplanning-niveau");if(v)return Math.min(mod3Mag()&&!isTeler()?4:3,Math.max(2,+v));return localStorage.getItem("potplanning-zv")==="1"?2:3}catch(e){return 3}};
+/* modules (per apparaat): 1 basis · 2 + prijzen · 3 + vloervulling (afd, vloer, ruimte, kosten) · 4 + verkoop en delen.
+   intern: niveau() 2 = zonder vloervulling, 3 = met vloervulling, 4 = module 4 */
+const modNr=()=>{let v=0;try{v=+localStorage.getItem("potplanning-module")||0;if(!v){const o=+localStorage.getItem("potplanning-niveau")||0;v=o||(localStorage.getItem("potplanning-zv")==="1"?2:3)}}catch(e){v=3}
+  return Math.max(1,Math.min(v,mod3Mag()&&!isTeler()?4:3))};
+const niveau=()=>Math.max(2,modNr());
+const mod4=()=>modNr()>=4;
 const ZV=()=>niveau()<3;
-const NIV_UITLEG={2:"Planning met reserveringen",3:"Plus kosten per week·m², afd en vloer",4:"Plus aanbodlijst, prijzen en delen"};const MODNR={2:1,3:2,4:3};
-function zvKlaar(){const bi=document.getElementById("brutoIn");if(bi&&document.activeElement!==bi)bi.value=(data.instellingen&&data.instellingen.brutoM2)||"";const li=document.getElementById("levIn");if(li&&document.activeElement!==li)li.value=(data.instellingen&&data.instellingen.levertijd)||0;const si=document.getElementById("seizIn");if(si&&document.activeElement!==si)si.value=(data.instellingen&&data.instellingen.seizoenStart)||11;const n=niveau(),z=n<3;document.body.classList.toggle("zv",z);{const b4=document.getElementById("niv4");if(b4)b4.hidden=!mod3Mag()}[1,2,3,4].forEach(i=>{document.body.classList.toggle("niv"+i,i===n);const b=document.getElementById("niv"+i);if(b)b.classList.toggle("aan",i===n)});
-  const u=document.getElementById("nivUitleg");if(u)u.textContent=NIV_UITLEG[n];
+const MOD_UITLEG={1:"Basis: parameters, inkoop, klanten, opzetplan, afleverplan",2:"Plus prijzen",3:"Plus vloervulling: afd, vloer, ruimte en kosten",4:"Plus verkoop en delen: aanbodlijst, foto's, WhatsApp, orderformulier"};
+function zvKlaar(){const bi=document.getElementById("brutoIn");if(bi&&document.activeElement!==bi)bi.value=(data.instellingen&&data.instellingen.brutoM2)||"";const li=document.getElementById("levIn");if(li&&document.activeElement!==li)li.value=(data.instellingen&&data.instellingen.levertijd)||0;const si=document.getElementById("seizIn");if(si&&document.activeElement!==si)si.value=(data.instellingen&&data.instellingen.seizoenStart)||11;const n=niveau(),z=n<3;document.body.classList.toggle("zv",z);{const b4=document.getElementById("mod4");if(b4)b4.hidden=!mod3Mag()}const mn=modNr();[1,2,3,4].forEach(i=>{document.body.classList.toggle("niv"+i,i===n);const b=document.getElementById("mod"+i);if(b)b.classList.toggle("aan",i===mn)});prijsKnoppen();
+  const u=document.getElementById("nivUitleg");if(u)u.textContent=MOD_UITLEG[mn];
   if(z&&["afdop","vlop","afduit","vluit","kost","kosttot"].includes(ovEenheid))ovEenheid="planten";
   if(n===1){aflMod="afl";aflRij="teelt";if(["klanten","verkoop","bestel","werk"].includes(tab))tab="aflever"}
   if(n<3&&tab==="ruimtegraf")tab="oppotov"}
-function zetNiveau(n){n=Math.max(2,n);try{localStorage.setItem("potplanning-niveau",String(n))}catch(e){}zvKlaar();render();melding("Module "+MODNR[n]+": "+NIV_UITLEG[n],"#2d6a4f")}
+function zetModule(n){try{localStorage.setItem("potplanning-module",String(n))}catch(e){}zvKlaar();render();melding("Module "+modNr()+": "+MOD_UITLEG[modNr()],"#2d6a4f")}
+const zetNiveau=n=>zetModule(n);
 /* ---------- Overzicht verkooporders + pakbon ---------- */
 let vkVanaf=true,vkKlant="",vkPlek=null,vkIsPop=false;
 /* overzicht reserveringen als popup (klik op een week in de Afleverplanning); klik ernaast = dicht */
@@ -4893,7 +4897,7 @@ function klantMenu(naam,el){sluitKlantMenu();const k=klantVan(naam)||{naam},r=el
     ${k.id?it("📦","Fust per teelt",`klantPerTeelt('${k.id}')`):""}
     ${niveau()>1&&k.id&&!geenPrijs()?it("💶","Prijzen",`prijsTabel('${k.id}')`):""}
     ${it("＋","Reservering",`vo={datum:datumTekst(new Date()),klant:${N},teelt:teeltFilter||'',soort:'',n:''};verkoopOrder()`)}
-    ${it("🧾","Orderformulier",`orderForm(${N})`)}
+    ${mod4()?it("🧾","Orderformulier",`orderForm(${N})`):""}
     ${it("📋","Overzicht pakbonnen",`klantKaart(${N},true)`)}`;
   document.body.appendChild(m);const h=m.offsetHeight;m.style.left=Math.min(r.left+20,innerWidth-m.offsetWidth-8)+"px";m.style.top=Math.max(8,Math.min(r.bottom-6,innerHeight-h-8))+"px";
   setTimeout(()=>document.addEventListener("click",klMenuBuiten,true),0)}
@@ -4924,7 +4928,7 @@ function klantKaart(naam,kaal){if(kaal!==undefined)kkKaal=kaal;const k=klantVan(
   toonPop((kkKaal?"📋 Pakbonnen · ":"👤 ")+esc(k.naam||naam),h);const m=document.querySelector("#mobPop .mpop");if(m)m.classList.add("breed")}
 /* orderformulier: één klant, één week, alle soorten onder elkaar; alleen aantallen (en evt. prijs) invullen */
 let ofWeek=null;
-function orderForm(naam,t){const kk=klantVan(naam)||{naam},nu=+dezeWeek();if(t!=null)ofWeek=t;if(ofWeek==null||ofWeek<nu)ofWeek=+plusWeken(new Date(nu),1);
+function orderForm(naam,t){if(!mod4()){melding("Het orderformulier zit in module 4 (Bestand → Module 4)");return}const kk=klantVan(naam)||{naam},nu=+dezeWeek();if(t!=null)ofWeek=t;if(ofWeek==null||ofWeek<nu)ofWeek=+plusWeken(new Date(nu),1);
   const per=new Map();for(const r of afleverRegels())if(r.aantal>0&&r.t===ofWeek&&(!teeltFilter||r.p.soortId===teeltFilter)){const k=r.product+"|"+r.soort;per.set(k,(per.get(k)||0)+r.aantal)}
   const wks=[];for(let i=0;i<16;i++)wks.push(+plusWeken(new Date(nu),i));
   const rijen=[...per.keys()].sort((a,b)=>a.localeCompare(b,"nl"));let vor="",h=`<div class="rij" style="gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:10px"><button type="button" class="groenvraag" title="Uitleg van het orderformulier" onclick="toonOrderUitleg()">?</button><b>Week</b><select onchange="orderForm(this.dataset.k,+this.value)" data-k="${esc(kk.naam||naam)}">${wks.map(w=>`<option value="${w}" ${w===ofWeek?"selected":""}>wk ${isoWeek(new Date(w)).w}${w===nu?" (deze week)":""}</option>`).join("")}</select>
