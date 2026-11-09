@@ -706,7 +706,7 @@ table.oppot th.jaarstart,table.oppot td.jaarstart{border-left:3px solid #4b2a6e!
 .kvtab tr.oud td{color:#999}
 
 .ovtabel .klE{position:sticky;right:0;z-index:2;min-width:96px;box-sizing:border-box;box-shadow:inset 1px 0 0 #c9c2b6}.ovtabel .klT.r0{right:0}
-.trkform{display:grid;grid-template-columns:1fr 1fr;gap:8px}.trkform label{display:flex;flex-direction:column;font-size:13px;color:#555;gap:3px}.trkform select,.trkform input{font:inherit;font-size:15px;padding:6px;border:1px solid #cfc6b4;border-radius:6px}
+.trkform{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:8px}.trkform input,.trkform select{min-width:0;box-sizing:border-box;max-width:100%}.trkform label{display:flex;flex-direction:column;font-size:13px;color:#555;gap:3px}.trkform select,.trkform input{font:inherit;font-size:15px;padding:6px;border:1px solid #cfc6b4;border-radius:6px}
 .trkres{display:grid;grid-template-columns:auto 1fr;gap:4px 12px;margin-top:12px;padding:10px;background:#eef6f0;border-radius:8px}.trktab{border-collapse:collapse;font-size:14px}.trktab td,.trktab th{padding:3px 10px;text-align:right;border-bottom:1px solid #e3ddd0}.trktab td:first-child,.trktab th:first-child{text-align:left}.trktab tr.trkdoel td{background:#fff3c4;font-weight:700}.trktab tr.tot td{font-weight:700}
 .prgtab{font-size:14px}.prgtab th.ovnaam{position:sticky;left:0;z-index:4;background:#b9b9b9}.prgtab tr.prgteelt td.ovnaam{background:#e7e1d4}.prgtab td,.prgtab th{padding:2px 4px;text-align:right;white-space:nowrap}.prgtab th.nu,.prgtab td.nu{background:#fff3c4}.prgtab tr.prgteelt td{background:#e7e1d4}.prgin{width:56px;font:inherit;font-size:13px;text-align:right;border:1px solid #d6cfc0;border-radius:4px;padding:2px 3px;background:#fff}.prgok{color:#2d6a4f;font-weight:700}.prgmid{color:#c77700;font-weight:700}.prgweinig{color:#b3261e;font-weight:700}.prgmeer{color:#1f5fa8;font-weight:700}.ovtabel .klT{position:sticky;right:96px;z-index:2;min-width:90px;box-sizing:border-box;box-shadow:-2px 0 4px rgba(0,0,0,.08)}.ovtabel tr:first-child th.kltot{z-index:5}
 
@@ -1003,7 +1003,7 @@ body.sales .navMidden>.mknop.groot{display:none!important}body.kijkmodus #btnPri
 
 <script>
 "use strict";
-const VERSIE="48.7";
+const VERSIE="48.8";
 const VERSIE_DATUM="03-11-2026";
 /* ---------- Basis ---------- */
 const PALET=["#2d6a4f","#1B5EBE","#E8007D","#c77d1a","#7a4fa0","#0f8b8d","#5b6b2f","#3d5a80","#a0522d","#7AB648"];
@@ -4190,28 +4190,29 @@ function prgOver(tid,rid){const J=prgJaar,G=prgSoorten().filter(x=>!tid||x.t.id=
   wijzig();melding(`✓ Voorstel staat in Inkoop (${lijst.length} soort${lijst.length===1?"":"en"})`,"#2d6a4f")}
 const prgOverAlles=()=>prgOver("");
 /* ---------- 🧮 Terugrekenen (bij Inkoop): aantal in een afleverweek → opzetweek + aantal, met de echte spreiding over de raaptijd ---------- */
-let trk={t:"",r:"",n:"",w:"",y:""};
+let trk={t:"",r:"",n:"",p:"",w:"",y:""};
 function terugReken(){const T=data.teeltduren;if(!T.length)return;if(!T.some(t=>t.id===trk.t))trk.t=T[0].id;const R=data.rassen.filter(r=>r.teeltId===trk.t);if(!R.some(r=>r.id===trk.r))trk.r=(R[0]||{}).id||"";
   if(!trk.w){const n=isoWeek(nuWk());trk.w=n.w;trk.y=n.y+1}
   toonPop("🧮 Terugrekenen",`<div class="trkform">
     <label>Teelt<select onchange="trk.t=this.value;trk.r='';terugReken()">${T.map(t=>`<option value="${t.id}" ${t.id===trk.t?"selected":""}>${esc(teeltLabel(t))}</option>`).join("")}</select></label>
     <label>Soort<select onchange="trk.r=this.value;trkReken()">${R.map(r=>`<option value="${r.id}" ${r.id===trk.r?"selected":""}>${esc(r.naam)}</option>`).join("")}</select></label>
-    <label>Aantal verkopen<input id="trkN" inputmode="numeric" value="${trk.n}" placeholder="bijv. 1000" oninput="trk.n=this.value;trkReken()"></label>
+    <label>Aantal verkopen<span style="display:flex;gap:4px;align-items:center"><input id="trkN" inputmode="numeric" value="${trk.n}" placeholder="bijv. 2000" style="flex:1;min-width:0" oninput="trk.n=this.value;trkReken()"><span>+</span><input id="trkP" inputmode="decimal" value="${trk.p}" placeholder="0" style="width:52px" title="Extra % bovenop het aantal (bijv. 20)" oninput="trk.p=this.value;trkReken()"><span>%</span></span></label>
     <label>Afleverweek<span style="display:flex;gap:4px"><input id="trkW" inputmode="numeric" value="${trk.w}" style="width:60px" oninput="trk.w=this.value;trkReken()"><input id="trkY" inputmode="numeric" value="${trk.y}" style="width:70px" oninput="trk.y=this.value;trkReken()"></span></label></div>
     <div id="trkUit"></div>`);trkReken()}
 function trkBereken(){const t=data.teeltduren.find(x=>x.id===trk.t),r=data.rassen.find(x=>x.id===trk.r);const P=Math.round(+String(trk.n).replace(/\./g,"").replace(",",".")||0),w=+trk.w,y=+trk.y;
   if(!t||!r||!P||!(w>=1&&w<=53)||!(y>2000))return null;const wk=7*864e5,a=+maandagIso(y,w);
   const o=prgOpzet(t,r,a);if(o==null)return null;
-  const u=(r.uitval!=null&&r.uitval!==""?+r.uitval:(+t.uitval||0))/100,fa=fustAantal(r.fust||t.fust)||0;let n=Math.ceil(P/(1-Math.min(u,.9)));if(fa>1)n=Math.ceil(n/fa)*fa;
+  const ex=+String(trk.p||"").replace(",",".")||0,PX=Math.round(P*(1+ex/100));
+  const u=(r.uitval!=null&&r.uitval!==""?+r.uitval:(+t.uitval||0))/100,fa=fustAantal(r.fust||t.fust)||0;let n=Math.ceil(PX/(1-Math.min(u,.9)));if(fa>1)n=Math.ceil(n/fa)*fa;
   /* echte spreiding: zelfde rekenwijze als de afleverplanning (fase 1 + fase 2, raaptijd, raapverdeling, uitval) */
   const D=duurVan(t,r),iw=isoWeek(new Date(o)),f1=Math.ceil(+((D.fase1||[])[iw.w-1])||0),f2=Math.ceil(+((D.fase2||[])[iw.w-1])||0),leeg=o+(f1+f2)*wk,R=r.raaptijd||1,pct=raapVerdeling(r),net=Math.round(n*(1-u));
   let cum=0,vorig=0;const sp=[];for(let k=0;k<R;k++){cum+=pct[k];const tot=k===R-1?net:Math.round(net*cum/100);sp.push({t:leeg+(k-R)*wk,n:tot-vorig,pct:pct[k]});vorig=tot}
-  return{t,r,P,a,o,n,u,fa,sp,net,duur:prgDuur(t,r,o)}}
+  return{t,r,P,ex,PX,a,o,n,u,fa,sp,net,duur:prgDuur(t,r,o)}}
 function trkReken(){const el=document.getElementById("trkUit");if(!el)return;const x=trkBereken();if(!x){el.innerHTML=`<p class="status">Vul het aantal en de afleverweek in.</p>`;return}
   const wl=t=>{const{y,w}=isoWeek(new Date(t));return"wk "+w+(y!==x.y0?` (${y})`:"")};x.y0=isoWeek(new Date(x.a)).y;const nu=prgNu(x.r,x.o);
   el.innerHTML=`<div class="trkres"><div>Opzetweek</div><b>${wl(x.o)} <span class="status">(${isoWeek(new Date(x.o)).y})</span></b>
       <div>Opzetten</div><b>${getal(x.n)} planten</b>
-      <div class="status">Rekening</div><div class="status">${getal(x.P)} + uitval ${Math.round(x.u*100)}%${x.fa>1?` · afgerond op trays van ${x.fa}`:""} · teeltduur ${x.duur} wk</div>
+      <div class="status">Rekening</div><div class="status">${x.ex?`${getal(x.P)} + ${pctTekst(x.ex)}% = <b>${getal(x.PX)}</b> nodig · `:`${getal(x.P)} `}+ uitval ${Math.round(x.u*100)}%${x.fa>1?` · afgerond op trays van ${x.fa}`:""} · teeltduur ${x.duur} wk</div>
       ${nu?`<div class="status">Nu in Inkoop</div><div class="status">${getal(nu)} in ${wl(x.o)}</div>`:""}</div>
     <h4 style="margin:12px 0 4px">Werkelijke spreiding (afleverplanning)</h4>
     <table class="trktab"><tr><th>Week</th><th>Klaar</th><th>%</th></tr>${x.sp.map(s=>`<tr class="${wkCode(s.t)===wkCode(x.a)?"trkdoel":""}"><td>${wl(s.t)}</td><td>${getal(s.n)}</td><td>${pctTekst(s.pct)}%</td></tr>`).join("")}<tr class="tot"><td>Totaal</td><td>${getal(x.net)}</td><td></td></tr></table>
