@@ -1006,7 +1006,7 @@ body.sales .navMidden>.mknop.groot{display:none!important}body.kijkmodus #btnPri
 
 <script>
 "use strict";
-const VERSIE="49.3";
+const VERSIE="49.4";
 const VERSIE_DATUM="03-11-2026";
 /* ---------- Basis ---------- */
 const PALET=["#2d6a4f","#1B5EBE","#E8007D","#c77d1a","#7a4fa0","#0f8b8d","#5b6b2f","#3d5a80","#a0522d","#7AB648"];
@@ -4285,6 +4285,9 @@ function prgUitleg(){toonPop("📈 Prognose · uitleg",`<ol style="padding-left:
   <li><b>🧮 Voorstel inkoop</b>: de app rekent de opzetweek zo uit dat uw afleverweek de <b>1-na-laatste week van de raap</b> is (teeltduur en raaptijd uit Parameters). Aantal = prognose + <b>uitval-%</b> (Parameters), afgerond op hele trays (fust).</li>
   <li><b>✓ Overnemen</b>: per soort, per teelt of alles. Het komt in Inkoop. Ctrl + Z = terug.</li>
   <li><b>Gereserveerd t.o.v. prognose</b>: tijdens het seizoen ziet u per week hoeveel % al gereserveerd is: <span class="prgok">groen</span> = op schema, <span class="prgmid">oranje</span> = iets achter, <span class="prgweinig">rood</span> = veel achter.</li></ol>`)}
+/* knopje bij de schuif: vorige, deze en volgende week */
+let aflDrie=false;
+function aflDrieWk(){const n=dezeWeek(),y=new Date(n).getFullYear(),sj=n>=seizoenVan(y)?y:y-1;if(planJaar!==sj)planJaar=sj;aflDrie=true;render()}
 function toonKlanten(){const n=data.klanten.length;
   let h=`<div class="rij" style="margin-bottom:12px"><h2 style="margin:0">Klanten</h2><span class="status">${n} klant${n===1?"":"en"}</span>
     <span style="flex:1"></span><button class="btn" onclick="klantErbij()">+ Klant</button></div>`;
@@ -4634,6 +4637,7 @@ function toonAflever(){syncSoorten();
   const alleWk=[];for(let i=0,n=Math.round((totT-van)/6048e5);i<n;i++)alleWk.push(+plusWeken(new Date(van),i));
   const M=alleWk.length-1,code=t=>{const{w,y}=isoWeek(new Date(t));return String(y).slice(2)+String(w).padStart(2,"0")};
   /* huidig seizoen: 2 weken terug + 10 vooruit · ander seizoen: het hele seizoen */
+  if(aflDrie){aflDrie=false;const i=alleWk.indexOf(+plusWeken(new Date(nu),-1));if(i>=0)aflS={jaar,start:i,eind:Math.min(M,i+2)}}
   if(!aflS||aflS.jaar!==jaar){const i=alleWk.indexOf(+plusWeken(new Date(nu),-2));aflS=i<0?{jaar,start:0,eind:M}:{jaar,start:i,eind:Math.min(M,i+17)}} /* 2 weken terug t/m 15 weken vooruit */
   aflS.eind=Math.max(0,Math.min(M,aflS.eind));aflS.start=Math.max(0,Math.min(aflS.eind,aflS.start));
   const regels=afleverRegels().filter(r=>r.t>=van&&r.t<totT&&r.aantal>0&&(!teeltFilter||r.p.soortId===teeltFilter)),tlF=teeltLabelF();
@@ -4647,6 +4651,7 @@ function toonAflever(){syncSoorten();
         <input type="range" id="ovLo" min="0" max="${M}" value="${aflS.start}" oninput="ovSchuifLive()" onchange="ovSchuifLive()">
         <input type="range" id="ovHi" min="0" max="${M}" value="${aflS.eind}" oninput="ovSchuifLive()" onchange="ovSchuifLive()"></div>
       <span id="ovSchuifTxt" class="ovinfo"></span></div>
+    <button class="ovk wk3knop" onclick="aflDrieWk()" title="Toon alleen vorige week, deze week en volgende week">◀ nu ▶</button>
     <button class="ovk ${aflRij!=="klant"?"aan":""}" onclick="aflRij='teelt';aflMod='vers';render()" title="Tabel per teelt · soort (kies links in de tabel: nog beschikbaar, afleverplan of gereserveerd)">Beschikbaar</button><button class="ovk nivVerk ${aflRij==="klant"?"aan":""}" onclick="aflRij='klant';aflMod='verk';render()" title="Per klant de reserveringen per week">👥 Klantoverzicht</button>${mod4()?`<button class="ovk inkcsv" onclick="beschLijst()" title="Lijst 'nog beschikbaar' om te printen, als PDF te bewaren of als plaatje te versturen">📄 Aanbodlijst</button>`:""}
 
 `;
