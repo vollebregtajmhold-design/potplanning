@@ -1003,7 +1003,7 @@ body.sales .navMidden>.mknop.groot{display:none!important}body.kijkmodus #btnPri
 
 <script>
 "use strict";
-const VERSIE="48.6";
+const VERSIE="48.7";
 const VERSIE_DATUM="03-11-2026";
 /* ---------- Basis ---------- */
 const PALET=["#2d6a4f","#1B5EBE","#E8007D","#c77d1a","#7a4fa0","#0f8b8d","#5b6b2f","#3d5a80","#a0522d","#7AB648"];
@@ -4129,14 +4129,17 @@ function prgWeken(J){const a=seizoenVan(J),b=seizoenVan(J+1),L=[];for(let t=a;t<
 const prgSoortKey=(t,r)=>teeltLabel(t)+"|"+r.naam;
 function prgSoorten(){return data.teeltduren.filter(t=>!prgTeelt||t.id===prgTeelt).map(t=>({t,R:data.rassen.filter(r=>r.teeltId===t.id)})).filter(x=>x.R.length)}
 /* terugrekenen: afleverweek − teeltduur = opzetweek; met uitval, raaptijd en afronden op fust */
+/* echte duur zoals de partijen: fase 1 + fase 2 (naar boven afgerond) */
+function prgDuurEcht(t,r,o){const D=duurVan(t,r),w=isoWeek(new Date(o)).w,f1=(D.fase1||[])[w-1],f2=(D.fase2||[])[w-1];if(f1!=null&&f2!=null)return Math.ceil(+f1)+Math.ceil(+f2);return prgDuur(t,r,o)}
+/* opzetweek zoeken: de afleverweek a wordt de 1-na-laatste week van de raap (bij raaptijd 1: de raapweek zelf) */
+function prgOpzet(t,r,a){const wk=7*864e5,R=r.raaptijd||1,doel=a+(R>=2?2:1)*wk;let o=null,bd=1e9;for(let x=doel-70*wk;x<=doel;x+=wk){const d=prgDuurEcht(t,r,x);if(!d)continue;const v=Math.abs(x+d*wk-doel);if(v<=bd){bd=v;o=x}}return o}   /* gelijk? dan de latere opzetweek */
 /* teeltduur uit Parameters (totaal, in weken) voor de opzetweek */
 function prgDuur(t,r,o){const D=duurVan(t,r),w=isoWeek(new Date(o)).w;return Math.round(+((D.totaal||t.totaal||[])[w-1])||0)}
 /* eenvoudig: opzetweek = afleverweek − (teeltduur − 1 week). Raaptijd telt niet mee.
    aantal = prognose + uitval, afgerond op hele trays */
 function prgVoorstel(t,r,J){const W=prgWeken(J),u=(r.uitval!=null&&r.uitval!==""?+r.uitval:(+t.uitval||0))/100,fa=fustAantal(r.fust||t.fust)||0,uit=new Map(),wk=7*864e5;
   for(const a of W){const P=prgGet(r.id,a);if(!P)continue;
-    const doel=a+wk;let best=null,bd=1e9;for(let o=doel-70*wk;o<=doel;o+=wk){const d=prgDuur(t,r,o);if(!d)continue;const v=Math.abs(o+d*wk-doel);if(v<bd){bd=v;best=o}}
-    if(best==null)continue;let n=Math.ceil(P/(1-Math.min(u,.9)));if(fa>1)n=Math.ceil(n/fa)*fa;uit.set(best,(uit.get(best)||0)+n)}
+    const best=prgOpzet(t,r,a);if(best==null)continue;let n=Math.ceil(P/(1-Math.min(u,.9)));if(fa>1)n=Math.ceil(n/fa)*fa;uit.set(best,(uit.get(best)||0)+n)}
   return uit}
 const prgNu=(r,o)=>{const{y,w}=isoWeek(new Date(o));return +(((r.aantallen||{})[y]||[])[w-1])||0};
 function toonPrognose(){if(prgJaar==null){const nu=dezeWeek();prgJaar=nu>=seizoenVan(new Date(nu).getFullYear())?new Date(nu).getFullYear():new Date(nu).getFullYear()-1}
@@ -4197,8 +4200,8 @@ function terugReken(){const T=data.teeltduren;if(!T.length)return;if(!T.some(t=>
     <label>Afleverweek<span style="display:flex;gap:4px"><input id="trkW" inputmode="numeric" value="${trk.w}" style="width:60px" oninput="trk.w=this.value;trkReken()"><input id="trkY" inputmode="numeric" value="${trk.y}" style="width:70px" oninput="trk.y=this.value;trkReken()"></span></label></div>
     <div id="trkUit"></div>`);trkReken()}
 function trkBereken(){const t=data.teeltduren.find(x=>x.id===trk.t),r=data.rassen.find(x=>x.id===trk.r);const P=Math.round(+String(trk.n).replace(/\./g,"").replace(",",".")||0),w=+trk.w,y=+trk.y;
-  if(!t||!r||!P||!(w>=1&&w<=53)||!(y>2000))return null;const wk=7*864e5,a=+maandagIso(y,w),doel=a+wk;
-  let o=null,bd=1e9;for(let x=doel-70*wk;x<=doel;x+=wk){const d=prgDuur(t,r,x);if(!d)continue;const v=Math.abs(x+d*wk-doel);if(v<bd){bd=v;o=x}}if(o==null)return null;
+  if(!t||!r||!P||!(w>=1&&w<=53)||!(y>2000))return null;const wk=7*864e5,a=+maandagIso(y,w);
+  const o=prgOpzet(t,r,a);if(o==null)return null;
   const u=(r.uitval!=null&&r.uitval!==""?+r.uitval:(+t.uitval||0))/100,fa=fustAantal(r.fust||t.fust)||0;let n=Math.ceil(P/(1-Math.min(u,.9)));if(fa>1)n=Math.ceil(n/fa)*fa;
   /* echte spreiding: zelfde rekenwijze als de afleverplanning (fase 1 + fase 2, raaptijd, raapverdeling, uitval) */
   const D=duurVan(t,r),iw=isoWeek(new Date(o)),f1=Math.ceil(+((D.fase1||[])[iw.w-1])||0),f2=Math.ceil(+((D.fase2||[])[iw.w-1])||0),leeg=o+(f1+f2)*wk,R=r.raaptijd||1,pct=raapVerdeling(r),net=Math.round(n*(1-u));
@@ -4212,7 +4215,7 @@ function trkReken(){const el=document.getElementById("trkUit");if(!el)return;con
       ${nu?`<div class="status">Nu in Inkoop</div><div class="status">${getal(nu)} in ${wl(x.o)}</div>`:""}</div>
     <h4 style="margin:12px 0 4px">Werkelijke spreiding (afleverplanning)</h4>
     <table class="trktab"><tr><th>Week</th><th>Klaar</th><th>%</th></tr>${x.sp.map(s=>`<tr class="${wkCode(s.t)===wkCode(x.a)?"trkdoel":""}"><td>${wl(s.t)}</td><td>${getal(s.n)}</td><td>${pctTekst(s.pct)}%</td></tr>`).join("")}<tr class="tot"><td>Totaal</td><td>${getal(x.net)}</td><td></td></tr></table>
-    <p class="status" style="font-size:12px;margin:6px 0">Raaptijd ${x.sp.length} ${x.sp.length===1?"week":"weken"} (Parameters). Geel = uw afleverweek.</p>
+    <p class="status" style="font-size:12px;margin:6px 0">Raaptijd ${x.sp.length} ${x.sp.length===1?"week":"weken"} (Parameters). Geel = uw afleverweek (1-na-laatste raapweek).</p>
     ${!kijker?`<div class="rij" style="gap:8px"><span style="flex:1"></span><button class="btn" onclick="trkZet()">➕ Zet ${getal(x.n)} in Inkoop (${wl(x.o)})</button></div>`:""}`}
 function trkZet(){const x=trkBereken();if(!x)return;const{y,w}=isoWeek(new Date(x.o)),A=(x.r.aantallen=x.r.aantallen||{})[y]=(x.r.aantallen[y]||Array(53).fill(null));
   A[w-1]=(+A[w-1]||0)+x.n;telOp(x.t,data.rassen);wijzig();melding(`✓ ${getal(x.n)} ${esc(x.r.naam)} erbij in week ${w} (${y}) (Ctrl + Z = terug)`,"#2d6a4f");trkReken()}
@@ -4234,7 +4237,7 @@ async function prgExcel(){const J=prgJaar,G=prgSoorten(),wk=7*864e5;let kol=[],v
 function prgOpen(){if(!(isBeheerder()&&mod3Mag()))return;if(!opt("prognose"))zetOptie("prognose",true);try{if(isSales())zetWeergave("alles")}catch(e){}naar("prognose")}
 function prgUitleg(){toonPop("📈 Prognose · uitleg",`<ol style="padding-left:18px;line-height:1.5;margin:0">
   <li><b>Prognose invullen</b>: per soort en afleverweek hoeveel planten u verwacht te verkopen.<br>Snel: <b>📋 Vorig seizoen overnemen</b> (de reserveringen van vorig seizoen, met evt. + of − %), daarna <b>± %</b> of per week aanpassen.</li>
-  <li><b>🧮 Voorstel inkoop</b>: de app rekent terug: opzetweek = afleverweek − (teeltduur − 1 week). De teeltduur komt uit Parameters; de raaptijd telt niet mee. Aantal = prognose + <b>uitval-%</b> (Parameters), afgerond op hele trays (fust).</li>
+  <li><b>🧮 Voorstel inkoop</b>: de app rekent de opzetweek zo uit dat uw afleverweek de <b>1-na-laatste week van de raap</b> is (teeltduur en raaptijd uit Parameters). Aantal = prognose + <b>uitval-%</b> (Parameters), afgerond op hele trays (fust).</li>
   <li><b>✓ Overnemen</b>: per soort, per teelt of alles. Het komt in Inkoop. Ctrl + Z = terug.</li>
   <li><b>Gereserveerd t.o.v. prognose</b>: tijdens het seizoen ziet u per week hoeveel % al gereserveerd is: <span class="prgok">groen</span> = op schema, <span class="prgmid">oranje</span> = iets achter, <span class="prgweinig">rood</span> = veel achter.</li></ol>`)}
 function toonKlanten(){const n=data.klanten.length;
