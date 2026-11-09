@@ -712,6 +712,7 @@ table.oppot th.jaarstart,table.oppot td.jaarstart{border-left:3px solid #4b2a6e!
 .bestelbanner{display:flex;align-items:center;gap:6px;flex-wrap:wrap;background:#fff6d6;border:1px solid #e9c46a;border-radius:10px;padding:8px 12px;margin:0 0 10px;cursor:pointer;font-size:15px}.bestelbanner:hover{background:#ffefb8}.bbknop{margin-left:auto;color:#4b2a6e;font-weight:700}.bblaat{color:#b3261e;font-weight:700}
 .besteltab td,.besteltab th{text-align:left!important}.besteltab tr.bbklaar td{opacity:.45;text-decoration:line-through}.besteltab tr.bbklaar td:first-child{text-decoration:none;opacity:1}
 .verptab input{font:inherit;font-size:14px;padding:3px 5px;border:1px solid #cfc6b4;border-radius:5px}.verptab td,.verptab th{text-align:left!important}.verpknop.aan{background:#2d6a4f;color:#fff}.ofv{font-size:12px;margin-left:6px;max-width:140px}
+.fdchips{display:inline-flex;gap:4px;margin-left:6px;vertical-align:middle}.fdchip{font-size:11px;padding:1px 6px;border:1px solid #9cc5ae;border-radius:10px;background:#eef6f1;color:#1f4d39;cursor:pointer;white-space:nowrap}.fdchip:hover{background:#d8eee1}.fdchip.ok{background:#2d6a4f;color:#fff}.fdchip.leeg{border-color:#e3c3c3;background:#fbefef;color:#a33;cursor:default}@media print{.fdchips{display:none}}
 .trkKnop{background:#2d6a4f;color:#fff;border:0;border-radius:10px;padding:8px 16px;font-size:15px;font-weight:700;cursor:pointer;box-shadow:0 2px 6px rgba(45,106,79,.35);margin-right:6px;white-space:nowrap}.trkKnop:hover{background:#245a42}
 .trkform{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:8px}.trkform input,.trkform select{min-width:0;box-sizing:border-box;max-width:100%}.trkform label{display:flex;flex-direction:column;font-size:13px;color:#555;gap:3px}.trkform select,.trkform input{font:inherit;font-size:15px;padding:6px;border:1px solid #cfc6b4;border-radius:6px}
 .trkres{display:grid;grid-template-columns:auto 1fr;gap:4px 12px;margin-top:12px;padding:10px;background:#eef6f0;border-radius:8px}.trktab{border-collapse:collapse;font-size:14px}.trktab td,.trktab th{padding:3px 10px;text-align:right;border-bottom:1px solid #e3ddd0}.trktab td:first-child,.trktab th:first-child{text-align:left}.trktab tr.trkdoel td{background:#fff3c4;font-weight:700}.trktab tr.tot td{font-weight:700}
@@ -1010,7 +1011,7 @@ body.sales .navMidden>.mknop.groot{display:none!important}body.kijkmodus #btnPri
 
 <script>
 "use strict";
-const VERSIE="50.0";
+const VERSIE="50.2";
 const VERSIE_DATUM="03-11-2026";
 /* ---------- Basis ---------- */
 const PALET=["#2d6a4f","#1B5EBE","#E8007D","#c77d1a","#7a4fa0","#0f8b8d","#5b6b2f","#3d5a80","#a0522d","#7AB648"];
@@ -4273,25 +4274,31 @@ async function fdKopieer(){const t=fdRijen().map(r=>r.map(v=>typeof v==="number"
 async function fdExcel(){const R=fdRijen(),naam=`Floriday ${fdKlant.naam||""} ${fdRegels[0]?fdRegels[0].wk:""}`.trim();
   try{await xlsxDownload(R,naam+".xlsx","Floriday",R.length,5)}catch(e){const q=v=>`"${String(v??"").replace(/"/g,'""')}"`,a=document.createElement("a");a.href=URL.createObjectURL(new Blob(["\ufeff"+R.map(r=>r.map(v=>typeof v==="number"?v:q(v)).join(";")).join("\n")],{type:"text/csv"}));a.download=naam+".csv";document.body.appendChild(a);a.click();a.remove()}}
 /* ---------- 📦 Verpakkingen per soort (alleen beheer, vinkje Floriday): één soort in de planning, meerdere handelsartikelen in de verkoop ----------
-   ras.verp=[{id,naam:"x4",code:"CURLY MIX X4",fust:"408",opb:"6×5×4",kar:"DC",per:6}] · opbouw = planten per fust × fust per laag × lagen */
+   ras.verp=[{id,naam:"x4",code:"CURLY MIX X4",fust:"408",opb:"6×5×4",kar:"DC",per:4}] · opbouw zoals Floriday: a × b × planten per tray (x4 = 4 per tray) */
 const verpOpb=o=>String(o||"").split(/[x×*]/i).map(v=>+v.replace(",",".")||0);
 const verpKar=v=>{const a=verpOpb(v.opb);return a.length===3&&a.every(x=>x>0)?a[0]*a[1]*a[2]:0};
 const verpVan=(r,id)=>r&&(r.verp||[]).find(v=>v.id===id);
 function verpPop(rid){const r=data.rassen.find(x=>x.id===rid);if(!r)return;const L=r.verp=r.verp||[],t=data.teeltduren.find(x=>x.id===r.teeltId);
   toonPop("📦 Verpakkingen · "+esc(r.naam),`<p class="status" style="margin:0 0 8px">Eén soort in de planning, meerdere verpakkingen in de verkoop. De voorraad blijft samen.</p>
-    <table class="trktab verptab"><tr><th>Naam</th><th>Floriday-code</th><th>Fust</th><th title="planten per fust × fust per laag × lagen">Opbouw</th><th>Kar</th><th title="planten per fust">Per fust</th><th>Per kar</th><th></th></tr>
+    <table class="trktab verptab"><tr><th>Naam</th><th>Floriday-code</th><th>Fust</th><th title="zoals in Floriday, bijv. 6×5×4 (laatste getal = planten per tray)">Opbouw</th><th>Kar</th><th title="planten per tray">Per tray</th><th>Per kar</th><th></th></tr>
     ${L.map((v,i)=>`<tr><td><input value="${esc(v.naam)}" placeholder="x4" onchange="verpZet('${rid}',${i},'naam',this.value)" style="width:60px"></td><td><input value="${esc(v.code)}" placeholder="CURLY MIX X4" onchange="verpZet('${rid}',${i},'code',this.value)" style="width:130px"></td><td><input value="${esc(v.fust)}" placeholder="408" onchange="verpZet('${rid}',${i},'fust',this.value)" style="width:60px"></td><td><input value="${esc(v.opb)}" placeholder="6×5×4" onchange="verpZet('${rid}',${i},'opb',this.value)" style="width:80px"></td><td><input value="${esc(v.kar)}" placeholder="DC" onchange="verpZet('${rid}',${i},'kar',this.value)" style="width:44px"></td><td><input value="${v.per||""}" inputmode="numeric" placeholder="6" onchange="verpZet('${rid}',${i},'per',this.value)" style="width:50px"></td><td><b>${verpKar(v)?getal(verpKar(v)):"–"}</b></td><td><button class="ovk ovlink" onclick="verpWeg('${rid}',${i})" title="Weghalen">✕</button></td></tr>`).join("")}</table>
     <div class="rij" style="gap:8px;margin-top:10px"><button class="btn licht" onclick="verpErbij('${rid}')">+ Verpakking</button><span style="flex:1"></span><button class="btn" onclick="sluitMobSoort();render()">Klaar</button></div>
-    <p class="status" style="font-size:12px;margin:8px 0 0">Opbouw zoals in Floriday, bijv. <b>6×5×4</b> = 6 planten per fust × 5 fust per laag × 4 lagen = 120 per kar. "Per fust" vult zich vanzelf in uit de opbouw. Bij een reservering en in het orderformulier kiest u daarna de verpakking.</p>`);
+    <p class="status" style="font-size:12px;margin:8px 0 0">Opbouw zoals in Floriday, bijv. <b>6×5×4</b>: het laatste getal is het aantal <b>planten per tray</b> (x4 = 4 per tray). 6 × 5 × 4 = 120 planten per kar. "Per tray" vult zich vanzelf in uit de opbouw (of uit de naam, bijv. x4). Bij een reservering en in het orderformulier kiest u daarna de verpakking.</p>`);
   const m=document.querySelector("#mobPop .mpop");if(m){m.classList.add("breed");m.style.maxWidth="900px"}}
 function verpZet(rid,i,k,v){const r=data.rassen.find(x=>x.id===rid),x=r&&r.verp&&r.verp[i];if(!x)return;v=String(v).trim();
-  if(k==="per")x.per=Math.max(0,Math.round(+v||0));else x[k]=v;if(k==="opb"){const a=verpOpb(v);if(a[0]>0&&!x.per)x.per=Math.round(a[0])}opslaanLater();verpPop(rid)}
+  if(k==="per")x.per=Math.max(0,Math.round(+v||0));else x[k]=v;if(k==="opb"){const a=verpOpb(v);if(a.length===3&&a[2]>0)x.per=Math.round(a[2])}
+  if(k==="naam"&&!x.per){const m=v.match(/x\s*(\d+)/i);if(m)x.per=+m[1]}opslaanLater();verpPop(rid)}
 function verpErbij(rid){const r=data.rassen.find(x=>x.id===rid);if(!r)return;(r.verp=r.verp||[]).push({id:uid(),naam:"",code:"",fust:"",opb:"",kar:"",per:0});opslaanLater();verpPop(rid)}
 function verpWeg(rid,i){const r=data.rassen.find(x=>x.id===rid);if(!r||!r.verp)return;if(!confirm("Deze verpakking weghalen?"))return;r.verp.splice(i,1);if(!r.verp.length)delete r.verp;opslaanLater();verpPop(rid)}
 /* vaste verpakking per klant per teelt (wordt onthouden bij het kiezen) */
 const verpKlantNaam=(kk,tid)=>kk&&kk.perTeelt&&kk.perTeelt[tid]&&kk.perTeelt[tid].v||"";
 function verpKlantZet(kk,tid,naam){if(!kk||!tid)return;kk.perTeelt=kk.perTeelt||{};kk.perTeelt[tid]=Object.assign({},kk.perTeelt[tid]||{},{v:naam})}
 const verpVelden=v=>v?{verp:v.id,vn:v.naam,vc:v.code,...(v.fust?{fust:v.fust}:{}),...(v.per>1?{perFust:v.per}:{})}:{};
+/* 📋 snel kopiëren voor Floriday: klik = code (of aantal trays) op het klembord, dan Ctrl + V in Floriday */
+function fdChips(r){const x=((data.verkoop||{})[r.key]||[])[r.i]||{},ras=vkRasVan(r.k||(r.gewas+"|"+r.soort)),vv=verpVan(ras,x.verp),code=(vv&&vv.code)||x.vc||(ras&&ras.fdArt)||"",per=+x.perFust||(vv&&vv.per)||0;
+  return` <span class="fdchips">${code?`<button class="fdchip" data-c="${esc(code)}" onclick="event.stopPropagation();fdKopie(this)" title="Kopieer de Floriday-code · daarna Ctrl + V in Floriday">📋 ${esc(code)}</button>`:`<span class="fdchip leeg" title="Nog geen Floriday-code (Parameters → 📦 of kolom Floriday)">geen code</span>`}${per>1?`<button class="fdchip" data-c="${Math.round(x.n/per)}" onclick="event.stopPropagation();fdKopie(this)" title="Kopieer het aantal trays">📋 ${getal(Math.round(x.n/per))} tr</button>`:""}</span>`}
+async function fdKopie(b){const t=b.dataset.c;try{await navigator.clipboard.writeText(t)}catch(e){const a=document.createElement("textarea");a.value=t;document.body.appendChild(a);a.select();document.execCommand("copy");a.remove()}
+  document.querySelectorAll(".fdchip.ok").forEach(x=>x.classList.remove("ok"));b.classList.add("ok");melding("📋 "+esc(t)+" gekopieerd · Ctrl + V in Floriday","#2d6a4f")}
 /* knopje bij de schuif: vorige, deze en volgende week */
 let aflDrie=false;
 function aflDrieWk(){const n=dezeWeek(),y=new Date(n).getFullYear(),sj=n>=seizoenVan(y)?y:y-1;if(planJaar!==sj)planJaar=sj;aflDrie=true;render()}
@@ -5021,7 +5028,7 @@ function voRender(){
   const voRas=()=>data.rassen.find(r=>r.teeltId===vo.teelt&&r.naam===vo.soort);
   const voVerpVul=()=>{const r=voRas(),VL=opt("floriday")&&r&&r.verp&&r.verp.length?r.verp:null,rij=$i("voVerpRij");rij.hidden=!VL;if(!VL){vo.verp="";return}
     if(!VL.some(v=>v.id===vo.verp)){const kn=verpKlantNaam(klantVan(vo.klant),vo.teelt),d=VL.find(v=>v.naam&&v.naam===kn);vo.verp=d?d.id:""}
-    $i("voVerp").innerHTML=`<option value="">— geen —</option>`+VL.map(v=>`<option value="${v.id}" ${v.id===vo.verp?"selected":""}>${esc(v.naam||v.code)}${v.code&&v.naam?" · "+esc(v.code):""}${v.per>1?" · "+v.per+"/fust":""}</option>`).join("")};
+    $i("voVerp").innerHTML=`<option value="">— geen —</option>`+VL.map(v=>`<option value="${v.id}" ${v.id===vo.verp?"selected":""}>${esc(v.naam||v.code)}${v.code&&v.naam?" · "+esc(v.code):""}${v.per>1?" · "+v.per+"/tray":""}</option>`).join("")};
   voVerpVul();{const v=verpVan(voRas(),vo.verp);if(v&&!vo.fustZelf){vo.fust=v.fust||vo.fust;vo.perFust=v.per>1?v.per:vo.perFust;$i("voFust").value=vo.fust||"";$i("voPer").value=vo.perFust||""}}$i("voSoort").onchange=e=>{vo.soort=e.target.value;vo.verp="";voVerpVul();voUpd()};
   $i("voVerp").onchange=e=>{vo.verp=e.target.value;const v=verpVan(voRas(),vo.verp);if(v){vo.fust=v.fust||vo.fust;vo.perFust=v.per>1?v.per:vo.perFust;vo.fustZelf=true;$i("voFust").value=vo.fust||"";$i("voPer").value=vo.perFust||""}};
   $i("voN").oninput=e=>{vo.n=e.target.value;voUpd()};
@@ -5174,7 +5181,7 @@ function toonVerkoop(){const pop=vkIsPop;maakPlekMap();const nu=dezeWeek();let l
   for(const r of l){if(r.code!==vorige){vorige=r.code;const som=l.filter(x=>x.code===r.code).reduce((a,x)=>a+x.n,0);
       h+=`<tr class="vkwk"><td colspan="${ZV()?9:11}">Week ${r.code}${r.t===nu?" · deze week":""} · ${getal(som)} planten</td></tr>`}
     const pl=plekVan(r.k,r.t);
-    h+=`<tr class="vkrij" data-klant="${esc(r.klant)}" data-code="${r.code}" onclick="pakbonVan(this)"><td>${r.code}</td><td>${datNL(r.datum)}</td><td><b>${esc(r.klant)}</b></td><td>${esc(r.gewas)}</td><td>${esc(r.soort)}</td>
+    h+=`<tr class="vkrij" data-klant="${esc(r.klant)}" data-code="${r.code}" onclick="pakbonVan(this)"><td>${r.code}</td><td>${datNL(r.datum)}</td><td><b>${esc(r.klant)}</b></td><td>${esc(r.gewas)}</td><td>${esc(r.soort)}${opt("floriday")?fdChips(r):""}</td>
       <td style="text-align:right"><b>${getal(r.n)}</b></td><td style="text-align:right;white-space:nowrap">${prijsTxt(r.prijs)}</td><td class="zvweg">${esc(pl.afd)}</td><td class="zvweg"><b>${esc(pl.vloer)||'<span class="let">?</span>'}</b></td><td class="vkopm vkopmklik" title="Klik: opmerking veranderen" onclick="event.stopPropagation();vkOpm('${esc(r.key)}',${r.i},${pop})">${r.opm?esc(r.opm):'<span class="status">+ opmerking</span>'} ✎</td>
       <td class="noprint" style="white-space:nowrap"><button class="btn rood klein" title="Order verwijderen" onclick="event.stopPropagation();vkWeg('${esc(r.key)}',${r.i},${pop})">✕</button></td></tr>`}
   zet(h+`</table>`);if(pop)return;
@@ -5255,7 +5262,7 @@ function orderForm(naam,t){const kk=klantVan(naam)||{naam},nu=+dezeWeek();if(t!=
     for(const k of rijen){const[pr,so]=k.split("|");if(pr!==vor){h+=`<tr class="kkweek"><td colspan="7">${esc(pr)}</td></tr>`;vor=pr}
       const vrij=per.get(k)-verkSom(k,ofWeek),al=verkVan(k,ofWeek).filter(x=>(x.klant||"").toLowerCase()===String(kk.naam||naam).toLowerCase()).reduce((a,x)=>a+ +x.n,0),ras=vkRasVan(k),pv=ras?vkPrijs(kk.id,ras.id):null;
       const VL=opt("floriday")&&ras&&ras.verp&&ras.verp.length?ras.verp:null,vk=VL?verpKlantNaam(kk,ras.teeltId):"";
-      h+=`<tr data-k="${esc(k)}"><td class="ofvk"><input type="checkbox" class="ofmee" checked title="Uitgevinkt = niet in de mail"></td><td>${esc(so)}${VL?` <select class="ofv" title="Verpakking"><option value="">— verpakking —</option>${VL.map(v=>`<option value="${v.id}" ${v.naam&&v.naam===vk?"selected":""}>${esc(v.naam||v.code)}${v.per>1?" · "+v.per+"/fust":""}</option>`).join("")}</select>`:""}</td><td class="r ofaan" data-v="${vrij}">${ofAanTxt(vrij,ofPctVan())}</td><td class="r ofvrij ${vrij<0?"let":""}">${getal(vrij)}</td><td class="r">${al?getal(al):""}</td><td><input class="ofn" inputmode="numeric" placeholder="0" oninput="ofTel()"></td><td><input class="ofp" inputmode="decimal" value="${pv!=null?pF(pv):""}" placeholder="€"></td></tr>`}
+      h+=`<tr data-k="${esc(k)}"><td class="ofvk"><input type="checkbox" class="ofmee" checked title="Uitgevinkt = niet in de mail"></td><td>${esc(so)}${VL?` <select class="ofv" title="Verpakking"><option value="">— verpakking —</option>${VL.map(v=>`<option value="${v.id}" ${v.naam&&v.naam===vk?"selected":""}>${esc(v.naam||v.code)}${v.per>1?" · "+v.per+"/tray":""}</option>`).join("")}</select>`:""}</td><td class="r ofaan" data-v="${vrij}">${ofAanTxt(vrij,ofPctVan())}</td><td class="r ofvrij ${vrij<0?"let":""}">${getal(vrij)}</td><td class="r">${al?getal(al):""}</td><td><input class="ofn" inputmode="numeric" placeholder="0" oninput="ofTel()"></td><td><input class="ofp" inputmode="decimal" value="${pv!=null?pF(pv):""}" placeholder="€"></td></tr>`}
     h+=`</table>`}
   toonPop("🧾 Order · "+esc(kk.naam||naam),h);const m=document.querySelector("#mobPop .mpop");if(m)m.classList.add("breed");
   const e=document.querySelector(".oftab .ofn");if(e&&!/Android|iPhone|iPad/i.test(navigator.userAgent))e.focus()}
