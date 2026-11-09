@@ -706,6 +706,7 @@ table.oppot th.jaarstart,table.oppot td.jaarstart{border-left:3px solid #4b2a6e!
 .kvtab tr.oud td{color:#999}
 
 .ovtabel .klE{position:sticky;right:0;z-index:2;min-width:96px;box-sizing:border-box;box-shadow:inset 1px 0 0 #c9c2b6}.ovtabel .klT.r0{right:0}
+.logtab td{font-size:13px;white-space:nowrap}.logtab td:nth-child(2),.logtab td:nth-child(3),.logtab th:nth-child(2),.logtab th:nth-child(3){text-align:left}.logtab .logop{color:#2d6a4f}.logtab .logaf{color:#b3261e}
 .trkKnop{background:#2d6a4f;color:#fff;border:0;border-radius:10px;padding:8px 16px;font-size:15px;font-weight:700;cursor:pointer;box-shadow:0 2px 6px rgba(45,106,79,.35);margin-right:6px;white-space:nowrap}.trkKnop:hover{background:#245a42}
 .trkform{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:8px}.trkform input,.trkform select{min-width:0;box-sizing:border-box;max-width:100%}.trkform label{display:flex;flex-direction:column;font-size:13px;color:#555;gap:3px}.trkform select,.trkform input{font:inherit;font-size:15px;padding:6px;border:1px solid #cfc6b4;border-radius:6px}
 .trkres{display:grid;grid-template-columns:auto 1fr;gap:4px 12px;margin-top:12px;padding:10px;background:#eef6f0;border-radius:8px}.trktab{border-collapse:collapse;font-size:14px}.trktab td,.trktab th{padding:3px 10px;text-align:right;border-bottom:1px solid #e3ddd0}.trktab td:first-child,.trktab th:first-child{text-align:left}.trktab tr.trkdoel td{background:#fff3c4;font-weight:700}.trktab tr.tot td{font-weight:700}
@@ -1004,7 +1005,7 @@ body.sales .navMidden>.mknop.groot{display:none!important}body.kijkmodus #btnPri
 
 <script>
 "use strict";
-const VERSIE="48.9";
+const VERSIE="49.0";
 const VERSIE_DATUM="03-11-2026";
 /* ---------- Basis ---------- */
 const PALET=["#2d6a4f","#1B5EBE","#E8007D","#c77d1a","#7a4fa0","#0f8b8d","#5b6b2f","#3d5a80","#a0522d","#7AB648"];
@@ -1301,7 +1302,18 @@ function soortRegels(p,html){if(!p.soorten||!p.soorten.length)return"";
 const kapTekst=l=>l.length?l.map(x=>x.kap.replace(/^(Kap|Vloer)\s*/i,"")+" ("+getal(x.m2)+" m²)").join(", "):"–";
 
 /* ---------- Opslaan in bestand ---------- */
+/* ---------- 📜 Logboek inkoop: elke wijziging van een aantal (wie, wanneer, van → naar). Max 1500 regels in data.inkLog ---------- */
+let logRef=null,logSnap=null;
+function logMaak(d){const m=new Map(),add=(k,a)=>{for(const y in a||{})(a[y]||[]).forEach((v,w)=>{if(v!=null&&v!=="")m.set(k+"|"+y+"|"+(w+1),+v)})};
+  for(const r of d.rassen||[])add("r:"+r.id,r.aantallen);for(const t of d.teeltduren||[])add("t:"+t.id,t.losAantallen);return m}
+function logBasis(){if(logRef!==data){logRef=data;try{logSnap=logMaak(data)}catch(e){logSnap=null}}}
+function logDiff(){if(logRef!==data||!logSnap)return;const nu=logMaak(data),L=data.inkLog=data.inkLog||[],ts=Math.round(Date.now()/1000),wie=wolkMail||"",naam=k=>{const[s,id]=k.split(":");
+    if(s==="r"){const r=data.rassen.find(x=>x.id===id),t=r&&data.teeltduren.find(x=>x.id===r.teeltId);return(t?teeltLabel(t):"")+" · "+(r?r.naam:"?")}const t=data.teeltduren.find(x=>x.id===id);return t?teeltLabel(t):"?"};
+  let n=0;const keys=new Set([...logSnap.keys(),...nu.keys()]);
+  for(const k of keys){const a=logSnap.get(k)||0,b=nu.get(k)||0;if(a===b)continue;const[id,y,w]=k.split("|");L.push([ts,wie,id,naam(id),+y,+w,a,b]);n++}
+  if(L.length>1500)L.splice(0,L.length-1500);logSnap=nu}
 function wijzig(){if(kijker){kijkTerug();return}
+  try{logDiff()}catch(e){console.log("logboek",e)}
   data=normaliseer(data); render();
   clearTimeout(opslaanTimer); opslaanTimer=setTimeout(opslaan,400);
 }
@@ -1590,7 +1602,7 @@ document.addEventListener("keydown",e=>{if((e.ctrlKey||e.metaKey)&&!e.shiftKey&&
 /* Korte melding bovenin (verdwijnt vanzelf) */
 function melding(t,kleur){let m=document.getElementById("toast");if(!m){m=document.createElement("div");m.id="toast";document.body.appendChild(m)}
   m.innerHTML=t;m.style.background=kleur||"#2b2b2b";m.classList.add("aan");clearTimeout(m._t);m._t=setTimeout(()=>m.classList.remove("aan"),kleur?5000:2500)}
-async function opslaan(){if(kijker){kijkTerug();return}
+async function opslaan(){if(kijker){kijkTerug();return}try{logDiff()}catch(e){}
   onthoudVersie();
   if(proef){zetStatus("🧪 Proefmodus – wordt niet in je bestand opgeslagen");return}
   try{historieBij()}catch(e){console.log("historie",e)}
@@ -1890,7 +1902,7 @@ document.addEventListener("keydown",e=>{
   if(document.querySelector("dialog[open]"))return;
   e.preventDefault();bladeren(e.key==="ArrowLeft"?-1:1)});
 let vorigeTab="",houdOpen=false;
-function render(){try{prijsKnoppen()}catch(e){}document.body.classList.toggle("isBeheer",isBeheerder());document.body.classList.toggle("magMw",magMw());if(tab==="beheer"&&!isBeheerder())tab="oppot";if(tab==="prognose"&&!opt("prognose"))tab="aflever";if(isTeler()){if(TELER_WEG.includes(tab))tab="aflever";if(typeof aflRij!=="undefined"&&aflRij==="klant")aflRij="teelt"}if(mwRol==="verkoper"&&!SALES_TABS.includes(tab))tab="aflever";if(typeof postitTel==="function")postitTel();if(tab==="bestel")tab="oppotov";if(tab==="ruimtegraf")tab="oppot"; /* ruimte zit nu bij Inkoop / opzetten */ /* bestelplanning zit nu in Opzetplanning */
+function render(){try{logBasis()}catch(e){}try{prijsKnoppen()}catch(e){}document.body.classList.toggle("isBeheer",isBeheerder());document.body.classList.toggle("magMw",magMw());if(tab==="beheer"&&!isBeheerder())tab="oppot";if(tab==="prognose"&&!opt("prognose"))tab="aflever";if(isTeler()){if(TELER_WEG.includes(tab))tab="aflever";if(typeof aflRij!=="undefined"&&aflRij==="klant")aflRij="teelt"}if(mwRol==="verkoper"&&!SALES_TABS.includes(tab))tab="aflever";if(typeof postitTel==="function")postitTel();if(tab==="bestel")tab="oppotov";if(tab==="ruimtegraf")tab="oppot"; /* ruimte zit nu bij Inkoop / opzetten */ /* bestelplanning zit nu in Opzetplanning */
   zvKlaar();
   if(tab==="rassen"||tab==="duren")tab="soorten";
   if(tab==="proef")tab="oppot"; /* proberen is teruggedraaid */
@@ -3165,7 +3177,7 @@ function toonOppot(){
   let h="";
   {const ob=document.getElementById("ovBalk");ob.hidden=false;ob.innerHTML=`<span class="ovtitel">Inkoop / opzetten</span>
     <span class="oppjaar"><button class="btn licht klein" onclick="inkStap(-1)" title="Half jaar terug">◀</button><b title="${inkHalf?"week 27 van "+planJaar+" t/m week 26 van "+(planJaar+1):"heel "+planJaar}">${inkLabel()}</b><button class="btn licht klein" onclick="inkStap(1)" title="Half jaar verder">▶</button></span>
-    <span style="flex:1"></span><button class="trkKnop" onclick="terugReken()" title="Vul in wat u in een afleverweek wilt hebben: de app rekent de opzetweek en het aantal uit">🧮 Terugrekenen</button><button class="ovk inkcsv" onclick="legeRuimte()" title="Hoeveel planten passen er per opzetweek nog bij (zonder dat de kas te vol wordt)">🪴 Lege ruimte</button>${opt("kosten")?`<button class="ovk inkcsv kostknop" onclick="toonKostVerdeling()" title="Welk deel van de kosten hoort bij welke teelt en bij de vaste bezetting">📊 Kostenverdeling</button>`:""}<button class="ovk inkcsv" onclick="inkoopCsv()" title="Inkoop van ${planJaar} als Excel-bestand (CSV): alle teelten en soorten, per week">⬇ Excel</button>`}
+    <span style="flex:1"></span><button class="ovk inkcsv" onclick="logboek()" title="Wie heeft wanneer een aantal in Inkoop veranderd">📜 Logboek</button><button class="trkKnop" onclick="terugReken()" title="Vul in wat u in een afleverweek wilt hebben: de app rekent de opzetweek en het aantal uit">🧮 Terugrekenen</button><button class="ovk inkcsv" onclick="legeRuimte()" title="Hoeveel planten passen er per opzetweek nog bij (zonder dat de kas te vol wordt)">🪴 Lege ruimte</button>${opt("kosten")?`<button class="ovk inkcsv kostknop" onclick="toonKostVerdeling()" title="Welk deel van de kosten hoort bij welke teelt en bij de vaste bezetting">📊 Kostenverdeling</button>`:""}<button class="ovk inkcsv" onclick="inkoopCsv()" title="Inkoop van ${planJaar} als Excel-bestand (CSV): alle teelten en soorten, per week">⬇ Excel</button>`}
   if(!data.teeltduren.length){$("#inhoud").innerHTML=h+`<div class="leeg">Nog geen teelten. Maak ze eerst aan bij <b>Stamdata → Teelt</b>, of <button class="btn" onclick="openPlak()">📋 Plak een bestellijst</button></div>`;return}
   if(!data.teeltduren.some(t=>t.id===oppotKeuze))oppotKeuze=data.teeltduren[0].id; /* "Alle teelten" is weg */
   h+=`<div class="tchips">${data.teeltduren.map(t=>{const TJ={},n=C.reduce((x,k)=>x+(+((TJ[k.j]=TJ[k.j]||aantalRij(t,k.j))[k.w])||0),0);return`<button type="button" class="tchip ${t.id===oppotKeuze?"aan":""}" onclick="oppotKeuze='${t.id}';render()" oncontextmenu="naarTeeltId('${t.id}');return false" title="Klik: inkoop van deze teelt · Rechtermuisknop: teelt bewerken"><b>${esc(teeltNaamKort(t))}</b><small>${getal(n)}</small></button>`}).join("")}
@@ -4190,6 +4202,22 @@ function prgOver(tid,rid){const J=prgJaar,G=prgSoorten().filter(x=>!tid||x.t.id=
     for(let o=a;o<=b;o+=wk){const{y,w}=isoWeek(new Date(o)),A=r.aantallen[y]=r.aantallen[y]||Array(53).fill(null);A[w-1]=m.get(o)||null;n++}telOp(t,data.rassen)}
   wijzig();melding(`✓ Voorstel staat in Inkoop (${lijst.length} soort${lijst.length===1?"":"en"})`,"#2d6a4f")}
 const prgOverAlles=()=>prgOver("");
+let logF={t:"",q:"",n:300};
+function logboek(){const L=(data.inkLog||[]).slice().reverse(),T=data.teeltduren,q=logF.q.trim().toLowerCase();
+  const tl=logF.t?data.teeltduren.find(x=>x.id===logF.t):null,pre=tl?teeltLabel(tl):"";
+  const F=L.filter(x=>(!pre||String(x[3]).startsWith(pre))&&(!q||(x[1]+" "+x[3]+" wk "+x[5]).toLowerCase().includes(q)));
+  const dt=s=>{const d=new Date(s*1000);return d.toLocaleDateString("nl-NL",{weekday:"short",day:"numeric",month:"short"})+" "+d.toLocaleTimeString("nl-NL",{hour:"2-digit",minute:"2-digit"})};
+  toonPop("📜 Logboek inkoop",`<div class="rij" style="gap:6px;flex-wrap:wrap;margin-bottom:8px"><select class="mwveld" style="width:auto;margin:0" onchange="logF.t=this.value;logF.n=300;logboek()"><option value="">Alle teelten</option>${T.map(t=>`<option value="${t.id}" ${t.id===logF.t?"selected":""}>${esc(teeltLabel(t))}</option>`).join("")}</select>
+      <input class="mwveld" style="width:160px;margin:0" placeholder="zoek soort of naam" value="${esc(logF.q)}" onchange="logF.q=this.value;logF.n=300;logboek()"><span style="flex:1"></span><button class="btn licht" onclick="logExcel()">Excel</button></div>
+    ${F.length?`<div style="max-height:60vh;overflow:auto"><table class="trktab logtab"><tr><th>Wanneer</th><th>Wie</th><th>Teelt · soort</th><th>Week</th><th>Van</th><th>Naar</th></tr>
+      ${F.slice(0,logF.n).map(x=>`<tr><td>${dt(x[0])}</td><td>${esc(String(x[1]||"–").split("@")[0])}</td><td>${esc(x[3])}</td><td>wk ${x[5]} <span class="status">(${x[4]})</span></td><td>${x[6]?getal(x[6]):"–"}</td><td class="${x[7]>x[6]?"logop":"logaf"}"><b>${x[7]?getal(x[7]):"–"}</b></td></tr>`).join("")}</table></div>
+      ${F.length>logF.n?`<button class="btn licht" style="margin-top:8px" onclick="logF.n+=300;logboek()">Meer tonen (${F.length-logF.n})</button>`:""}`:`<p class="status">Nog geen wijzigingen. Vanaf nu wordt elke wijziging van een aantal in Inkoop bijgehouden.</p>`}
+    <p class="status" style="font-size:12px;margin:8px 0 0">De laatste 1.500 wijzigingen worden bewaard. Ook slepen, Terugrekenen en Prognose overnemen komen erin.</p>`);
+  const m=document.querySelector("#mobPop .mpop");if(m){m.classList.add("breed");m.style.maxWidth="820px"}}
+async function logExcel(){const L=(data.inkLog||[]).slice().reverse();if(!L.length)return;const rijen=[["Datum","Tijd","Wie","Teelt · soort","Jaar","Week","Van","Naar","Verschil"]];
+  for(const x of L){const d=new Date(x[0]*1000);rijen.push([d.toLocaleDateString("nl-NL"),d.toLocaleTimeString("nl-NL",{hour:"2-digit",minute:"2-digit"}),x[1]||"",x[3],x[4],x[5],x[6]||0,x[7]||0,(x[7]||0)-(x[6]||0)])}
+  const naam="logboek inkoop "+new Date().toISOString().slice(0,10);
+  try{await xlsxDownload(rijen,naam+".xlsx","Logboek",rijen.length,4)}catch(e){const q=v=>`"${String(v??"").replace(/"/g,'""')}"`,a=document.createElement("a");a.href=URL.createObjectURL(new Blob(["\ufeff"+rijen.map(r=>r.map(v=>typeof v==="number"?v:q(v)).join(";")).join("\n")],{type:"text/csv"}));a.download=naam+".csv";document.body.appendChild(a);a.click();a.remove()}}
 /* ---------- 🧮 Terugrekenen (bij Inkoop): aantal in een afleverweek → opzetweek + aantal, met de echte spreiding over de raaptijd ---------- */
 let trk={t:"",r:"",n:"",p:"",w:"",y:""};
 function terugReken(){const T=data.teeltduren;if(!T.length)return;if(!T.some(t=>t.id===trk.t))trk.t=T[0].id;const R=data.rassen.filter(r=>r.teeltId===trk.t);if(!R.some(r=>r.id===trk.r))trk.r=(R[0]||{}).id||"";
