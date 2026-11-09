@@ -898,6 +898,7 @@ body.sales .navMidden>.mknop.groot{display:none!important}body.kijkmodus #btnPri
       <button id="btnInlezen" class="wolkAlleen" type="button" title="Een json-bestand inlezen in de online planning">📥 Json-bestand inlezen</button>
       <button type="button" class="wolkAlleen alleenKlantApp" onclick="document.querySelectorAll('#balk .menu.open').forEach(m=>m.classList.remove('open'));toonDelen()">👥 Wie mag wat zien</button>
       <button type="button" class="wolkAlleen alleenEigen" onclick="document.querySelectorAll('#balk .menu.open').forEach(m=>m.classList.remove('open'));fotoMapPop()" title="Foto's per teelt die niet bij één soort horen">📁 Foto-mappen</button>
+      <button type="button" class="dlKnop" onclick="document.querySelectorAll('#balk .menu.open').forEach(m=>m.classList.remove('open'));dlMapPop()" title="Alle downloads van CyclaPilot in één vaste map op deze computer">📁 Downloadmap</button>
       <button type="button" class="mwKnop" onclick="document.querySelectorAll('#balk .menu.open').forEach(m=>m.classList.remove('open'));toonMedewerkers()" title="Medewerkers die inloggen met e-mail en wachtwoord">👷 Medewerkers</button>
       <button id="btnUitlog" class="wolkAlleen" type="button">🚪 Uitloggen</button>
       <button type="button" class="alleenBeheer" onclick="document.querySelectorAll('#balk .menu.open').forEach(m=>m.classList.remove('open'));naar('beheer')">🛠 Beheer klanten</button>
@@ -1007,7 +1008,7 @@ body.sales .navMidden>.mknop.groot{display:none!important}body.kijkmodus #btnPri
 
 <script>
 "use strict";
-const VERSIE="49.5";
+const VERSIE="49.6";
 const VERSIE_DATUM="03-11-2026";
 /* ---------- Basis ---------- */
 const PALET=["#2d6a4f","#1B5EBE","#E8007D","#c77d1a","#7a4fa0","#0f8b8d","#5b6b2f","#3d5a80","#a0522d","#7AB648"];
@@ -4224,6 +4225,26 @@ function bestelVink(k,v){const B=data.besteld=data.besteld||{};if(v)B[k]=1;else 
   const bb=document.querySelector(".bestelbanner");if(bb){const n=bestelBanner();if(n)bb.outerHTML=n;else bb.remove()}}
 /* één keer per dag bij het starten een melding */
 function bestelMelding(){try{const d=new Date().toISOString().slice(0,10);if(localStorage.getItem("potplanning-bestelmelding")===d)return;const L=bestelLijst().filter(x=>!x.klaar&&x.cat!=="volg");if(!L.length)return;localStorage.setItem("potplanning-bestelmelding",d);melding(`📦 ${L.length} soort${L.length===1?"":"en"} bestellen deze week${L.some(x=>x.cat==="laat")?" (ook te laat)":""} · zie Inkoop`,"#6a3d9a")}catch(e){}}
+/* ---------- 📁 Eén vaste downloadmap (Chrome/Edge). De map staat op deze computer (IndexedDB), downloads gaan er vanzelf in ---------- */
+const DL_KAN=typeof window.showDirectoryPicker==="function";let dlMap=null;const dlBlobs=new Map();
+function dlDb(){return new Promise((ok,nee)=>{const r=indexedDB.open("cyclapilot",1);r.onupgradeneeded=()=>r.result.createObjectStore("kv");r.onsuccess=()=>ok(r.result);r.onerror=()=>nee(r.error)})}
+async function dlKv(k,v){const db=await dlDb();return new Promise((ok,nee)=>{const tx=db.transaction("kv",v===undefined?"readonly":"readwrite"),st=tx.objectStore("kv");const r=v===undefined?st.get(k):v===null?st.delete(k):st.put(v,k);r.onsuccess=()=>ok(r.result);r.onerror=()=>nee(r.error)})}
+if(DL_KAN)dlKv("dlmap").then(h=>{dlMap=h||null}).catch(()=>{});
+/* blob-adressen onthouden, zodat het bestand ook na revokeObjectURL nog te schrijven is */
+{const o=URL.createObjectURL.bind(URL);URL.createObjectURL=b=>{const u=o(b);if(b instanceof Blob){dlBlobs.set(u,b);setTimeout(()=>dlBlobs.delete(u),60000)}return u}}
+{const oc=HTMLAnchorElement.prototype.click;HTMLAnchorElement.prototype.click=function(){if(this.download&&dlMap&&DL_KAN){const a=this;dlSchrijf(a).catch(e=>{console.log("downloadmap",e);oc.call(a)});return}return oc.call(this)}}
+async function dlSchrijf(a){let p=await dlMap.queryPermission({mode:"readwrite"});if(p!=="granted")p=await dlMap.requestPermission({mode:"readwrite"});if(p!=="granted")throw new Error("geen toestemming");
+  const b=dlBlobs.get(a.href)||await (await fetch(a.href)).blob();let naam=String(a.download||"download").replace(/[\\/:*?"<>|]+/g," ").trim()||"download";
+  const pnt=naam.lastIndexOf("."),basis=pnt>0?naam.slice(0,pnt):naam,ext=pnt>0?naam.slice(pnt):"";
+  for(let i=2;i<100;i++){try{await dlMap.getFileHandle(naam);naam=`${basis} (${i})${ext}`}catch(e){break}}
+  const fh=await dlMap.getFileHandle(naam,{create:true}),w=await fh.createWritable();await w.write(b);await w.close();melding(`⬇ ${esc(naam)} staat in de map ${esc(dlMap.name)}`,"#2d6a4f")}
+function dlMapPop(){if(!DL_KAN){toonPop("📁 Downloadmap",`<p>Dit werkt alleen in <b>Chrome</b> of <b>Edge</b> op de computer.</p><p class="status">In deze browser gaan downloads naar de gewone map Downloads.</p>`);return}
+  toonPop("📁 Downloadmap",`<p style="margin:0 0 10px">Alle downloads van CyclaPilot (Excel, foto's, logboek…) gaan vanzelf naar één vaste map op deze computer.</p>
+    <div class="trkres" style="grid-template-columns:auto 1fr"><div>Map nu</div><b>${dlMap?"📁 "+esc(dlMap.name):"– gewone map Downloads"}</b></div>
+    <div class="rij" style="gap:8px;margin-top:12px;flex-wrap:wrap"><button class="btn" onclick="dlMapKies()">${dlMap?"Andere map kiezen":"Map kiezen"}</button>${dlMap?`<button class="btn licht" onclick="dlMapUit()">Uit (weer gewoon Downloads)</button>`:""}</div>
+    <p class="status" style="font-size:12px;margin:10px 0 0">Tip: maak bijv. een map "CyclaPilot-downloads" in Documenten. De keuze geldt alleen op deze computer. Soms vraagt de browser één keer of de app in die map mag schrijven: klik dan op Toestaan.</p>`)}
+async function dlMapKies(){try{const h=await window.showDirectoryPicker({id:"cyclapilot",mode:"readwrite"});dlMap=h;await dlKv("dlmap",h);melding("📁 Downloads gaan nu naar "+esc(h.name),"#2d6a4f");dlMapPop()}catch(e){if(e&&e.name!=="AbortError")alert("Lukt niet: "+e.message)}}
+async function dlMapUit(){dlMap=null;try{await dlKv("dlmap",null)}catch(e){}melding("Downloads gaan weer naar de gewone map Downloads","#2d6a4f");dlMapPop()}
 /* knopje bij de schuif: vorige, deze en volgende week */
 let aflDrie=false;
 function aflDrieWk(){const n=dezeWeek(),y=new Date(n).getFullYear(),sj=n>=seizoenVan(y)?y:y-1;if(planJaar!==sj)planJaar=sj;aflDrie=true;render()}
