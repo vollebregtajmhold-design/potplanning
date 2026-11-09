@@ -1001,7 +1001,7 @@ body.sales .navMidden>.mknop.groot{display:none!important}body.kijkmodus #btnPri
 
 <script>
 "use strict";
-const VERSIE="48.3";
+const VERSIE="48.4";
 const VERSIE_DATUM="03-11-2026";
 /* ---------- Basis ---------- */
 const PALET=["#2d6a4f","#1B5EBE","#E8007D","#c77d1a","#7a4fa0","#0f8b8d","#5b6b2f","#3d5a80","#a0522d","#7AB648"];
@@ -4346,7 +4346,7 @@ function ovZet(rid,w){const ip=document.getElementById("ovInP");if(!ip)return;co
   const t=data.teeltduren.find(x=>x.id===b.o.teeltId);if(t)telOp(t,data.rassen);
   sluitMobSoort();wijzig();melding("✓ Inkoop aangepast: "+esc(b.o.naam)+" week "+w+" = "+getal(n||0)+" planten","#2d6a4f")}
 function toonPop(titel,inhoud,onder){let m=document.getElementById("mobPop");if(!m){m=document.createElement("div");m.id="mobPop";m.onclick=e=>{if(e.target===m)sluitMobSoort()};document.body.appendChild(m)}
-  m.className=onder?"":"midden";m.innerHTML=`<div class="mpop"><div class="mpopKop"><b>${esc(titel)}</b><button onclick="sluitMobSoort()">✕</button></div><div class="mpopIn">${inhoud}</div></div>`;m.hidden=false;prijsKolWeg(m,false)}
+  try{galIn=0}catch(e){}m.className=onder?"":"midden";m.innerHTML=`<div class="mpop"><div class="mpopKop"><b>${esc(titel)}</b><button onclick="popX()" title="Sluiten">✕</button></div><div class="mpopIn">${inhoud}</div></div>`;m.hidden=false;prijsKolWeg(m,false)}
 function toonOppotOv(){
   const jaar=planJaar,regels=bestelRegels(jaar).filter(r=>!teeltFilter||r.teeltId===teeltFilter),nu=isoWeek(nuWk()),yy=String(jaar).slice(2),code=w=>yy+String(w).padStart(2,"0");
   const veelT=new Set(regels.map(r=>r.product)).size>1;
@@ -4796,7 +4796,9 @@ async function fotoWegS(id,suf,na){if(!confirm("Deze foto weghalen?"))return;con
   catch(e){alert("Lukt niet: "+e.message)}}
 const fotoIdx={};
 /* ---------- Foto-galerij (alleen beheerder, via Zoeken): alle foto's van alle soorten, per teelt ---------- */
-let galTeelt="",galOpen=0;
+let galTeelt="",galOpen=0,galIn=0;
+/* ✕ van een foto uit de galerij: terug naar de galerij. Klikken naast de popup: alles dicht */
+function popX(){if(galOpen&&!galIn)fotoGalerij();else sluitMobSoort()}
 function fotoGalerij(tid){if(!isBeheerder()||!fotoMag())return;galOpen=0;if(!wolkDoc){alert("Foto's werken alleen als u online bent ingelogd.");return}
   if(tid!=null)galTeelt=tid;const T=(data.teeltduren||[]).filter(t=>!galTeelt||t.id===galTeelt);let n=0;
   const blok=T.map(t=>{const R=data.rassen.filter(r=>r.teeltId===t.id&&fotoLijst(r.id).length),M=fmapLijst(t.id);if(!R.length&&!M.length)return"";
@@ -4805,7 +4807,7 @@ function fotoGalerij(tid){if(!isBeheerder()||!fotoMag())return;galOpen=0;if(!wol
     return`<h4 style="margin:14px 0 6px">${esc(teeltLabel(t))} <span class="status">(${fotos.length})</span></h4><div class="galgrid">${fotos.join("")}</div>`}).join("");
   toonPop("🖼 Foto-galerij",`<select class="mwveld" onchange="fotoGalerij(this.value)"><option value="">Alle teelten</option>${(data.teeltduren||[]).map(t=>`<option value="${t.id}" ${t.id===galTeelt?"selected":""}>${esc(teeltLabel(t))}</option>`).join("")}</select>
     ${blok||`<div class="status" style="padding:12px 0">Nog geen foto's.</div>`}`);
-  const m=document.querySelector("#mobPop .mpop");if(m){m.classList.add("breed");m.style.maxWidth="900px"}
+  galIn=1;const m=document.querySelector("#mobPop .mpop");if(m){m.classList.add("breed");m.style.maxWidth="900px"}
   const laad=async b=>{const u=b.dataset.gm?await fmapLaad(b.dataset.gm,b.dataset.gs):await fotoLaadS(b.dataset.gid,b.dataset.gs);if(u&&b.isConnected)b.insertAdjacentHTML("afterbegin",`<img src="${u}" alt="" loading="lazy">`)};
   const io=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){io.unobserve(e.target);laad(e.target)}}),{rootMargin:"300px"});
   document.querySelectorAll("#mobPop .galfoto").forEach(b=>io.observe(b))}
