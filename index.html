@@ -708,6 +708,9 @@ table.oppot th.jaarstart,table.oppot td.jaarstart{border-left:3px solid #4b2a6e!
 .ovtabel .klE{position:sticky;right:0;z-index:2;min-width:96px;box-sizing:border-box;box-shadow:inset 1px 0 0 #c9c2b6}.ovtabel .klT.r0{right:0}
 .logtab td{font-size:13px;white-space:nowrap}.logtab td:nth-child(2),.logtab td:nth-child(3),.logtab th:nth-child(2),.logtab th:nth-child(3){text-align:left}.logtab .logop{color:#2d6a4f}.logtab .logaf{color:#b3261e}
 .lrzelf{width:90px;font:inherit;font-size:14px;text-align:right;padding:3px 5px;border:1px solid #cfc6b4;border-radius:5px}
+.laatsttab td,.laatsttab th{text-align:left!important}.laatsttab td.laatstoud{color:#c77700;font-weight:700}
+.bestelbanner{display:flex;align-items:center;gap:6px;flex-wrap:wrap;background:#fff6d6;border:1px solid #e9c46a;border-radius:10px;padding:8px 12px;margin:0 0 10px;cursor:pointer;font-size:15px}.bestelbanner:hover{background:#ffefb8}.bbknop{margin-left:auto;color:#4b2a6e;font-weight:700}.bblaat{color:#b3261e;font-weight:700}
+.besteltab td,.besteltab th{text-align:left!important}.besteltab tr.bbklaar td{opacity:.45;text-decoration:line-through}.besteltab tr.bbklaar td:first-child{text-decoration:none;opacity:1}
 .trkKnop{background:#2d6a4f;color:#fff;border:0;border-radius:10px;padding:8px 16px;font-size:15px;font-weight:700;cursor:pointer;box-shadow:0 2px 6px rgba(45,106,79,.35);margin-right:6px;white-space:nowrap}.trkKnop:hover{background:#245a42}
 .trkform{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:8px}.trkform input,.trkform select{min-width:0;box-sizing:border-box;max-width:100%}.trkform label{display:flex;flex-direction:column;font-size:13px;color:#555;gap:3px}.trkform select,.trkform input{font:inherit;font-size:15px;padding:6px;border:1px solid #cfc6b4;border-radius:6px}
 .trkres{display:grid;grid-template-columns:auto 1fr;gap:4px 12px;margin-top:12px;padding:10px;background:#eef6f0;border-radius:8px}.trktab{border-collapse:collapse;font-size:14px}.trktab td,.trktab th{padding:3px 10px;text-align:right;border-bottom:1px solid #e3ddd0}.trktab td:first-child,.trktab th:first-child{text-align:left}.trktab tr.trkdoel td{background:#fff3c4;font-weight:700}.trktab tr.tot td{font-weight:700}
@@ -863,7 +866,6 @@ body.sales .navMidden>.mknop.groot{display:none!important}body.kijkmodus #btnPri
       <button data-tab="gereed" class="uitgebreid">Gereed</button>
       <button data-tab="registraties" class="uitgebreid">Registraties</button>
       <button data-tab="klanten">Klanten</button>
-      <button data-tab="prognose" class="prgKnop" title="Verwachte verkoop per soort → voorstel voor inkoop">📈 Prognose</button>
       <button data-tab="werk">Werkplanning</button>
       <button type="button" onclick="verkoopOrder()">🧾 Reservering <span class="status">toets R</span></button>
       <button data-tab="verkoop">📦 Overzicht reserveringen</button>
@@ -888,8 +890,7 @@ body.sales .navMidden>.mknop.groot{display:none!important}body.kijkmodus #btnPri
         <label><input type="checkbox" id="opt_prijs" onchange="zetOptie('prijs',this.checked)"> Verkoopprijzen</label>
         <label><input type="checkbox" id="opt_kosten" onchange="zetOptie('kosten',this.checked)"> Kosten per week·m²</label>
         <label class="optEigen"><input type="checkbox" id="opt_fotos" onchange="zetOptie('fotos',this.checked)"> Foto's</label>
-        <label class="optEigen"><input type="checkbox" id="opt_aanbod" onchange="zetOptie('aanbod',this.checked)"> Aanbodlijst en delen</label>
-        <label class="optEigen alleenBeheerOpt"><input type="checkbox" id="opt_prognose" onchange="zetOptie('prognose',this.checked)"> Prognose verkoop</label></div>
+        <label class="optEigen"><input type="checkbox" id="opt_aanbod" onchange="zetOptie('aanbod',this.checked)"> Aanbodlijst en delen</label></div>
       <div class="zvkeus" title="Sales: alleen Zoeken en de Afleverplanning. Alles: alle pagina's."><span>Weergave:</span><button type="button" id="wgSales" onclick="event.stopPropagation();zetWeergave('sales')">Sales</button><button type="button" id="wgAlles" onclick="event.stopPropagation();zetWeergave('alles')">Alles</button></div>
       <div class="zvkeus" title="Met welk mailprogramma de mailknoppen openen (per apparaat)"><span>Mail:</span><button type="button" id="mp_gmail" onclick="event.stopPropagation();zetMailProg('gmail')">Gmail</button><button type="button" id="mp_outlook" onclick="event.stopPropagation();zetMailProg('outlook')">Outlook</button><button type="button" id="mp_standaard" onclick="event.stopPropagation();zetMailProg('standaard')" title="Het mailprogramma dat op dit apparaat is ingesteld">Standaard</button></div>
       <div class="zvkeus" title="Totale oppervlakte van de kas (bruto). Komt als lijn in de Ruimte-grafiek."><span>Bruto kasruimte</span><input type="number" id="brutoIn" min="0" step="1" style="width:80px;font-size:13px;padding:3px 5px" onclick="event.stopPropagation()" onchange="data.instellingen.brutoM2=Math.max(0,Math.round(+this.value||0));wijzig();melding('✓ Bruto kasruimte: '+getal(data.instellingen.brutoM2)+' m²','#2d6a4f')"><span>m²</span></div>
@@ -950,7 +951,7 @@ body.sales .navMidden>.mknop.groot{display:none!important}body.kijkmodus #btnPri
 </div></dialog>
 <dialog id="zoekVenster"><div class="vlak">
   <input id="zoekInvoer" placeholder="Zoek: teeltduur, vloeren, Cyclamen, P08, leverancier…" autocomplete="off">
-  <div class="zoeksnel"><span class="status">Snel naar:</span><button type="button" class="btn licht zsPrijs" onclick="$('#zoekVenster').close();prijsTabel()">💶 Prijzen</button><button type="button" class="btn licht zsPrg" onclick="$('#zoekVenster').close();prgOpen()" title="Verwachte verkoop → voorstel inkoop">📈 Prognose</button><button type="button" class="btn licht zsGal" onclick="$('#zoekVenster').close();fotoGalerij()" title="Alle foto's van alle soorten">🖼 Foto-galerij</button></div>
+  <div class="zoeksnel"><span class="status">Snel naar:</span><button type="button" class="btn licht zsPrijs" onclick="$('#zoekVenster').close();prijsTabel()">💶 Prijzen</button><button type="button" class="btn licht zsGal" onclick="$('#zoekVenster').close();fotoGalerij()" title="Alle foto's van alle soorten">🖼 Foto-galerij</button></div>
   <div id="zoekLijst"></div>
   <p class="status" style="margin:8px 4px 0">↑ ↓ = kiezen · Enter = openen · Esc = sluiten</p>
 </div></dialog>
@@ -1006,7 +1007,7 @@ body.sales .navMidden>.mknop.groot{display:none!important}body.kijkmodus #btnPri
 
 <script>
 "use strict";
-const VERSIE="49.4";
+const VERSIE="49.5";
 const VERSIE_DATUM="03-11-2026";
 /* ---------- Basis ---------- */
 const PALET=["#2d6a4f","#1B5EBE","#E8007D","#c77d1a","#7a4fa0","#0f8b8d","#5b6b2f","#3d5a80","#a0522d","#7AB648"];
@@ -1813,10 +1814,12 @@ async function toonKopieen(){document.querySelectorAll("#balk .menu.open").forEa
 function kopieDown(i){const x=window.__kop[i];if(!x)return;const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([x.data().json],{type:"application/json"}));a.download=`potplanning-reservekopie-${x.id.slice(6)}.json`;a.click()}
 async function kopieTerug(i){const x=window.__kop[i];if(!x)return;if(!confirm(`Reservekopie van week ${x.id.slice(6)} terugzetten?\nUw huidige planning wordt dan vervangen.\n(Daarna kunt u nog terug met Ongedaan maken.)`))return;
   try{terugStapel.push(JSON.stringify(data));data=normaliseer(JSON.parse(x.data().json));laatsteKern=kernVan(data);zetTerugKnop();sluitMobSoort();render();await opslaan();melding("✓ Reservekopie van week "+x.id.slice(6)+" teruggezet","#2d6a4f")}catch(e){alert("Terugzetten lukt niet: "+e.message)}}
+/* klein briefje "laatst gewijzigd" (tijd + wie): de beheerder mag alleen dit lezen, niet de planning */
+let laatstT=0;function laatstBij(){if(Date.now()-laatstT<60000||!wolkDoc)return;laatstT=Date.now();wolkDoc.parent.doc("laatst").set({t:data.gewijzigd,door:wolkMail}).catch(()=>{})}
 async function wolkOpslaan(){
   const json=JSON.stringify(data);
   if(json.length>950000){wolkStatus("⚠ Planning is te groot om online op te slaan",false);return}
-  try{await wolkDoc.set({json,gewijzigd:data.gewijzigd,door:wolkMail,sessie:SESSIE});wolkStatus("Opgeslagen om "+new Date().toLocaleTimeString("nl-NL"));autoKopie(json);deelOpslaan()}
+  try{await wolkDoc.set({json,gewijzigd:data.gewijzigd,door:wolkMail,sessie:SESSIE});wolkStatus("Opgeslagen om "+new Date().toLocaleTimeString("nl-NL"));autoKopie(json);deelOpslaan();laatstBij()}
   catch(e){wolkStatus("⚠ Opslaan lukt niet: "+(e.code==="permission-denied"?"geen toegang met dit account":e.message),false)}
 }
 
@@ -1913,7 +1916,8 @@ document.addEventListener("keydown",e=>{
   if(document.querySelector("dialog[open]"))return;
   e.preventDefault();bladeren(e.key==="ArrowLeft"?-1:1)});
 let vorigeTab="",houdOpen=false;
-function render(){try{logBasis()}catch(e){}try{prijsKnoppen()}catch(e){}document.body.classList.toggle("isBeheer",isBeheerder());document.body.classList.toggle("magMw",magMw());if(tab==="beheer"&&!isBeheerder())tab="oppot";if(tab==="prognose"&&!opt("prognose"))tab="aflever";if(isTeler()){if(TELER_WEG.includes(tab))tab="aflever";if(typeof aflRij!=="undefined"&&aflRij==="klant")aflRij="teelt"}if(mwRol==="verkoper"&&!SALES_TABS.includes(tab))tab="aflever";if(typeof postitTel==="function")postitTel();if(tab==="bestel")tab="oppotov";if(tab==="ruimtegraf")tab="oppot"; /* ruimte zit nu bij Inkoop / opzetten */ /* bestelplanning zit nu in Opzetplanning */
+let bestelM=false;
+function render(){try{logBasis()}catch(e){}if(!bestelM&&data&&(data.rassen||[]).length&&!kijker){bestelM=true;setTimeout(bestelMelding,3000)}try{prijsKnoppen()}catch(e){}document.body.classList.toggle("isBeheer",isBeheerder());document.body.classList.toggle("magMw",magMw());if(tab==="beheer"&&!isBeheerder())tab="oppot";if(tab==="prognose")tab="aflever";if(isTeler()){if(TELER_WEG.includes(tab))tab="aflever";if(typeof aflRij!=="undefined"&&aflRij==="klant")aflRij="teelt"}if(mwRol==="verkoper"&&!SALES_TABS.includes(tab))tab="aflever";if(typeof postitTel==="function")postitTel();if(tab==="bestel")tab="oppotov";if(tab==="ruimtegraf")tab="oppot"; /* ruimte zit nu bij Inkoop / opzetten */ /* bestelplanning zit nu in Opzetplanning */
   zvKlaar();
   if(tab==="rassen"||tab==="duren")tab="soorten";
   if(tab==="proef")tab="oppot"; /* proberen is teruggedraaid */
@@ -1922,7 +1926,7 @@ function render(){try{logBasis()}catch(e){}try{prijsKnoppen()}catch(e){}document
   /* eenvoudige versie: alleen teelt & soorten, leveranciers, oppotplan, bestel-, aflever- en werkplanning en mobiel */
   const eenv=!!data.instellingen.eenvoudig;document.body.classList.toggle("eenvoudig",eenv);
   {const b=document.getElementById("btnModus");if(b)b.textContent=eenv?"⚙️ Alle functies tonen":"⚙️ Eenvoudige versie"}
-  if(eenv&&!["mkbesch","soorten","leveranciers","klanten","oppot","oppotov","bestel","aflever","werk","mobiel","verkoop","ruimtegraf","beheer","prognose"].includes(tab))tab="oppot"; // Soort en Teeltduur zitten nu bij Parameters
+  if(eenv&&!["mkbesch","soorten","leveranciers","klanten","oppot","oppotov","bestel","aflever","werk","mobiel","verkoop","ruimtegraf","beheer"].includes(tab))tab="oppot"; // Soort en Teeltduur zitten nu bij Parameters
   onthoudPagina();
   /* Parameters opent altijd met alles ingeklapt */
   if(tab==="soorten"&&vorigeTab!=="soorten"&&!houdOpen&&typeof teeltOpen!=="undefined")teeltOpen.clear();
@@ -1947,7 +1951,7 @@ function render(){try{logBasis()}catch(e){}try{prijsKnoppen()}catch(e){}document
   document.body.classList.toggle("klassiek",data.instellingen.kleuren==="klassiek");
   $("#jaarLabel").textContent=planJaar;
   if($("#duurVenster")&&$("#duurVenster").open)vulDuur();
-  ({prognose:toonPrognose,mkbesch:toonMeekijkBesch,beheer:toonBeheer,ruimtegraf:toonRuimteGraf,verkoop:toonVerkoop,soorten:toonSoorten,rassen:toonRassen,leveranciers:toonLeveranciers,mobiel:toonMobiel,registraties:toonRegistraties,bestel:toonBestel,oppotov:toonOppotOv,klanten:toonKlanten,aflever:toonAflever,werk:toonWerk,weeklijst:toonWeeklijst,proef:toonProef,plan:toonPlan,teelt:toonTeelt,partijen:toonPartijen,duren:toonDuren,oppot:toonOppot,ruimte:toonRuimte,gereed:toonGereed,kappen:toonKappen})[tab]();try{prijsKolWeg(document.getElementById("inhoud"),false)}catch(e){}
+  ({mkbesch:toonMeekijkBesch,beheer:toonBeheer,ruimtegraf:toonRuimteGraf,verkoop:toonVerkoop,soorten:toonSoorten,rassen:toonRassen,leveranciers:toonLeveranciers,mobiel:toonMobiel,registraties:toonRegistraties,bestel:toonBestel,oppotov:toonOppotOv,klanten:toonKlanten,aflever:toonAflever,werk:toonWerk,weeklijst:toonWeeklijst,proef:toonProef,plan:toonPlan,teelt:toonTeelt,partijen:toonPartijen,duren:toonDuren,oppot:toonOppot,ruimte:toonRuimte,gereed:toonGereed,kappen:toonKappen})[tab]();try{prijsKolWeg(document.getElementById("inhoud"),false)}catch(e){}
 }
 const wkKop=l=>l.map((d,i)=>{const{w,y}=isoWeek(d),jw=i>0&&w===1;return`<th class="wk ${d.getTime()===dezeWeek()?"nu":""} ${jw?"jw":""}" title="wk ${w} (${y})">${jw?`<span class="jaartje">${y}</span>`:""}${w}</th>`}).join("");
 /* Kleuren in het vloerenplan: "zacht" (oppotten oranje, uitgezet groen, zwarte cijfers), "product" (pastel per product), "klassiek" */
@@ -3242,7 +3246,7 @@ function toonOppot(){
   h+=`<tr class="nieuwsoort"><td class="vast">${verborgen.length?`<select onchange="if(this.value){oppotToon.add(this.value);render();setTimeout(()=>{const c=document.querySelector('.ac[data-b=&quot;'+this.value+'&quot;]');if(c)c.focus()},50)}"><option value="">➕ soort toevoegen…</option>${verborgen.map(r=>`<option value="${r.b}">${r.nr?esc(r.nr)+" · ":""}${esc(r.naam)}</option>`).join("")}</select>`:`<span class="status">alle soorten staan erin</span>`}</td><td colspan="${C.length+1}" class="status" style="text-align:left;padding-left:8px">Kies een soort uit de lijst. Nieuwe soort maken? <a href="#" onclick="naarTeeltId('${t.id}');return false">Parameters ›</a></td></tr>`;
   h+=`<tr class="totrij"><td class="vast"><b>Totaal ${esc(t.product)}</b></td>${totC.map((v,ci)=>`<td id="tt-${ci}"><b>${v?kort1k(v):""}</b></td>`).join("")}<td class="tot" id="tt-som"><b>${getal(som(totC))}</b></td></tr>${kostHTML}</table></div>
     ${mist.length?`<p class="let">⚠ ${esc(mist.join(" · "))} (Stamdata)</p>`:""}`;
-  $("#inhoud").innerHTML=h;inkRuimte();try{inkWzMarkeer()}catch(e){console.log(e)}
+  $("#inhoud").innerHTML=bestelBanner()+h;inkRuimte();try{inkWzMarkeer()}catch(e){console.log(e)}
 }
 /* Inkoop: ruimte die de kas nodig heeft per week (alle teelten), meteen bijgewerkt bij elk getal */
 const RKL=v=>v>95?"#E8007D":v>=85?"#F6B26B":"#86C49E";
@@ -4148,75 +4152,13 @@ function bestelRegels(jaar){ /* alle regels: per oppotweek, per soort, met lever
 /* ---------- Klanten ---------- */
 const KL_VELDEN=[["naam","Naam","19%"],["plaats","Plaats","11%"],["contact","Contactpersoon","13%"],["telefoon","Telefoon","11%"],["email","E-mail","15%"],["fust","Traymaat","11%"],["perFust","Per tray","8%"],["opmerking","Opmerking","12%"]];
 function klantVerkocht(naam){let n=0;for(const l of Object.values(data.verkoop||{}))for(const x of l)if(x.klant===naam)n+=+x.n||0;return n}
-/* ---------- 📈 Prognose: verwachte verkoop per soort per afleverweek → voorstel voor inkoop (alleen beheerder, vinkje) ----------
-   data.prognose["<soortId>|<jaar-week>"] = aantal planten dat u verwacht te verkopen in die afleverweek */
-let prgJaar=null,prgTeelt="",prgWeerg="prog";
-const prgKey=(rid,t)=>rid+"|"+wkCode(t);
-const prgGet=(rid,t)=>+((data.prognose||{})[prgKey(rid,t)])||0;
-function prgWeken(J){const a=seizoenVan(J),b=seizoenVan(J+1),L=[];for(let t=a;t<b;t+=7*864e5)L.push(t);return L}
-const prgSoortKey=(t,r)=>teeltLabel(t)+"|"+r.naam;
-function prgSoorten(){return data.teeltduren.filter(t=>!prgTeelt||t.id===prgTeelt).map(t=>({t,R:data.rassen.filter(r=>r.teeltId===t.id)})).filter(x=>x.R.length)}
-/* terugrekenen: afleverweek − teeltduur = opzetweek; met uitval, raaptijd en afronden op fust */
 /* echte duur zoals de partijen: fase 1 + fase 2 (naar boven afgerond) */
 function prgDuurEcht(t,r,o){const D=duurVan(t,r),w=isoWeek(new Date(o)).w,f1=(D.fase1||[])[w-1],f2=(D.fase2||[])[w-1];if(f1!=null&&f2!=null)return Math.ceil(+f1)+Math.ceil(+f2);return prgDuur(t,r,o)}
 /* opzetweek zoeken: de afleverweek a wordt de 1-na-laatste week van de raap (bij raaptijd 1: de raapweek zelf) */
 function prgOpzet(t,r,a){const wk=7*864e5,R=r.raaptijd||1,doel=a+(R>=2?2:1)*wk;let o=null,bd=1e9;for(let x=doel-70*wk;x<=doel;x+=wk){const d=prgDuurEcht(t,r,x);if(!d)continue;const v=Math.abs(x+d*wk-doel);if(v<=bd){bd=v;o=x}}return o}   /* gelijk? dan de latere opzetweek */
 /* teeltduur uit Parameters (totaal, in weken) voor de opzetweek */
 function prgDuur(t,r,o){const D=duurVan(t,r),w=isoWeek(new Date(o)).w;return Math.round(+((D.totaal||t.totaal||[])[w-1])||0)}
-/* eenvoudig: opzetweek = afleverweek − (teeltduur − 1 week). Raaptijd telt niet mee.
-   aantal = prognose + uitval, afgerond op hele trays */
-function prgVoorstel(t,r,J){const W=prgWeken(J),u=(r.uitval!=null&&r.uitval!==""?+r.uitval:(+t.uitval||0))/100,fa=fustAantal(r.fust||t.fust)||0,uit=new Map(),wk=7*864e5;
-  for(const a of W){const P=prgGet(r.id,a);if(!P)continue;
-    const best=prgOpzet(t,r,a);if(best==null)continue;let n=Math.ceil(P/(1-Math.min(u,.9)));if(fa>1)n=Math.ceil(n/fa)*fa;uit.set(best,(uit.get(best)||0)+n)}
-  return uit}
 const prgNu=(r,o)=>{const{y,w}=isoWeek(new Date(o));return +(((r.aantallen||{})[y]||[])[w-1])||0};
-function toonPrognose(){if(prgJaar==null){const nu=dezeWeek();prgJaar=nu>=seizoenVan(new Date(nu).getFullYear())?new Date(nu).getFullYear():new Date(nu).getFullYear()-1}
-  const J=prgJaar,W=prgWeken(J),G=prgSoorten(),wl=t=>"wk "+isoWeek(new Date(t)).w,nuW=dezeWeek();
-  let h=`<div class="rij" style="gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:8px">
-    <b style="font-size:18px">📈 Prognose</b>
-    <select onchange="prgJaar=+this.value;render()" title="Afleverseizoen">${[J-1,J,J+1].map(j=>`<option value="${j}" ${j===J?"selected":""}>Seizoen ${j}/${String(j+1).slice(2)}</option>`).join("")}</select>
-    <select onchange="prgTeelt=this.value;render()"><option value="">Alle teelten</option>${data.teeltduren.map(t=>`<option value="${t.id}" ${t.id===prgTeelt?"selected":""}>${esc(teeltLabel(t))}</option>`).join("")}</select>
-    <select onchange="prgWeerg=this.value;render()" title="Wat ziet u">${[["prog","✏️ Prognose invullen"],["vorig","Vorig seizoen (gereserveerd)"],["nu","Dit seizoen gereserveerd"],["stand","Gereserveerd t.o.v. prognose"],["voorstel","🧮 Voorstel inkoop"]].map(([v,n])=>`<option value="${v}" ${v===prgWeerg?"selected":""}>${n}</option>`).join("")}</select>
-    ${prgWeerg==="prog"?`<button class="ovk inkcsv" onclick="prgKopieer()" title="Neem de reserveringen van vorig seizoen over als prognose">📋 Vorig seizoen overnemen</button><button class="ovk inkcsv" onclick="prgProcent()" title="Alle prognoses (van de gekozen teelt) een % hoger of lager">± %</button>`:""}
-    ${prgWeerg==="voorstel"?`<button class="ovk inkcsv" onclick="prgOverAlles()" title="Zet het voorstel in Inkoop voor alle soorten hieronder">✓ Neem alles over in Inkoop</button>`:""}
-    <button class="ovk inkcsv" onclick="prgExcel()" title="Deze weergave als Excel-bestand">Excel</button><button class="ovk ovlink" onclick="prgUitleg()">Uitleg</button></div>`;
-  if(!G.length){h+=`<div class="status">Nog geen soorten. Maak eerst teelten en soorten aan bij Parameters.</div>`;$("#inhoud").innerHTML=h;return}
-  if(prgWeerg==="voorstel"){h+=prgVoorstelTabel(J,G);$("#inhoud").innerHTML=h;return}
-  const vorigW=W.map((t,i)=>seizoenVan(J-1)+i*7*864e5);
-  let prgRi=0;const waarde=(t,r,i)=>prgWeerg==="vorig"?verkSom(prgSoortKey(t,r),vorigW[i]):prgWeerg==="nu"||prgWeerg==="stand"?verkSom(prgSoortKey(t,r),W[i]):prgGet(r.id,W[i]);
-  h+=`<div class="scroll"><table class="ovtabel prgtab"><tr><th class="ovnaam">Teelt · soort</th>${W.map(t=>`<th class="${t===nuW?"nu":""}">${wl(t)}</th>`).join("")}<th class="kltot">Totaal</th></tr>`;
-  for(const{t,R}of G){const som=W.map((w,i)=>R.reduce((a,r)=>a+waarde(t,r,i),0)),somP=W.map(w=>R.reduce((a,r)=>a+prgGet(r.id,w),0));
-    const cel=(v,p)=>prgWeerg==="stand"?(p?`<span class="${v>=p?"prgok":v>=p*.7?"prgmid":"prgweinig"}" title="gereserveerd ${getal(v)} van prognose ${getal(p)}">${Math.round(v/p*100)}%</span>`:v?getal(v):""):v?getal(v):"";
-    h+=`<tr class="prgteelt"><td class="ovnaam"><b>${esc(teeltLabel(t))}</b></td>${som.map((v,i)=>`<td>${cel(v,somP[i])}</td>`).join("")}<td class="kltot"><b>${getal(som.reduce((a,b)=>a+b,0))}</b></td></tr>`;
-    for(const r of R){const v=W.map((w,i)=>waarde(t,r,i)),ri=prgRi++;
-      h+=`<tr><td class="ovnaam">${esc(r.naam)}</td>${W.map((w,i)=>prgWeerg==="prog"&&!kijker?`<td class="${w===nuW?"nu":""}"><input class="prgin" inputmode="numeric" data-r="${r.id}" data-t="${w}" data-ri="${ri}" data-ci="${i}" value="${v[i]||""}" onchange="prgZet(this)"></td>`:`<td class="${w===nuW?"nu":""}">${cel(v[i],prgGet(r.id,w))}</td>`).join("")}<td class="kltot"><b>${getal(v.reduce((a,b)=>a+b,0))}</b></td></tr>`}}
-  h+=`</table></div>`;$("#inhoud").innerHTML=h}
-function prgZet(inp){const n=Math.max(0,Math.round(+String(inp.value).replace(/\./g,"").replace(",",".")||0)),P=data.prognose=data.prognose||{},k=prgKey(inp.dataset.r,+inp.dataset.t);
-  if(n)P[k]=n;else delete P[k];inp.value=n||"";opslaanLater()}
-function prgKopieer(){const J=prgJaar,W=prgWeken(J),G=prgSoorten();const p=prompt("Reserveringen van vorig seizoen overnemen als prognose.\nHoeveel % erbij of eraf? (bijv. 10 of -10, 0 = gelijk)","0");if(p===null)return;
-  const f=1+(+String(p).replace(",",".")||0)/100,P=data.prognose=data.prognose||{};let n=0;
-  if(G.some(({R})=>R.some(r=>W.some(w=>prgGet(r.id,w))))&&!confirm("Er staat al een prognose. Overschrijven?"))return;
-  for(const{t,R}of G)for(const r of R)W.forEach((w,i)=>{const v=verkSom(prgSoortKey(t,r),seizoenVan(J-1)+i*7*864e5),k=prgKey(r.id,w);if(v>0){P[k]=Math.round(v*f);n++}else delete P[k]});
-  wijzig();melding(n?`✓ ${n} weken overgenomen van vorig seizoen (Ctrl + Z = terug)`:"Vorig seizoen heeft geen reserveringen voor deze soorten.","#2d6a4f")}
-function prgProcent(){const p=prompt("Prognose hoger of lager. Hoeveel %? (bijv. 10 of -10)","10");if(p===null)return;const f=1+(+String(p).replace(",",".")||0)/100,W=prgWeken(prgJaar),P=data.prognose||{};
-  for(const{R}of prgSoorten())for(const r of R)for(const w of W){const k=prgKey(r.id,w);if(P[k])P[k]=Math.round(P[k]*f)}wijzig();melding("✓ Prognose aangepast (Ctrl + Z = terug)","#2d6a4f")}
-function prgVoorstelTabel(J,G){let all=[];const V=new Map();for(const{t,R}of G)for(const r of R){const m=prgVoorstel(t,r,J);V.set(r.id,m);all.push(...m.keys())}
-  if(!all.length)return`<div class="status">Nog geen voorstel: vul eerst de prognose in.</div>`;
-  const wk=7*864e5,a=Math.min(...all),b=Math.max(...all),O=[];for(let o=a;o<=b;o+=wk)O.push(o);
-  let h=`<p class="status" style="margin:0 0 6px">Per opzetweek: <b>voorstel</b> (uit de prognose). Kleur: <span class="prgok">● gelijk aan Inkoop</span> <span class="prgmid">● Inkoop is minder</span> <span class="prgmeer">● Inkoop is meer</span>. Grijs getal = nu in Inkoop.</p>
-    <div class="scroll"><table class="ovtabel prgtab"><tr><th class="ovnaam">Teelt · soort</th>${O.map(o=>{const{y,w}=isoWeek(new Date(o));return`<th>wk ${w}${y!==J?` <span class="status">(${String(y).slice(2)})</span>`:""}</th>`}).join("")}<th class="kltot">Totaal</th><th></th></tr>`;
-  for(const{t,R:R0}of G){const R=R0.filter(r=>V.get(r.id).size);if(!R.length)continue;h+=`<tr class="prgteelt"><td class="ovnaam"><b>${esc(teeltLabel(t))}</b></td>${O.map(()=>"<td></td>").join("")}<td class="kltot"></td><td><button class="ovk ovlink" onclick="prgOver('${t.id}')" title="Neem het voorstel over voor deze hele teelt">✓ Teelt</button></td></tr>`;
-    for(const r of R){const m=V.get(r.id);let tv=0;
-      h+=`<tr><td class="ovnaam">${esc(r.naam)}</td>${O.map(o=>{const v=m.get(o)||0,nu=prgNu(r,o);tv+=v;if(!v&&!nu)return"<td></td>";
-        const k=v===nu?"prgok":nu<v?"prgmid":"prgmeer";return`<td title="voorstel ${getal(v)} · nu in Inkoop ${getal(nu)}"><span class="${k}">${v?getal(v):"0"}</span>${v!==nu?`<br><small class="status">${getal(nu)}</small>`:""}</td>`}).join("")}<td class="kltot"><b>${getal(tv)}</b></td><td>${m.size?`<button class="ovk ovlink" onclick="prgOver('${t.id}','${r.id}')">✓</button>`:""}</td></tr>`}}
-  return h+`</table></div>`}
-function prgOver(tid,rid){const J=prgJaar,G=prgSoorten().filter(x=>!tid||x.t.id===tid);let n=0;
-  const lijst=G.flatMap(({t,R})=>R.filter(r=>!rid||r.id===rid).map(r=>({t,r,m:prgVoorstel(t,r,J)}))).filter(x=>x.m.size);
-  if(!lijst.length)return;if(!confirm(`Voorstel overnemen in Inkoop voor ${lijst.length} soort${lijst.length===1?"":"en"}?\nDe weken ertussen worden gelijk gemaakt aan het voorstel. (Ctrl + Z = terug)`))return;
-  const wk=7*864e5;for(const{t,r,m}of lijst){const ks=[...m.keys()],a=Math.min(...ks),b=Math.max(...ks);r.aantallen=r.aantallen||{};
-    for(let o=a;o<=b;o+=wk){const{y,w}=isoWeek(new Date(o)),A=r.aantallen[y]=r.aantallen[y]||Array(53).fill(null);A[w-1]=m.get(o)||null;n++}telOp(t,data.rassen)}
-  wijzig();melding(`✓ Voorstel staat in Inkoop (${lijst.length} soort${lijst.length===1?"":"en"})`,"#2d6a4f")}
-const prgOverAlles=()=>prgOver("");
 let logF={t:"",q:"",n:300};
 function logboek(){const L=(data.inkLog||[]).slice().reverse(),T=data.teeltduren,q=logF.q.trim().toLowerCase();
   const tl=logF.t?data.teeltduren.find(x=>x.id===logF.t):null,pre=tl?teeltLabel(tl):"";
@@ -4264,27 +4206,24 @@ function trkReken(){const el=document.getElementById("trkUit");if(!el)return;con
     ${!kijker?`<div class="rij" style="gap:8px"><span style="flex:1"></span><button class="btn" onclick="trkZet()">➕ Zet ${getal(x.n)} in Inkoop (${wl(x.o)})</button></div>`:""}`}
 function trkZet(){const x=trkBereken();if(!x)return;const{y,w}=isoWeek(new Date(x.o)),A=(x.r.aantallen=x.r.aantallen||{})[y]=(x.r.aantallen[y]||Array(53).fill(null));
   A[w-1]=(+A[w-1]||0)+x.n;telOp(x.t,data.rassen);wijzig();melding(`✓ ${getal(x.n)} ${esc(x.r.naam)} erbij in week ${w} (${y}) (Ctrl + Z = terug)`,"#2d6a4f");trkReken()}
-/* Excel van de weergave die u ziet */
-async function prgExcel(){const J=prgJaar,G=prgSoorten(),wk=7*864e5;let kol=[],val,titel;
-  const nm={prog:"Prognose",vorig:"Vorig seizoen gereserveerd",nu:"Gereserveerd",stand:"Gereserveerd",voorstel:"Voorstel inkoop"}[prgWeerg]||"Prognose";
-  if(prgWeerg==="voorstel"){const V=new Map();let all=[];for(const{t,R}of G)for(const r of R){const m=prgVoorstel(t,r,J);V.set(r.id,m);all.push(...m.keys())}
-    if(!all.length){melding("Nog geen voorstel: vul eerst de prognose in.");return}const a=Math.min(...all),b=Math.max(...all);for(let o=a;o<=b;o+=wk)kol.push(o);val=(t,r,o)=>V.get(r.id).get(o)||0}
-  else{kol=prgWeken(J);const vw=kol.map((t,i)=>seizoenVan(J-1)+i*wk);val=(t,r,w,i)=>prgWeerg==="vorig"?verkSom(prgSoortKey(t,r),vw[i]):prgWeerg==="nu"||prgWeerg==="stand"?verkSom(prgSoortKey(t,r),w):prgGet(r.id,w)}
-  const kop=kol.map(o=>{const{y,w}=isoWeek(new Date(o));return String(y).slice(2)+String(w).padStart(2,"0")});
-  const rijen=[["Teelt","Soort",...kop,"Totaal"]],tot=Array(kol.length).fill(0);
-  for(const{t,R}of G)for(const r of R){const v=kol.map((o,i)=>val(t,r,o,i));if(!v.some(x=>x))continue;v.forEach((x,i)=>tot[i]+=x);rijen.push([teeltLabel(t),r.naam,...v.map(x=>x||null),v.reduce((a,b)=>a+b,0)])}
-  if(rijen.length<2){melding("Er staat niets in deze weergave.");return}
-  const nData=rijen.length;rijen.push(["Totaal","",...tot.map(x=>x||null),tot.reduce((a,b)=>a+b,0)]);
-  const naam=`${nm} ${J}-${String(J+1).slice(2)}`;
-  try{melding("Excel-bestand maken…");await xlsxDownload(rijen,naam+".xlsx",nm.slice(0,28),nData,2);melding("⬇ "+naam+" als Excel-bestand gedownload","#2d6a4f")}
-  catch(e){const q=x=>`"${String(x??"").replace(/"/g,'""')}"`,a=document.createElement("a");a.href=URL.createObjectURL(new Blob(["\ufeff"+rijen.map(r=>r.map(v=>typeof v==="number"?v:q(v)).join(";")).join("\n")],{type:"text/csv"}));a.download=naam+".csv";document.body.appendChild(a);a.click();a.remove();melding("⬇ "+naam+" als CSV gedownload","#2d6a4f")}}
-/* openen vanuit Zoeken: zet het vinkje vanzelf aan */
-function prgOpen(){if(!(isBeheerder()&&mod3Mag()))return;if(!opt("prognose"))zetOptie("prognose",true);try{if(isSales())zetWeergave("alles")}catch(e){}naar("prognose")}
-function prgUitleg(){toonPop("📈 Prognose · uitleg",`<ol style="padding-left:18px;line-height:1.5;margin:0">
-  <li><b>Prognose invullen</b>: per soort en afleverweek hoeveel planten u verwacht te verkopen.<br>Snel: <b>📋 Vorig seizoen overnemen</b> (de reserveringen van vorig seizoen, met evt. + of − %), daarna <b>± %</b> of per week aanpassen.</li>
-  <li><b>🧮 Voorstel inkoop</b>: de app rekent de opzetweek zo uit dat uw afleverweek de <b>1-na-laatste week van de raap</b> is (teeltduur en raaptijd uit Parameters). Aantal = prognose + <b>uitval-%</b> (Parameters), afgerond op hele trays (fust).</li>
-  <li><b>✓ Overnemen</b>: per soort, per teelt of alles. Het komt in Inkoop. Ctrl + Z = terug.</li>
-  <li><b>Gereserveerd t.o.v. prognose</b>: tijdens het seizoen ziet u per week hoeveel % al gereserveerd is: <span class="prgok">groen</span> = op schema, <span class="prgmid">oranje</span> = iets achter, <span class="prgweinig">rood</span> = veel achter.</li></ol>`)}
+/* ---------- 📦 Bestel-herinnering: bestelweek = opzetweek − levertijd (per soort, anders van de leverancier) ---------- */
+function bestelLijst(){const D=dezeWeek(),wk=7*864e5,L=[],B=data.besteld||{};
+  for(const r of data.rassen){const t=data.teeltduren.find(x=>x.id===r.teeltId);if(!t)continue;const lev=data.leveranciers.find(l=>l.id===r.leverancierId),lt=r.levertijd!=null?+r.levertijd:(+levTijd(lev)||0);
+    for(const y in r.aantallen||{})(r.aantallen[y]||[]).forEach((n,i)=>{if(!(+n>0))return;const o=+maandagIso(+y,i+1);if(o<D)return;const b=o-lt*wk;if(b>D+wk)return;
+      const k=r.id+"|"+wkCode(o),fa=fustAantal(r.fust||t.fust)||0;L.push({k,r,t,o,b,n:+n,tr:fa>1?Math.ceil(n/fa):0,lev:lev?lev.naam:"",lt,cat:b<D?"laat":b<D+wk?"nu":"volg",klaar:!!B[k]})})}
+  return L.sort((a,b)=>a.b-b.b||a.o-b.o)}
+function bestelBanner(){if(kijker)return"";const L=bestelLijst().filter(x=>!x.klaar);if(!L.length)return"";const c=k=>L.filter(x=>x.cat===k).length;
+  return`<div class="bestelbanner" onclick="bestelPop()" title="Klik voor de lijst">📦 <b>Bestellen:</b> ${c("laat")?`<span class="bblaat">${c("laat")} te laat</span> · `:""}${c("nu")} deze week · ${c("volg")} volgende week <span class="bbknop">Bekijk ›</span></div>`}
+function bestelPop(){const L=bestelLijst(),T={laat:"⚠ Te laat (had al besteld moeten zijn)",nu:"Deze week bestellen",volg:"Volgende week bestellen"};
+  let h="";for(const k of ["laat","nu","volg"]){const X=L.filter(x=>x.cat===k);if(!X.length)continue;
+    h+=`<h4 style="margin:12px 0 4px" class="${k==="laat"?"bblaat":""}">${T[k]} (${X.length})</h4><table class="trktab besteltab"><tr><th>Besteld</th><th>Teelt · soort</th><th>Opzetweek</th><th>Aantal</th><th>Leverancier</th></tr>
+      ${X.map(x=>`<tr class="${x.klaar?"bbklaar":""}"><td><input type="checkbox" ${x.klaar?"checked":""} ${kijker?"disabled":""} onchange="bestelVink('${x.k}',this.checked)"></td><td>${esc(teeltLabel(x.t))} · <b>${esc(x.r.naam)}</b></td><td>wk ${isoWeek(new Date(x.o)).w} <span class="status">(${isoWeek(new Date(x.o)).y})</span></td><td>${getal(x.n)}${x.tr?` <span class="status">(${getal(x.tr)} trays)</span>`:""}</td><td>${esc(x.lev||"–")} <span class="status">· ${x.lt} wk</span></td></tr>`).join("")}</table>`}
+  toonPop("📦 Bestellen",(h||`<p class="status">Niets te bestellen deze en volgende week.</p>`)+`<p class="status" style="font-size:12px;margin:8px 0 0">Bestelweek = opzetweek − levertijd (Parameters). Vink aan wat besteld is; dan verdwijnt het uit de melding.</p>`);
+  const m=document.querySelector("#mobPop .mpop");if(m){m.classList.add("breed");m.style.maxWidth="820px"}}
+function bestelVink(k,v){const B=data.besteld=data.besteld||{};if(v)B[k]=1;else delete B[k];opslaanLater();const r=document.querySelector(`input[onchange="bestelVink('${k}',this.checked)"]`);if(r)r.closest("tr").classList.toggle("bbklaar",v);
+  const bb=document.querySelector(".bestelbanner");if(bb){const n=bestelBanner();if(n)bb.outerHTML=n;else bb.remove()}}
+/* één keer per dag bij het starten een melding */
+function bestelMelding(){try{const d=new Date().toISOString().slice(0,10);if(localStorage.getItem("potplanning-bestelmelding")===d)return;const L=bestelLijst().filter(x=>!x.klaar&&x.cat!=="volg");if(!L.length)return;localStorage.setItem("potplanning-bestelmelding",d);melding(`📦 ${L.length} soort${L.length===1?"":"en"} bestellen deze week${L.some(x=>x.cat==="laat")?" (ook te laat)":""} · zie Inkoop`,"#6a3d9a")}catch(e){}}
 /* knopje bij de schuif: vorige, deze en volgende week */
 let aflDrie=false;
 function aflDrieWk(){const n=dezeWeek(),y=new Date(n).getFullYear(),sj=n>=seizoenVan(y)?y:y-1;if(planJaar!==sj)planJaar=sj;aflDrie=true;render()}
@@ -5106,13 +5045,13 @@ const FOTO_KLANT=false,fotoMag=()=>(FOTO_KLANT||!KLANT.code)&&opt("fotos");
 /* Wat ziet u (per apparaat; telefoon apart): basis + aan te vinken onderdelen.
    ruimte = afd + vloeren · prijs = verkoopprijzen · kosten = kosten per week·m² · fotos en aanbod = alleen eigen app */
 const modMob=()=>window.innerWidth<700;
-const OPT_ALLE=["ruimte","prijs","kosten","fotos","aanbod","prognose"],OPT_EIGEN=["fotos","aanbod","prognose"];
+const OPT_ALLE=["ruimte","prijs","kosten","fotos","aanbod"],OPT_EIGEN=["fotos","aanbod"];
 function optLees(){const sl=modMob()?"potplanning-opties-mob":"potplanning-opties";let o=null;
   try{o=JSON.parse(localStorage.getItem(sl)||"null")}catch(e){}
   if(!o){/* van de oude modules overnemen */let m=0;try{m=+localStorage.getItem(modMob()?"potplanning-module-mob":"potplanning-module")||+localStorage.getItem("potplanning-module")||+localStorage.getItem("potplanning-niveau")||0}catch(e){}
     if(!m)m=modMob()&&!KLANT.code?4:3;o={ruimte:m>=3,prijs:m>=2,kosten:m>=3,fotos:!KLANT.code,aanbod:m>=4}}
   return o}
-function opt(k){if(OPT_EIGEN.includes(k)&&!mod3Mag())return false;if(k==="prognose"&&!isBeheerder())return false;if(isTeler()&&(k==="prijs"||k==="kosten"||k==="aanbod"))return false;return !!optLees()[k]}
+function opt(k){if(OPT_EIGEN.includes(k)&&!mod3Mag())return false;if(isTeler()&&(k==="prijs"||k==="kosten"||k==="aanbod"))return false;return !!optLees()[k]}
 function zetOptie(k,v){const o=optLees();o[k]=!!v;try{localStorage.setItem(modMob()?"potplanning-opties-mob":"potplanning-opties",JSON.stringify(o))}catch(e){}zvKlaar();render()}
 const modNr=()=>opt("aanbod")?4:opt("ruimte")?3:opt("prijs")?2:1;   /* alleen nog voor oude stukjes code */
 const niveau=()=>opt("ruimte")?3:2;
@@ -5255,7 +5194,7 @@ function orderMail(naam){const kk=klantVan(naam)||{naam},pct=+(document.getEleme
   let h=`<div style="${F}color:#222"><p>Beste ${esc(kk.contact||kk.naam)},</p><p>Hierbij ons aanbod voor week ${wk}:</p><table style="border-collapse:collapse;${F}min-width:420px"><tr><th style="${th}text-align:left">Soort</th><th style="${th}text-align:right">Beschikbaar</th><th style="${th}text-align:right">Prijs</th></tr>`,t=`Beste ${kk.contact||kk.naam},\n\nHierbij ons aanbod voor week ${wk}:\n`,vor="";
   for(const r of rijen){if(r.pr!==vor){h+=`<tr><td colspan="3" style="${td}background:#eef6f1;font-weight:bold;color:#1f4d39;padding-top:8px">${esc(r.pr)}</td></tr>`;t+=`\n${r.pr}\n`;vor=r.pr}
     h+=`<tr><td style="${td}">${esc(r.so)}</td><td style="${td}text-align:right">${getal(r.n)}</td><td style="${td}text-align:right">${r.pv!=null?prijsTxt(r.pv):""}</td></tr>`;t+=`- ${r.so}: ${getal(r.n)}${r.pv!=null?" à "+prijsTxt(r.pv):""}\n`}
-  h+=`</table><p style="font-size:12px;color:#555">Onder voorbehoud van tussentijdse verkoop.</p><p>Met vriendelijke groet,</p></div>`;t+="\nOnder voorbehoud van tussentijdse verkoop.\n\nMet vriendelijke groet,\n";
+  h+=`</table><p style="font-size:12px;color:#555">Onder voorbehoud van tussentijdse verkoop.</p></div>`;t+="\nOnder voorbehoud van tussentijdse verkoop.\n";
   const su=`Aanbod week ${wk}`+(KLANT.appNaam?" – "+KLANT.appNaam:""),w=window.open("about:blank","_blank");
   (async()=>{let ok=false;try{await navigator.clipboard.write([new ClipboardItem({"text/html":new Blob([zonderPrijsHtml(h)],{type:"text/html"}),"text/plain":new Blob([t],{type:"text/plain"})})]);ok=true}catch(e){}
     const u=mailUrl(kk.email,su,ok?"":t);
@@ -5333,7 +5272,6 @@ function klantMailOverzicht(naam){const k=klantVan(naam)||{naam},nu=wkCode(+deze
   let t=`Beste ${k.contact||k.naam},\n\nHierbij het overzicht van uw reserveringen:\n`;
   for(const w of Object.keys(per).sort()){t+=`\nWeek ${+w.slice(2)}\n`;for(const{pr,so,x}of per[w])t+=`- ${so} (${pr}): ${getal(x.n)} st${ft(x)}${x.prijs!=null?" à "+prijsTxt(x.prijs):""}${x.opmerking?" – "+x.opmerking:""}\n`}
   if(!Object.keys(per).length)t+="\n(geen reserveringen vanaf deze week)\n";
-  t+="\nMet vriendelijke groet,\n";
   const su="Uw reserveringen"+(KLANT.appNaam?" – "+KLANT.appNaam:""),mob=/Android|iPhone|iPad/i.test(navigator.userAgent);
   if(mob){location.href=`mailto:${encodeURIComponent(k.email||"")}?subject=${encodeURIComponent(su)}&body=${encodeURIComponent(t)}`;return}
   /* computer: opgemaakte tabel kopiëren, Gmail openen met adres en onderwerp; gebruiker plakt met Ctrl + V */
@@ -5343,7 +5281,7 @@ function klantMailOverzicht(naam){const k=klantVan(naam)||{naam},nu=wkCode(+deze
   for(const w of Object.keys(per).sort()){const l=per[w],sn=l.reduce((a,b)=>a+ +b.x.n,0),se=l.reduce((a,b)=>a+(b.x.prijs!=null?b.x.prijs*b.x.n:0),0);tot+=sn;totE+=se;
     h+=`<tr><td colspan="6" style="${td}background:#eef6f1;font-weight:bold;color:#1f4d39;padding-top:8px">Week ${+w.slice(2)} · ${getal(sn)} planten${se&&MET_WAARDE?" · "+euro(se):""}</td></tr>`;
     for(const{pr,so,x}of l)h+=`<tr><td style="${td}">${esc(so)} <span style="color:#777;font-size:12px">${esc(pr)}</span></td><td style="${td}text-align:right">${getal(x.n)}</td><td style="${td}">${fustTxt(x)}</td><td style="${td}text-align:right">${x.prijs!=null?prijsTxt(x.prijs):""}</td><td style="${td}text-align:right">${x.prijs!=null?euro(x.prijs*x.n):""}</td><td style="${td}">${esc(x.opmerking||"")}</td></tr>`}
-  h+=`<tr><td style="${td}font-weight:bold;border-top:2px solid ${G}">Totaal</td><td style="${td}font-weight:bold;text-align:right;border-top:2px solid ${G}">${getal(tot)}</td><td colspan="2" style="${td}border-top:2px solid ${G}"></td><td style="${td}font-weight:bold;text-align:right;border-top:2px solid ${G}">${totE?euro(totE):""}</td><td style="${td}border-top:2px solid ${G}"></td></tr></table><p>Met vriendelijke groet,</p></div>`;
+  h+=`<tr><td style="${td}font-weight:bold;border-top:2px solid ${G}">Totaal</td><td style="${td}font-weight:bold;text-align:right;border-top:2px solid ${G}">${getal(tot)}</td><td colspan="2" style="${td}border-top:2px solid ${G}"></td><td style="${td}font-weight:bold;text-align:right;border-top:2px solid ${G}">${totE?euro(totE):""}</td><td style="${td}border-top:2px solid ${G}"></td></tr></table></div>`;
   const w=window.open("about:blank","_blank");let ok=false;
   (async()=>{try{await navigator.clipboard.write([new ClipboardItem({"text/html":new Blob([zonderPrijsHtml(h)],{type:"text/html"}),"text/plain":new Blob([t],{type:"text/plain"})})]);ok=true}catch(e){}
     const u=mailUrl(k.email,su,ok?"":t);
@@ -5432,22 +5370,17 @@ function rgSchuif(){const lo=document.getElementById("rgLo"),hi=document.getElem
 
 /* ---------- Inkoop: aantal doortrekken zoals in Excel (sleep het groene blokje rechtsonder) ---------- */
 let vul=null,vulKlikWeg=false;
-const vulInp=td=>td&&td.querySelector("input.ac,input.kost,input.prgin");
-const VUL_TD="table.oppot.invoer td,table.prgtab td";
+const vulInp=td=>td&&td.querySelector("input.ac,input.kost");
+const VUL_TD="table.oppot.invoer td";
 function vulCel(e){const td=e.target.closest&&e.target.closest(VUL_TD);return vulInp(td)?td:null}
 document.addEventListener("mouseover",e=>{if(vul)return;const td=vulCel(e);if(td&&td.classList.contains("vulbron"))return;
   document.querySelectorAll("td.vulbron").forEach(x=>x.classList.remove("vulbron"));if(td&&vulInp(td).value.trim())td.classList.add("vulbron")});
 document.addEventListener("mousedown",e=>{const td=vulCel(e);if(!td||!td.classList.contains("vulbron")||e.button!==0)return;
   const b=td.getBoundingClientRect();if(e.clientX<b.right-12||e.clientY<b.bottom-12)return; /* alleen het blokje rechtsonder */
-  const inp=vulInp(td);if(inp.classList.contains("prgin")){if(document.activeElement===inp)prgZet(inp);e.preventDefault();vul={inp,prg:true,r:+inp.dataset.ri,w:+inp.dataset.ci,x:e.clientX,y:e.clientY,doel:[]};document.body.classList.add("vulsleep");return}
-  const kost=inp.classList.contains("kost");if(document.activeElement===inp){if(kost)inp.dispatchEvent(new Event("change",{bubbles:true}));else zetAantal(inp,inp.value)}
+  const inp=vulInp(td);const kost=inp.classList.contains("kost");if(document.activeElement===inp){if(kost)inp.dispatchEvent(new Event("change",{bubbles:true}));else zetAantal(inp,inp.value)}
   e.preventDefault();vul={inp,kost,kf:inp.dataset.kf,r:+inp.dataset.r,w:+(inp.dataset.c??inp.dataset.w),x:e.clientX,y:e.clientY,doel:[]};document.body.classList.add("vulsleep")});
 document.addEventListener("mousemove",e=>{if(!vul)return;document.querySelectorAll("td.vulsel").forEach(x=>x.classList.remove("vulsel"));vul.doel=[];
   const el=document.elementFromPoint(e.clientX,e.clientY),td=el&&el.closest&&el.closest(VUL_TD),i=vulInp(td);if(!i)return;
-  if(vul.prg){if(!i.classList.contains("prgin"))return;const r1=+i.dataset.ri,c1=+i.dataset.ci,q=(r,c)=>document.querySelector(`input.prgin[data-ri="${r}"][data-ci="${c}"]`);
-    if(Math.abs(e.clientX-vul.x)>=Math.abs(e.clientY-vul.y)){for(let c=Math.min(vul.w,c1);c<=Math.max(vul.w,c1);c++)if(c!==vul.w){const x=q(vul.r,c);if(x)vul.doel.push(x)}}
-    else{for(let r=Math.min(vul.r,r1);r<=Math.max(vul.r,r1);r++)if(r!==vul.r){const x=q(r,vul.w);if(x)vul.doel.push(x)}}
-    vul.doel.forEach(c=>c.closest("td").classList.add("vulsel"));return}
   const r1=+i.dataset.r,w1=+(i.dataset.c??i.dataset.w);
   if(vul.kost){for(let w=Math.min(vul.w,w1);w<=Math.max(vul.w,w1);w++)if(w!==vul.w){const c=document.querySelector(`input.kost[data-kf="${vul.kf}"][data-w="${w}"]`);if(c)vul.doel.push(c)}} /* kosten: alleen weken */
   else if(i.classList.contains("kost"))return;
@@ -5456,8 +5389,7 @@ document.addEventListener("mousemove",e=>{if(!vul)return;document.querySelectorA
   vul.doel.forEach(c=>c.closest("td").classList.add("vulsel"))});
 document.addEventListener("mouseup",()=>{if(!vul)return;const v=vul;vul=null;document.body.classList.remove("vulsleep");
   document.querySelectorAll("td.vulsel").forEach(x=>x.classList.remove("vulsel"));if(!v.doel.length)return;vulKlikWeg=true;setTimeout(()=>vulKlikWeg=false,300);
-  const n=v.inp.value;if(v.prg){for(const c of v.doel){c.value=n;prgZet(c)}wijzig();melding(`✓ ${esc(n)} gekopieerd naar ${v.doel.length} ${v.doel.length===1?"vak":"vakken"} (Ctrl + Z = terug)`,"#2d6a4f");return}
-  if(v.kost){for(const c of v.doel){c.value=n;c.dispatchEvent(new Event("change",{bubbles:true}))}melding(`✓ ${v.kf.startsWith("vast")?esc(n)+" m²":"€ "+esc(n)} gekopieerd naar ${v.doel.length} weken`,"#2d6a4f");return}
+  const n=v.inp.value;  if(v.kost){for(const c of v.doel){c.value=n;c.dispatchEvent(new Event("change",{bubbles:true}))}melding(`✓ ${v.kf.startsWith("vast")?esc(n)+" m²":"€ "+esc(n)} gekopieerd naar ${v.doel.length} weken`,"#2d6a4f");return}
   for(const c of v.doel)zetAantal(c,n);
   melding(`✓ ${esc(n)} planten gekopieerd naar ${v.doel.length} ${v.doel.length===1?"vak":"vakken"} (Ctrl + Z = terug)`,"#2d6a4f")});
 document.addEventListener("click",e=>{if(vulKlikWeg){e.stopPropagation();e.preventDefault();vulKlikWeg=false}},true);
@@ -5574,13 +5506,26 @@ async function bhActief(i,stil){const k=beheerData().klanten[i];if(!k||!i)return
   if(!u){if(stil)return;try{const p=new firebase.auth.GoogleAuthProvider();p.setCustomParameters({prompt:"select_account"});u=(await app.auth().signInWithPopup(p)).user}
     catch(e){bhAct[k.id]={fout:e.message};if(tab==="beheer")render();return}}
   const col=app.firestore().collection("planning"),mail=String(u.email||"").toLowerCase();let a=null;
-  try{const h=await col.doc("hoofd").get();if(h.exists)a={t:h.data().gewijzigd,door:h.data().door}}catch(e){}
+  try{const l=await col.doc("laatst").get();if(l.exists)a={t:l.data().t,door:l.data().door}}catch(e){}
+  if(!a)try{const h=await col.doc("hoofd").get();if(h.exists)a={t:h.data().gewijzigd,door:h.data().door}}catch(e){}
   if(!a)try{const d=await col.doc("delen_"+mail).get();a=d.exists?{t:d.data().gemaakt,door:d.data().door}:{fout:"Er is nog niets gedeeld met "+mail}}catch(e){a={fout:e.code==="permission-denied"?mail+" staat niet bij 'meekijken' in Firebase":e.message}}
   bhAct[k.id]=a;if(tab==="beheer")render()}
+async function bhLaatstAlle(){const K=beheerData().klanten;toonPop("🕒 Laatst actief",`<div class="status">Ophalen…</div>`);
+  await Promise.all(K.map((k,i)=>i&&bhFbApp(k)?bhActief(i,true).catch(()=>{}):null));
+  const nu=Date.now(),rel=t=>{if(!t)return"";const d=Math.floor((nu-new Date(t))/864e5);return d<1?"vandaag":d===1?"gisteren":d+" dagen geleden"};
+  const rij=(k,i)=>{const a=bhAct[k.id];if(!bhFbApp(k))return`<tr><td>${esc(k.naam)}</td><td colspan="2" class="status">geen firebaseConfig</td><td></td></tr>`;
+    if(!a)return`<tr><td>${esc(k.naam)}</td><td colspan="2" class="status">nog niet ingelogd</td><td><button class="ovk ovlink" onclick="bhActief(${i}).then(bhLaatstAlle)">Inloggen</button></td></tr>`;
+    if(a.fout)return`<tr><td>${esc(k.naam)}</td><td colspan="2" class="status">${esc(a.fout)}</td><td></td></tr>`;
+    const d=a.t?new Date(a.t):null,oud=d&&nu-d>14*864e5;
+    return`<tr><td><b>${esc(k.naam)}</b></td><td class="${oud?"laatstoud":""}">${d?d.toLocaleDateString("nl-NL",{weekday:"short",day:"numeric",month:"short"})+" "+d.toLocaleTimeString("nl-NL",{hour:"2-digit",minute:"2-digit"})+` <span class="status">(${rel(a.t)})</span>`:"–"}</td><td>${esc(a.door||"–")}</td><td></td></tr>`};
+  const R=K.map((k,i)=>i?rij(k,i):"").join("");
+  toonPop("🕒 Laatst actief",`<table class="trktab laatsttab"><tr><th>Klant</th><th>Laatste wijziging</th><th>Door</th><th></th></tr>${R||`<tr><td colspan="4" class="status">Nog geen klanten.</td></tr>`}</table>
+    <p class="status" style="font-size:12px;margin:8px 0 0">Oranje = langer dan 2 weken niets veranderd. Werkt het beste als bij de klant de nieuwe <b>Regels Firebase</b> staan; dan ziet u alleen tijd en naam, niet de planning.</p>`);
+  const m=document.querySelector("#mobPop .mpop");if(m){m.classList.add("breed");m.style.maxWidth="760px"}}
 const bhVersies={},bhOpen1=new Set();let bhAutoCheck=false;
 function bhKlap(id){bhOpen1.has(id)?bhOpen1.delete(id):bhOpen1.add(id);render()}
 function toonBeheer(){const B=beheerData(),ob=document.getElementById("ovBalk");ob.hidden=false;if(!bhAutoCheck){bhAutoCheck=true;setTimeout(()=>bhAlleVersies(true),50)}
-  ob.innerHTML=`<span class="ovtitel">Beheer klanten</span><span class="ovinfo">${B.klanten.length} klanten · deze app: versie ${VERSIE}</span><span style="flex:1"></span><button class="ovk ovlink bhgroot" onclick="ghAlles()" title="Kies het nieuwe index.html-bestand. De app zet het bij alle klanten in GitHub, met hun eigen klant.js.">⬆ Alles bijwerken</button><button class="ovk ovlink" onclick="ghSleutel()" title="GitHub-sleutel (staat alleen op deze computer)">🔑 GitHub-sleutel ${ghToken()?"✓":"– nog niet"}</button><button class="ovk ovlink" onclick="bhAlleVersies()">↻ Versies controleren</button><button class="ovk ovlink" onclick="bhNieuw()">+ Nieuwe klant</button>`;
+  ob.innerHTML=`<span class="ovtitel">Beheer klanten</span><span class="ovinfo">${B.klanten.length} klanten · deze app: versie ${VERSIE}</span><span style="flex:1"></span><button class="ovk ovlink" onclick="bhLaatstAlle()" title="Per klant: wanneer en door wie het laatst iets is veranderd">🕒 Laatst actief</button><button class="ovk ovlink bhgroot" onclick="ghAlles()" title="Kies het nieuwe index.html-bestand. De app zet het bij alle klanten in GitHub, met hun eigen klant.js.">⬆ Alles bijwerken</button><button class="ovk ovlink" onclick="ghSleutel()" title="GitHub-sleutel (staat alleen op deze computer)">🔑 GitHub-sleutel ${ghToken()?"✓":"– nog niet"}</button><button class="ovk ovlink" onclick="bhAlleVersies()">↻ Versies controleren</button><button class="ovk ovlink" onclick="bhNieuw()">+ Nieuwe klant</button>`;
   const veld=(k,i,lab,type,ph)=>`<label>${lab}</label>${type==="ta"?`<textarea data-bk="${k}" data-bi="${i}" placeholder="${ph||""}">${esc(B.klanten[i][k]??(k==="beheerder"?"vollebregt.a@gmail.com":""))}</textarea>`:`<input data-bk="${k}" data-bi="${i}" value="${esc(B.klanten[i][k]||"")}" placeholder="${ph||""}">`}`;
   $("#inhoud").innerHTML=`<p class="status" style="margin:0 0 12px">Hier beheert u al uw klanten. Elke klant heeft een eigen GitHub (index.html + klant.js) en een eigen Firebase. Deze lijst staat alleen in uw eigen planning.</p>`+B.klanten.map((k,i)=>{const fb=fbLees(k.firebase),v=bhVersies[k.id];
     const st=v===undefined?`<span class="bhstat">versie ?</span>`:v===null?`<span class="bhstat oud">niet bereikbaar</span>`:v===VERSIE?`<span class="bhstat ok">versie ${esc(v)} ✓</span>`:`<span class="bhstat oud">versie ${esc(v)} → update naar ${VERSIE}</span>`;
@@ -5682,7 +5627,7 @@ ${eigen?`      function isBaas() { return ingelogd() && google() && mail() in ${
       // meekijker mag ook veranderen zolang de klant 'Wijzigen' niet heeft uitgevinkt
       function magWijzigen() { return isKijker() && (!exists(rechten()) || mail() in get(rechten()).data.wijzigen); }`}
       allow read: if isKlant() || magWijzigen()
-        || (isBeheer() && doc in ["toegang", "medewerkers", "login"])
+        || (isBeheer() && doc in ["toegang", "medewerkers", "login", "laatst"])
         || (isKijker() && (doc == "delen_" + mail() || doc == "bevestigd"));
       allow write: if (isKlant() && !mwKijk() && !(doc in ["toegang", "bevestigd", "medewerkers"]))
         || (magWijzigen() && !(doc in ["toegang", "rechten", "bevestigd", "medewerkers"]))
@@ -5809,7 +5754,6 @@ function bestelCsv(){const jaar=planJaar,lev=data.leveranciers.find(l=>l.id===be
 
 /* ---------- Zoeken (blauwe knop / Ctrl+K): snel naar een pagina, product, partij, soort of leverancier ---------- */
 const PAGINAS=[
-  ["📈","Prognose verkoop","Pagina","prognose verwachting verkoopverwachting voorstel inkoop seizoen",()=>prgOpen()],
   ["📦","Overzicht reserveringen","Pagina","reserveringen reservering verkooporders overzicht pakbon pakbonnen orders verkocht klant",()=>naar("verkoop")],
   ["🧾","Reservering (toets R)","Actie","reservering reserveren verkoop verkooporder order verkopen klant bestelling",()=>verkoopOrder()],
   ["🏠","Vloeren","Stamdata","vloeren kappen kas vakken oppotvloer m2 rijen",()=>naar("kappen")],
@@ -5838,7 +5782,6 @@ const PAGINAS=[
 ];
 function naar(t){tab=t;render()}
 const PAGINAS_E=[
-  ["📈","Prognose verkoop","Pagina","prognose verwachting verkoopverwachting voorstel inkoop seizoen",()=>prgOpen()],
   ["🚛","Afleverplanning (overzicht)","Pagina","afleveren afleverplan verkoop verkocht beschikbaar rapen vloer",()=>naar("aflever")],
   ["🪴","Opzetplanning (overzicht)","Pagina","oppotten oppotoverzicht trays m2 afdeling vloer",()=>naar("oppotov")],
   ["✏️","Inkoop / opzetten","Pagina","oppotplan aantallen invullen per week",()=>naar("oppot")],
@@ -5855,7 +5798,7 @@ const PAGINAS_E=[
 ];
 function zoekItemsE(q){q=q.trim().toLowerCase();const r=[],woorden=q.split(/\s+/).filter(Boolean);
   const past=(...v)=>{const t=v.join(" ").toLowerCase();return woorden.every(w=>t.includes(w))},score=t=>String(t).toLowerCase().startsWith(q)?0:1;
-  const nivWeg=n=>(/^Beheer/.test(n)&&!isBeheerder())||(/^Prognose/.test(n)&&!(isBeheerder()&&mod3Mag()))||(isTeler()&&/verkoop|klant|reserver|pakbon|order/i.test(n))||(niveau()===1&&/verkoop|klant|bestel|werk|pakbon/i.test(n))||(niveau()<3&&/ruimte/i.test(n));
+  const nivWeg=n=>(/^Beheer/.test(n)&&!isBeheerder())||(isTeler()&&/verkoop|klant|reserver|pakbon|order/i.test(n))||(niveau()===1&&/verkoop|klant|bestel|werk|pakbon/i.test(n))||(niveau()<3&&/ruimte/i.test(n));
   for(const[ic,naam,grp,w,f]of PAGINAS_E)if(!nivWeg(naam)&&past(naam,w))r.push({ic,naam,grp,f,s:score(naam)});
   if(q){const nu=+maandagIso(isoWeek(nuWk()).y,isoWeek(nuWk()).w);
     for(const t of data.teeltduren)if(past(t.product,t.potmaat,"cm")){
@@ -5869,7 +5812,7 @@ function zoekItemsE(q){q=q.trim().toLowerCase();const r=[],woorden=q.split(/\s+/
 function zoekItems(q){if(data.instellingen.eenvoudig)return zoekItemsE(q);q=q.trim().toLowerCase();const r=[];
   const woorden=q.split(/\s+/).filter(Boolean);
   const past=(...v)=>{const tekst=v.join(" ").toLowerCase();return woorden.every(w=>tekst.includes(w))},score=t=>t.toLowerCase().startsWith(q)?0:1;
-  for(const[ic,naam,grp,w,f]of PAGINAS)if(!(/^Prognose/.test(naam)&&!(isBeheerder()&&mod3Mag()))&&past(naam,w))r.push({ic,naam,grp,f,s:score(naam)});
+  for(const[ic,naam,grp,w,f]of PAGINAS)if(past(naam,w))r.push({ic,naam,grp,f,s:score(naam)});
   if(q){
     for(const t of data.teeltduren)if(woorden.some(w=>(t.product||"").toLowerCase().includes(w))&&past(t.product,t.potmaat,"cm teeltduur duur oppotplan")){
       r.push({ic:"⏱️",naam:"Teeltduur · "+teeltNaam(t),grp:"Teelt",f:()=>{naar("soorten");openDuur(t.id)},s:score(t.product)+.5});
