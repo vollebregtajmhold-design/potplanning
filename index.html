@@ -1003,7 +1003,7 @@ body.sales .navMidden>.mknop.groot{display:none!important}body.kijkmodus #btnPri
 
 <script>
 "use strict";
-const VERSIE="48.5";
+const VERSIE="48.6";
 const VERSIE_DATUM="03-11-2026";
 /* ---------- Basis ---------- */
 const PALET=["#2d6a4f","#1B5EBE","#E8007D","#c77d1a","#7a4fa0","#0f8b8d","#5b6b2f","#3d5a80","#a0522d","#7AB648"];
@@ -3164,7 +3164,7 @@ function toonOppot(){
   let h="";
   {const ob=document.getElementById("ovBalk");ob.hidden=false;ob.innerHTML=`<span class="ovtitel">Inkoop / opzetten</span>
     <span class="oppjaar"><button class="btn licht klein" onclick="inkStap(-1)" title="Half jaar terug">◀</button><b title="${inkHalf?"week 27 van "+planJaar+" t/m week 26 van "+(planJaar+1):"heel "+planJaar}">${inkLabel()}</b><button class="btn licht klein" onclick="inkStap(1)" title="Half jaar verder">▶</button></span>
-    <span style="flex:1"></span>${opt("prognose")?`<button class="ovk inkcsv" onclick="terugReken()" title="Vul in wat u in een afleverweek wilt hebben: de app rekent de opzetweek en het aantal uit">🧮 Terugrekenen</button>`:""}<button class="ovk inkcsv" onclick="legeRuimte()" title="Hoeveel planten passen er per opzetweek nog bij (zonder dat de kas te vol wordt)">🪴 Lege ruimte</button>${opt("kosten")?`<button class="ovk inkcsv kostknop" onclick="toonKostVerdeling()" title="Welk deel van de kosten hoort bij welke teelt en bij de vaste bezetting">📊 Kostenverdeling</button>`:""}<button class="ovk inkcsv" onclick="inkoopCsv()" title="Inkoop van ${planJaar} als Excel-bestand (CSV): alle teelten en soorten, per week">⬇ Excel</button>`}
+    <span style="flex:1"></span>${isBeheerder()&&mod3Mag()?`<button class="ovk inkcsv" onclick="terugReken()" title="Vul in wat u in een afleverweek wilt hebben: de app rekent de opzetweek en het aantal uit">🧮 Terugrekenen</button>`:""}<button class="ovk inkcsv" onclick="legeRuimte()" title="Hoeveel planten passen er per opzetweek nog bij (zonder dat de kas te vol wordt)">🪴 Lege ruimte</button>${opt("kosten")?`<button class="ovk inkcsv kostknop" onclick="toonKostVerdeling()" title="Welk deel van de kosten hoort bij welke teelt en bij de vaste bezetting">📊 Kostenverdeling</button>`:""}<button class="ovk inkcsv" onclick="inkoopCsv()" title="Inkoop van ${planJaar} als Excel-bestand (CSV): alle teelten en soorten, per week">⬇ Excel</button>`}
   if(!data.teeltduren.length){$("#inhoud").innerHTML=h+`<div class="leeg">Nog geen teelten. Maak ze eerst aan bij <b>Stamdata → Teelt</b>, of <button class="btn" onclick="openPlak()">📋 Plak een bestellijst</button></div>`;return}
   if(!data.teeltduren.some(t=>t.id===oppotKeuze))oppotKeuze=data.teeltduren[0].id; /* "Alle teelten" is weg */
   h+=`<div class="tchips">${data.teeltduren.map(t=>{const TJ={},n=C.reduce((x,k)=>x+(+((TJ[k.j]=TJ[k.j]||aantalRij(t,k.j))[k.w])||0),0);return`<button type="button" class="tchip ${t.id===oppotKeuze?"aan":""}" onclick="oppotKeuze='${t.id}';render()" oncontextmenu="naarTeeltId('${t.id}');return false" title="Klik: inkoop van deze teelt · Rechtermuisknop: teelt bewerken"><b>${esc(teeltNaamKort(t))}</b><small>${getal(n)}</small></button>`}).join("")}
