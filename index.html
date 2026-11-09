@@ -711,6 +711,7 @@ table.oppot th.jaarstart,table.oppot td.jaarstart{border-left:3px solid #4b2a6e!
 .laatsttab td,.laatsttab th{text-align:left!important}.laatsttab td.laatstoud{color:#c77700;font-weight:700}
 .bestelbanner{display:flex;align-items:center;gap:6px;flex-wrap:wrap;background:#fff6d6;border:1px solid #e9c46a;border-radius:10px;padding:8px 12px;margin:0 0 10px;cursor:pointer;font-size:15px}.bestelbanner:hover{background:#ffefb8}.bbknop{margin-left:auto;color:#4b2a6e;font-weight:700}.bblaat{color:#b3261e;font-weight:700}
 .besteltab td,.besteltab th{text-align:left!important}.besteltab tr.bbklaar td{opacity:.45;text-decoration:line-through}.besteltab tr.bbklaar td:first-child{text-decoration:none;opacity:1}
+.verptab input{font:inherit;font-size:14px;padding:3px 5px;border:1px solid #cfc6b4;border-radius:5px}.verptab td,.verptab th{text-align:left!important}.verpknop.aan{background:#2d6a4f;color:#fff}.ofv{font-size:12px;margin-left:6px;max-width:140px}
 .trkKnop{background:#2d6a4f;color:#fff;border:0;border-radius:10px;padding:8px 16px;font-size:15px;font-weight:700;cursor:pointer;box-shadow:0 2px 6px rgba(45,106,79,.35);margin-right:6px;white-space:nowrap}.trkKnop:hover{background:#245a42}
 .trkform{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:8px}.trkform input,.trkform select{min-width:0;box-sizing:border-box;max-width:100%}.trkform label{display:flex;flex-direction:column;font-size:13px;color:#555;gap:3px}.trkform select,.trkform input{font:inherit;font-size:15px;padding:6px;border:1px solid #cfc6b4;border-radius:6px}
 .trkres{display:grid;grid-template-columns:auto 1fr;gap:4px 12px;margin-top:12px;padding:10px;background:#eef6f0;border-radius:8px}.trktab{border-collapse:collapse;font-size:14px}.trktab td,.trktab th{padding:3px 10px;text-align:right;border-bottom:1px solid #e3ddd0}.trktab td:first-child,.trktab th:first-child{text-align:left}.trktab tr.trkdoel td{background:#fff3c4;font-weight:700}.trktab tr.tot td{font-weight:700}
@@ -1009,7 +1010,7 @@ body.sales .navMidden>.mknop.groot{display:none!important}body.kijkmodus #btnPri
 
 <script>
 "use strict";
-const VERSIE="49.9";
+const VERSIE="50.0";
 const VERSIE_DATUM="03-11-2026";
 /* ---------- Basis ---------- */
 const PALET=["#2d6a4f","#1B5EBE","#E8007D","#c77d1a","#7a4fa0","#0f8b8d","#5b6b2f","#3d5a80","#a0522d","#7AB648"];
@@ -1100,7 +1101,7 @@ function normaliseer(d){
   /* Soorten (rassen) per teelt: later te kiezen in een keuzelijst */
   d.registraties=(Array.isArray(d.registraties)?d.registraties:[]).filter(r=>r&&r.id);
   d.leveranciers=(Array.isArray(d.leveranciers)?d.leveranciers:[]).map(l=>({id:l.id||uid(),naam:String(l.naam||""),contact:String(l.contact||""),telefoon:String(l.telefoon||""),email:String(l.email||""),opmerking:String(l.opmerking||""),levertijd:Math.max(0,Math.round(+l.levertijd||0))}));
-  d.rassen=(Array.isArray(d.rassen)?d.rassen:[]).map(r=>({id:r.id||uid(),teeltId:String(r.teeltId||""),naam:String(r.naam||""),nr:String(r.nr||""),fdArt:String(r.fdArt||""),klopt:String(r.klopt||""),levertijd:r.levertijd==null||r.levertijd===""||isNaN(+r.levertijd)?null:Math.max(0,Math.round(+r.levertijd)),leverancierId:String(r.leverancierId||""),aantallen:r.aantallen||{},raaptijd:Math.max(1,Math.min(26,Math.round(+r.raaptijd||1))),gewas:String(r.gewas||""),fust:String(r.fust||""),...(r.kar?{kar:String(r.kar)}:{}),prijs:r.prijs===""||r.prijs==null||isNaN(+r.prijs)?null:+r.prijs,uitval:r.uitval===undefined?undefined:Math.max(0,Math.min(100,+r.uitval||0)),
+  d.rassen=(Array.isArray(d.rassen)?d.rassen:[]).map(r=>({id:r.id||uid(),teeltId:String(r.teeltId||""),naam:String(r.naam||""),nr:String(r.nr||""),fdArt:String(r.fdArt||""),...(Array.isArray(r.verp)&&r.verp.length?{verp:r.verp.filter(v=>v&&(v.naam||v.code)).map(v=>({id:v.id||uid(),naam:String(v.naam||""),code:String(v.code||""),fust:String(v.fust||""),opb:String(v.opb||""),kar:String(v.kar||""),per:Math.max(0,Math.round(+v.per||0))}))}:{}),klopt:String(r.klopt||""),levertijd:r.levertijd==null||r.levertijd===""||isNaN(+r.levertijd)?null:Math.max(0,Math.round(+r.levertijd)),leverancierId:String(r.leverancierId||""),aantallen:r.aantallen||{},raaptijd:Math.max(1,Math.min(26,Math.round(+r.raaptijd||1))),gewas:String(r.gewas||""),fust:String(r.fust||""),...(r.kar?{kar:String(r.kar)}:{}),prijs:r.prijs===""||r.prijs==null||isNaN(+r.prijs)?null:+r.prijs,uitval:r.uitval===undefined?undefined:Math.max(0,Math.min(100,+r.uitval||0)),
     ...(Array.isArray(r.perioden)&&r.perioden.length?{perioden:r.perioden}:{}),
     ...(r.vloeren&&typeof r.vloeren==="object"?{vloeren:r.vloeren}:{}),
     ...(Array.isArray(r.raapPct)&&r.raapPct.length===Math.max(1,Math.min(26,Math.round(+r.raaptijd||1)))-1?{raapPct:r.raapPct.map(x=>Math.max(0,Math.min(100,+x||0)))}:{})}));
@@ -2888,7 +2889,7 @@ function toonSoorten(){
           <td style="width:25%"><b>Alle soorten</b><br><span class="status" style="font-size:11px">vult de hele kolom</span></td>
           <td style="width:18%" class="uitgebreid"><select data-alle="leverancierId" data-teelt="${t.id}" style="width:100%"><option value="">— kies —</option>${[...data.leveranciers].filter(x=>x.naam).sort((a,b)=>a.naam.localeCompare(b.naam,"nl")).map(x=>`<option value="${x.id}">${esc(x.naam)}</option>`).join("")}</select></td>
           <td style="width:70px"></td>${opt("floriday")?`<td style="width:82px"></td>`:""}
-          <td style="width:84px"><input data-alle="fust" data-teelt="${t.id}" placeholder="fust" style="width:100%;font-size:12px"></td>
+          ${opt("floriday")?`<td style="width:50px"></td>`:""}<td style="width:84px"><input data-alle="fust" data-teelt="${t.id}" placeholder="fust" style="width:100%;font-size:12px"></td>
           <td style="width:120px;white-space:nowrap;font-size:12px"><span class="status">raaptijd</span> <input type="number" min="1" max="26" style="width:48px" data-alle="raaptijd" data-teelt="${t.id}" placeholder="–"> <span class="status">wk</span></td>
           <td style="white-space:nowrap;font-size:12px;width:${raapBreedte(srt)}px">${(()=>{const tel={};srt.forEach(r=>tel[r.raaptijd||1]=(tel[r.raaptijd||1]||0)+1);const R=+Object.entries(tel).sort((a,b)=>b[1]-a[1])[0][0],zelf=srt.filter(r=>(r.raaptijd||1)===R);
             const gelijk=zelf.every(r=>JSON.stringify(r.raapPct||null)===JSON.stringify(zelf[0].raapPct||null)),w=gelijk?zelf[0].raapPct:null;
@@ -2900,7 +2901,7 @@ function toonSoorten(){
           <td class="uitgebreid"><select data-ras="${r.id}" data-rk="leverancierId" style="width:100%">${levOpties(r.leverancierId)}</select></td>
           <td style="width:70px"><input data-ras="${r.id}" data-rk="nr" value="${esc(r.nr||"")}" placeholder="nr." title="Soortnummer (bijv. artikelnummer van de leverancier)" style="width:100%;font-size:12px"></td>
           ${opt("floriday")?`<td style="width:82px"><input data-ras="${r.id}" data-rk="fdArt" value="${esc(r.fdArt||"")}" placeholder="Floriday" title="Floriday-artikelnummer van deze soort (voor 📋 Floriday bij het orderformulier)" style="width:100%;font-size:12px"></td>`:""}
-          <td style="width:84px"><input data-ras="${r.id}" data-rk="fust" value="${esc(r.fust)}" placeholder="fust" title="Fust, bijv. Tray 260" style="width:100%;font-size:12px"></td>
+          <td style="width:84px"><input data-ras="${r.id}" data-rk="fust" value="${esc(r.fust)}" placeholder="fust" title="Fust, bijv. Tray 260" style="width:100%;font-size:12px"></td>${opt("floriday")?`<td style="width:50px"><button class="ovk ovlink verpknop ${(r.verp||[]).length?"aan":""}" onclick="verpPop('${r.id}')" title="Verpakkingen voor de verkoop (bijv. x3, x4, x6)">📦${(r.verp||[]).length?" "+r.verp.length:""}</button></td>`:""}
           <td style="width:120px;white-space:nowrap;font-size:12px" title="Raaptijd: in hoeveel weken (de laatste weken van de teelt) deze soort afgeleverd wordt"><span class="status">raaptijd</span> <input type="number" min="1" max="26" style="width:48px" data-ras="${r.id}" data-rk="raaptijd" value="${r.raaptijd||1}"> <span class="status">wk</span></td>
           <td style="white-space:nowrap;font-size:12px;width:${raapBreedte(srt)}px">${pctCellen(r.raaptijd||1,`data-ras="${r.id}" data-rk="pct"`,r.raapPct,!!r.raapPct)}</td>
           <td style="width:110px;white-space:nowrap;font-size:12px" title="Uitval in procent. Telt alleen mee voor de afleverplanning."><span class="status">uitval</span> <input type="number" min="0" max="100" step="0.5" style="width:48px" data-ras="${r.id}" data-rk="uitval" value="${r.uitval||""}" placeholder="0"> <span class="status">%</span></td>
@@ -4249,15 +4250,15 @@ async function dlMapKies(){try{const h=await window.showDirectoryPicker({id:"cyc
 async function dlMapUit(){dlMap=null;try{await dlKv("dlmap",null)}catch(e){}melding("Downloads gaan weer naar de gewone map Downloads","#2d6a4f");dlMapPop()}
 /* ---------- 📋 Floriday: orderregels klaarzetten (artikelnummer, aantal, fust, prijs, week, klant/GLN) om in Floriday in te voeren ---------- */
 let fdRegels=[],fdKlant=null,fdTerug=null,fdForm=[];
-function fdHerstel(){for(const x of fdForm){const tr=[...document.querySelectorAll(".oftab tr[data-k]")].find(t=>t.dataset.k===x.k);if(tr){tr.querySelector(".ofn").value=x.n;if(x.prv!=null)tr.querySelector(".ofp").value=x.prv}}try{ofTel()}catch(e){}}
+function fdHerstel(){for(const x of fdForm){const tr=[...document.querySelectorAll(".oftab tr[data-k]")].find(t=>t.dataset.k===x.k);if(tr){tr.querySelector(".ofn").value=x.n;if(x.prv!=null)tr.querySelector(".ofp").value=x.prv;const vs=tr.querySelector(".ofv");if(vs&&x.vid)vs.value=x.vid}}try{ofTel()}catch(e){}}
 function fdLijst(naam){if(!opt("floriday"))return;const kk=klantVan(naam)||{naam},code=wkCode(ofWeek),wk=isoWeek(new Date(ofWeek));let R=[];
   /* 1. wat nu in het orderformulier staat; 2. anders wat al opgeslagen is voor deze klant in deze week */
-  document.querySelectorAll(".oftab tr[data-k]").forEach(tr=>{const v=Math.round(+String(tr.querySelector(".ofn").value).replace(/[.\s]/g,"").replace(",",".")||0);if(v>0)R.push({k:tr.dataset.k,n:v,pr:prijsLees(tr.querySelector(".ofp").value),prv:tr.querySelector(".ofp").value})});fdForm=R.slice();
+  document.querySelectorAll(".oftab tr[data-k]").forEach(tr=>{const v=Math.round(+String(tr.querySelector(".ofn").value).replace(/[.\s]/g,"").replace(",",".")||0);const vs=tr.querySelector(".ofv");if(v>0)R.push({k:tr.dataset.k,n:v,pr:prijsLees(tr.querySelector(".ofp").value),prv:tr.querySelector(".ofp").value,vid:vs?vs.value:""})});fdForm=R.slice();
   const bron=R.length?"orderformulier":"opgeslagen";
-  if(!R.length)for(const[key,l]of Object.entries(data.verkoop||{})){if(!key.endsWith("|"+code))continue;const k=key.slice(0,-(code.length+1));for(const x of l)if((x.klant||"").toLowerCase()===String(kk.naam).toLowerCase())R.push({k,n:+x.n,pr:x.prijs!=null?x.prijs:null,fust:x.fust,per:x.perFust})}
+  if(!R.length)for(const[key,l]of Object.entries(data.verkoop||{})){if(!key.endsWith("|"+code))continue;const k=key.slice(0,-(code.length+1));for(const x of l)if((x.klant||"").toLowerCase()===String(kk.naam).toLowerCase())R.push({k,n:+x.n,pr:x.prijs!=null?x.prijs:null,fust:x.fust,per:x.perFust,vid:x.verp,vn:x.vn,vc:x.vc})}
   if(!R.length){melding("Vul eerst een aantal in (of sla de order op).");return}
-  fdKlant=kk;fdTerug=naam;fdRegels=R.map(x=>{const ras=vkRasVan(x.k),[pr,so]=x.k.split("|"),kf=klantFust(kk.id?kk:null,teeltIdVan(x.k)),fu=x.fust||kf.fust||(ras&&ras.fust)||"",per=x.per||kf.per||fustAantal(fu)||0;
-    return{art:ras&&ras.fdArt||"",naam:pr+" · "+so,n:x.n,fust:fu,per,trays:per>1?Math.ceil(x.n/per):"",prijs:x.pr,wk:wk.y+"-"+String(wk.w).padStart(2,"0")}});
+  fdKlant=kk;fdTerug=naam;fdRegels=R.map(x=>{const ras=vkRasVan(x.k),[pr,so]=x.k.split("|"),vv=verpVan(ras,x.vid),kf=klantFust(kk.id?kk:null,teeltIdVan(x.k)),fu=(vv&&vv.fust)||x.fust||kf.fust||(ras&&ras.fust)||"",per=(vv&&vv.per)||x.per||kf.per||fustAantal(fu)||0;
+    return{art:(vv&&vv.code)||x.vc||(ras&&ras.fdArt)||"",naam:pr+" · "+so+((vv&&vv.naam)||x.vn?" · "+((vv&&vv.naam)||x.vn):""),n:x.n,fust:fu,per,trays:per>1?Math.ceil(x.n/per):"",prijs:x.pr,wk:wk.y+"-"+String(wk.w).padStart(2,"0")}});
   const mist=fdRegels.filter(x=>!x.art).length;
   toonPop("📋 Floriday · "+esc(kk.naam||naam),`<div class="trkres" style="grid-template-columns:auto 1fr;margin-top:0"><div>Klant</div><b>${esc(kk.naam||naam)}</b><div>Floriday / GLN</div><b>${kk.fdNr?esc(kk.fdNr):`<span class="bblaat">– ontbreekt</span> <span class="status">(Klantgegevens)</span>`}</b><div>Week</div><b>${wk.w} (${wk.y})</b></div>
     <table class="trktab besteltab" style="margin-top:10px"><tr><th>Artikelnr</th><th>Soort</th><th>Aantal</th><th>Fust</th><th>Trays</th>${geenPrijs()?"":"<th>€ /st</th>"}</tr>
@@ -4271,6 +4272,26 @@ async function fdKopieer(){const t=fdRijen().map(r=>r.map(v=>typeof v==="number"
   try{await navigator.clipboard.writeText(t);melding("📋 "+fdRegels.length+" regels gekopieerd · plak met Ctrl + V","#2d6a4f")}catch(e){prompt("Kopieer deze tekst (Ctrl + C):",t)}}
 async function fdExcel(){const R=fdRijen(),naam=`Floriday ${fdKlant.naam||""} ${fdRegels[0]?fdRegels[0].wk:""}`.trim();
   try{await xlsxDownload(R,naam+".xlsx","Floriday",R.length,5)}catch(e){const q=v=>`"${String(v??"").replace(/"/g,'""')}"`,a=document.createElement("a");a.href=URL.createObjectURL(new Blob(["\ufeff"+R.map(r=>r.map(v=>typeof v==="number"?v:q(v)).join(";")).join("\n")],{type:"text/csv"}));a.download=naam+".csv";document.body.appendChild(a);a.click();a.remove()}}
+/* ---------- 📦 Verpakkingen per soort (alleen beheer, vinkje Floriday): één soort in de planning, meerdere handelsartikelen in de verkoop ----------
+   ras.verp=[{id,naam:"x4",code:"CURLY MIX X4",fust:"408",opb:"6×5×4",kar:"DC",per:6}] · opbouw = planten per fust × fust per laag × lagen */
+const verpOpb=o=>String(o||"").split(/[x×*]/i).map(v=>+v.replace(",",".")||0);
+const verpKar=v=>{const a=verpOpb(v.opb);return a.length===3&&a.every(x=>x>0)?a[0]*a[1]*a[2]:0};
+const verpVan=(r,id)=>r&&(r.verp||[]).find(v=>v.id===id);
+function verpPop(rid){const r=data.rassen.find(x=>x.id===rid);if(!r)return;const L=r.verp=r.verp||[],t=data.teeltduren.find(x=>x.id===r.teeltId);
+  toonPop("📦 Verpakkingen · "+esc(r.naam),`<p class="status" style="margin:0 0 8px">Eén soort in de planning, meerdere verpakkingen in de verkoop. De voorraad blijft samen.</p>
+    <table class="trktab verptab"><tr><th>Naam</th><th>Floriday-code</th><th>Fust</th><th title="planten per fust × fust per laag × lagen">Opbouw</th><th>Kar</th><th title="planten per fust">Per fust</th><th>Per kar</th><th></th></tr>
+    ${L.map((v,i)=>`<tr><td><input value="${esc(v.naam)}" placeholder="x4" onchange="verpZet('${rid}',${i},'naam',this.value)" style="width:60px"></td><td><input value="${esc(v.code)}" placeholder="CURLY MIX X4" onchange="verpZet('${rid}',${i},'code',this.value)" style="width:130px"></td><td><input value="${esc(v.fust)}" placeholder="408" onchange="verpZet('${rid}',${i},'fust',this.value)" style="width:60px"></td><td><input value="${esc(v.opb)}" placeholder="6×5×4" onchange="verpZet('${rid}',${i},'opb',this.value)" style="width:80px"></td><td><input value="${esc(v.kar)}" placeholder="DC" onchange="verpZet('${rid}',${i},'kar',this.value)" style="width:44px"></td><td><input value="${v.per||""}" inputmode="numeric" placeholder="6" onchange="verpZet('${rid}',${i},'per',this.value)" style="width:50px"></td><td><b>${verpKar(v)?getal(verpKar(v)):"–"}</b></td><td><button class="ovk ovlink" onclick="verpWeg('${rid}',${i})" title="Weghalen">✕</button></td></tr>`).join("")}</table>
+    <div class="rij" style="gap:8px;margin-top:10px"><button class="btn licht" onclick="verpErbij('${rid}')">+ Verpakking</button><span style="flex:1"></span><button class="btn" onclick="sluitMobSoort();render()">Klaar</button></div>
+    <p class="status" style="font-size:12px;margin:8px 0 0">Opbouw zoals in Floriday, bijv. <b>6×5×4</b> = 6 planten per fust × 5 fust per laag × 4 lagen = 120 per kar. "Per fust" vult zich vanzelf in uit de opbouw. Bij een reservering en in het orderformulier kiest u daarna de verpakking.</p>`);
+  const m=document.querySelector("#mobPop .mpop");if(m){m.classList.add("breed");m.style.maxWidth="900px"}}
+function verpZet(rid,i,k,v){const r=data.rassen.find(x=>x.id===rid),x=r&&r.verp&&r.verp[i];if(!x)return;v=String(v).trim();
+  if(k==="per")x.per=Math.max(0,Math.round(+v||0));else x[k]=v;if(k==="opb"){const a=verpOpb(v);if(a[0]>0&&!x.per)x.per=Math.round(a[0])}opslaanLater();verpPop(rid)}
+function verpErbij(rid){const r=data.rassen.find(x=>x.id===rid);if(!r)return;(r.verp=r.verp||[]).push({id:uid(),naam:"",code:"",fust:"",opb:"",kar:"",per:0});opslaanLater();verpPop(rid)}
+function verpWeg(rid,i){const r=data.rassen.find(x=>x.id===rid);if(!r||!r.verp)return;if(!confirm("Deze verpakking weghalen?"))return;r.verp.splice(i,1);if(!r.verp.length)delete r.verp;opslaanLater();verpPop(rid)}
+/* vaste verpakking per klant per teelt (wordt onthouden bij het kiezen) */
+const verpKlantNaam=(kk,tid)=>kk&&kk.perTeelt&&kk.perTeelt[tid]&&kk.perTeelt[tid].v||"";
+function verpKlantZet(kk,tid,naam){if(!kk||!tid)return;kk.perTeelt=kk.perTeelt||{};kk.perTeelt[tid]=Object.assign({},kk.perTeelt[tid]||{},{v:naam})}
+const verpVelden=v=>v?{verp:v.id,vn:v.naam,vc:v.code,...(v.fust?{fust:v.fust}:{}),...(v.per>1?{perFust:v.per}:{})}:{};
 /* knopje bij de schuif: vorige, deze en volgende week */
 let aflDrie=false;
 function aflDrieWk(){const n=dezeWeek(),y=new Date(n).getFullYear(),sj=n>=seizoenVan(y)?y:y-1;if(planJaar!==sj)planJaar=sj;aflDrie=true;render()}
@@ -4590,7 +4611,8 @@ const euro=v=>!MET_WAARDE||geenPrijs()?"":"€ "+(+v).toLocaleString("nl-NL",{mi
 /* fust bij een reservering: standaard van de klant, per reservering te veranderen. Aantal = altijd hele fusten (naar boven) */
 const klantVan=n=>data.klanten.find(x=>x.naam&&x.naam.toLowerCase()===String(n||"").toLowerCase());
 const fustRond=(n,per)=>per>1&&n>0?Math.ceil(n/per)*per:n;
-const fustTxt=x=>x&&+x.perFust>1&&+x.n?`${getal(Math.round(x.n/x.perFust))} × ${getal(x.perFust)}${x.fust?" ("+esc(x.fust)+")":""}`:x&&x.fust?esc(x.fust):"";
+const fustTxt=x=>(x&&x.vn?`<b>${esc(x.vn)}</b> · `:"")+fustTxt0(x);
+const fustTxt0=x=>x&&+x.perFust>1&&+x.n?`${getal(Math.round(x.n/x.perFust))} × ${getal(x.perFust)}${x.fust?" ("+esc(x.fust)+")":""}`:x&&x.fust?esc(x.fust):"";
 /* opmerking bij een reservering veranderen */
 function opmVraag(x){const v=prompt("Opmerking bij deze reservering (leeg = weghalen):",x.opmerking||"");if(v===null)return false;const t=v.trim();if(t)x.opmerking=t;else delete x.opmerking;wijzig();return true}
 function verkOpm(k,t,i){const x=verkVan(k,t)[i];if(x&&opmVraag(x)&&raapLaatst)raapPop(...raapLaatst)}
@@ -4982,6 +5004,7 @@ function voRender(){
     <label id="voNieuwRij" ${vo.nieuw?"":"hidden"}>Naam <input id="voNieuw" value="${esc(vo.nieuw?vo.klant:"")}" placeholder="naam nieuwe klant"></label>
     <label>Gewas <select id="voTeelt">${tl.map(t=>`<option value="${t.id}" ${t.id===vo.teelt?"selected":""}>${esc(teeltNaam(t))}</option>`).join("")}</select></label>
     <label>Soort <select id="voSoort">${srt.length?srt.map(r=>`<option value="${esc(r.naam)}" ${r.naam===vo.soort?"selected":""}>${esc(r.naam)}</option>`).join(""):`<option value="">(zonder soort)</option>`}</select></label>
+    <label id="voVerpRij" hidden>Verpakking <select id="voVerp"></select></label>
     <div class="vobes" id="voBes"></div>
     <label>Aantal <input id="voN" type="text" inputmode="numeric" pattern="[0-9]*" value="${esc(vo.n)}" placeholder="aantal planten"></label>
     <label>Fust <span style="display:flex;gap:6px;flex:1"><input id="voFust" value="${esc(vo.fust||"")}" placeholder="bijv. Deense kar" style="flex:2"><input id="voPer" value="${esc(vo.perFust||"")}" placeholder="per fust" inputmode="numeric" style="flex:1" title="Aantal planten per fust. Het aantal wordt afgerond op hele fusten."></span></label>
@@ -4995,13 +5018,18 @@ function voRender(){
   $i("voKlant").onchange=e=>{const v=e.target.value,r=$i("voNieuwRij");vo.nieuw=v==="__nieuw";vo.klant=vo.nieuw?"":v;r.hidden=!vo.nieuw;if(vo.nieuw){$i("voNieuw").value="";$i("voNieuw").focus()}};
   $i("voNieuw").oninput=e=>{vo.klant=e.target.value};
   $i("voTeelt").onchange=e=>{vo.teelt=e.target.value;vo.soort="";voRender()};
-  $i("voSoort").onchange=e=>{vo.soort=e.target.value;voUpd()};
+  const voRas=()=>data.rassen.find(r=>r.teeltId===vo.teelt&&r.naam===vo.soort);
+  const voVerpVul=()=>{const r=voRas(),VL=opt("floriday")&&r&&r.verp&&r.verp.length?r.verp:null,rij=$i("voVerpRij");rij.hidden=!VL;if(!VL){vo.verp="";return}
+    if(!VL.some(v=>v.id===vo.verp)){const kn=verpKlantNaam(klantVan(vo.klant),vo.teelt),d=VL.find(v=>v.naam&&v.naam===kn);vo.verp=d?d.id:""}
+    $i("voVerp").innerHTML=`<option value="">— geen —</option>`+VL.map(v=>`<option value="${v.id}" ${v.id===vo.verp?"selected":""}>${esc(v.naam||v.code)}${v.code&&v.naam?" · "+esc(v.code):""}${v.per>1?" · "+v.per+"/fust":""}</option>`).join("")};
+  voVerpVul();{const v=verpVan(voRas(),vo.verp);if(v&&!vo.fustZelf){vo.fust=v.fust||vo.fust;vo.perFust=v.per>1?v.per:vo.perFust;$i("voFust").value=vo.fust||"";$i("voPer").value=vo.perFust||""}}$i("voSoort").onchange=e=>{vo.soort=e.target.value;vo.verp="";voVerpVul();voUpd()};
+  $i("voVerp").onchange=e=>{vo.verp=e.target.value;const v=verpVan(voRas(),vo.verp);if(v){vo.fust=v.fust||vo.fust;vo.perFust=v.per>1?v.per:vo.perFust;vo.fustZelf=true;$i("voFust").value=vo.fust||"";$i("voPer").value=vo.perFust||""}};
   $i("voN").oninput=e=>{vo.n=e.target.value;voUpd()};
   $i("voN").onkeydown=e=>{if(e.key==="Enter")voOpslaan()};
   $i("voHer").onchange=e=>{vo.her=e.target.value;$i("voTot").disabled=!+vo.her;if(+vo.her)$i("voTot").focus()};$i("voTot").oninput=e=>{vo.tot=e.target.value};
   const voFustVan=()=>{const kk=klantVan(vo.klant);if(kk&&!vo.fustZelf){const kf=klantFust(kk,vo.teelt);vo.fust=kf.fust;vo.perFust=kf.per||"";$i("voFust").value=vo.fust;$i("voPer").value=vo.perFust}};
   const voRond=()=>{const per=+String(vo.perFust||"").replace(/\D/g,"")||0,n=voGetal(vo.n),r=fustRond(n,per);if(r!==n&&n){vo.n=String(r);$i("voN").value=vo.n;melding(`Afgerond naar ${getal(r)} = ${getal(r/per)} × ${getal(per)}${vo.fust?" ("+esc(vo.fust)+")":""}`,"#2d6a4f");try{voUpd()}catch(e){}}};
-  $i("voKlant").addEventListener("change",()=>{vo.fustZelf=false;voFustVan();voRond()});$i("voNieuw").addEventListener("change",()=>{voFustVan();voRond()});
+  $i("voKlant").addEventListener("change",()=>{vo.fustZelf=false;voFustVan();vo.verp="";voVerpVul();const v=verpVan(voRas(),vo.verp);if(v){vo.fust=v.fust||vo.fust;vo.perFust=v.per>1?v.per:vo.perFust;$i("voFust").value=vo.fust||"";$i("voPer").value=vo.perFust||""}voRond()});$i("voNieuw").addEventListener("change",()=>{voFustVan();voRond()});
   $i("voFust").oninput=e=>{vo.fust=e.target.value;vo.fustZelf=true};$i("voPer").oninput=e=>{vo.perFust=e.target.value;vo.fustZelf=true};$i("voPer").onchange=voRond;
   $i("voN").addEventListener("change",voRond);if(!vo.fust&&!vo.perFust)voFustVan();
   const voPrijsVan=()=>{if(vo.prijsZelf)return;const ras=data.rassen.find(r=>r.teeltId===vo.teelt&&r.naam===vo.soort),kk=klantVan(vo.klant),pv=ras?vkPrijs(kk&&kk.id,ras.id):null;vo.prijs=pv!=null?pF(pv):"";$i("voP").value=vo.prijs};
@@ -5065,7 +5093,8 @@ function voOpslaan(){const vper=+String(vo.perFust||"").replace(/\D/g,"")||0;if(
   if(stap){if(!/^\d{4}$/.test(tot)){alert("Vul bij 'Herhalen' de laatste week in, bijv. 2710.");document.getElementById("voTot").focus();return}
     const eind=+maandagIso(2000+ +tot.slice(0,2),+tot.slice(2));if(eind<t){alert("De laatste week ligt vóór de eerste week.");return}
     for(let x=+plusWeken(new Date(t),stap);x<=eind&&weken.length<104;x=+plusWeken(new Date(x),stap))weken.push(x)}
-  for(const wt of weken){const key=k+"|"+wkCode(wt);(data.verkoop[key]=data.verkoop[key]||[]).push({klant,n,datum:vo.datum,...(opm?{opmerking:opm}:{}),...(pr!=null?{prijs:pr}:{}),...(String(vo.fust||"").trim()?{fust:String(vo.fust).trim()}:{}),...(vper>1?{perFust:vper}:{})})}
+  const vv=opt("floriday")?verpVan(data.rassen.find(r=>r.teeltId===vo.teelt&&r.naam===vo.soort),vo.verp):null;if(vv&&b)verpKlantZet(b,vo.teelt,vv.naam);
+  for(const wt of weken){const key=k+"|"+wkCode(wt);(data.verkoop[key]=data.verkoop[key]||[]).push({klant,n,datum:vo.datum,...(vv?{verp:vv.id,vn:vv.naam,vc:vv.code}:{}),...(opm?{opmerking:opm}:{}),...(pr!=null?{prijs:pr}:{}),...(String(vo.fust||"").trim()?{fust:String(vo.fust).trim()}:{}),...(vper>1?{perFust:vper}:{})})}
   if(weken.length>1)melding(`✓ ${weken.length} reserveringen gemaakt (${wkCode(weken[0])} t/m ${wkCode(weken[weken.length-1])})`,"#2d6a4f");
   opslaanLater();vo.n="";vo.opm="";vo.prijs="";vo.her="0";vo.tot="";vo.nieuw=false;vo.klant=klant;sluitMobSoort();if(tab!=="aflever"&&tab!=="mobiel"&&tab!=="oppotov")render();
   melding(`✓ Gereserveerd: ${getal(n)} × ${esc(k.replace("|"," · "))} aan ${esc(klant)} · week ${wkCode(t)}`,"#2d6a4f")}
@@ -5225,7 +5254,8 @@ function orderForm(naam,t){const kk=klantVan(naam)||{naam},nu=+dezeWeek();if(t!=
   else{h+=`<table class="kktab oftab"><tr><th class="ofvk"><input type="checkbox" checked title="Alles aan / uit (uitgevinkt = niet in de mail)" onchange="document.querySelectorAll('.oftab .ofmee').forEach(c=>c.checked=this.checked)"></th><th>Soort</th><th class="r ofaan" title="Wat er in de mail komt (aanbod-% van nog vrij, afgerond op 100)">In mail</th><th class="r">Nog vrij</th><th class="r">Al besteld</th><th>Aantal</th><th>€ /st</th></tr>`;
     for(const k of rijen){const[pr,so]=k.split("|");if(pr!==vor){h+=`<tr class="kkweek"><td colspan="7">${esc(pr)}</td></tr>`;vor=pr}
       const vrij=per.get(k)-verkSom(k,ofWeek),al=verkVan(k,ofWeek).filter(x=>(x.klant||"").toLowerCase()===String(kk.naam||naam).toLowerCase()).reduce((a,x)=>a+ +x.n,0),ras=vkRasVan(k),pv=ras?vkPrijs(kk.id,ras.id):null;
-      h+=`<tr data-k="${esc(k)}"><td class="ofvk"><input type="checkbox" class="ofmee" checked title="Uitgevinkt = niet in de mail"></td><td>${esc(so)}</td><td class="r ofaan" data-v="${vrij}">${ofAanTxt(vrij,ofPctVan())}</td><td class="r ofvrij ${vrij<0?"let":""}">${getal(vrij)}</td><td class="r">${al?getal(al):""}</td><td><input class="ofn" inputmode="numeric" placeholder="0" oninput="ofTel()"></td><td><input class="ofp" inputmode="decimal" value="${pv!=null?pF(pv):""}" placeholder="€"></td></tr>`}
+      const VL=opt("floriday")&&ras&&ras.verp&&ras.verp.length?ras.verp:null,vk=VL?verpKlantNaam(kk,ras.teeltId):"";
+      h+=`<tr data-k="${esc(k)}"><td class="ofvk"><input type="checkbox" class="ofmee" checked title="Uitgevinkt = niet in de mail"></td><td>${esc(so)}${VL?` <select class="ofv" title="Verpakking"><option value="">— verpakking —</option>${VL.map(v=>`<option value="${v.id}" ${v.naam&&v.naam===vk?"selected":""}>${esc(v.naam||v.code)}${v.per>1?" · "+v.per+"/fust":""}</option>`).join("")}</select>`:""}</td><td class="r ofaan" data-v="${vrij}">${ofAanTxt(vrij,ofPctVan())}</td><td class="r ofvrij ${vrij<0?"let":""}">${getal(vrij)}</td><td class="r">${al?getal(al):""}</td><td><input class="ofn" inputmode="numeric" placeholder="0" oninput="ofTel()"></td><td><input class="ofp" inputmode="decimal" value="${pv!=null?pF(pv):""}" placeholder="€"></td></tr>`}
     h+=`</table>`}
   toonPop("🧾 Order · "+esc(kk.naam||naam),h);const m=document.querySelector("#mobPop .mpop");if(m)m.classList.add("breed");
   const e=document.querySelector(".oftab .ofn");if(e&&!/Android|iPhone|iPad/i.test(navigator.userAgent))e.focus()}
@@ -5270,6 +5300,7 @@ function orderOpslaan(naam){const kk=klantVan(naam),code=wkCode(ofWeek);let r=0,
   document.querySelectorAll(".oftab tr[data-k]").forEach(tr=>{let v=Math.round(+String(tr.querySelector(".ofn").value).replace(/[.\s]/g,"").replace(",",".")||0);if(v<=0)return;
     const x={klant:kk?kk.naam:naam,n:v,datum:datumTekst(new Date())};if(kk){const kf=klantFust(kk,teeltIdVan(tr.dataset.k));if(kf.fust)x.fust=kf.fust;if(kf.per>1){x.perFust=kf.per;x.n=fustRond(v,x.perFust)}}
     const pr=prijsLees(tr.querySelector(".ofp").value);if(pr!=null)x.prijs=pr;
+    const vs=tr.querySelector(".ofv");if(vs&&vs.value){const ras=vkRasVan(tr.dataset.k),vv=verpVan(ras,vs.value);if(vv){Object.assign(x,verpVelden(vv));if(vv.per>1)x.n=fustRond(v,vv.per);if(kk)verpKlantZet(kk,ras.teeltId,vv.naam)}}
     const key=tr.dataset.k+"|"+code;(data.verkoop[key]=data.verkoop[key]||[]).push(x);r++;n+=x.n});
   if(!r){alert("Vul bij minstens één soort een aantal in.");return}
   window.ofKlaar=true;opslaanLater();render();melding(`✔ ${r} soort${r===1?"":"en"} · ${getal(n)} planten opgeslagen voor ${esc(naam)}`,"#2d6a4f");
