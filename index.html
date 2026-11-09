@@ -1008,7 +1008,7 @@ body.sales .navMidden>.mknop.groot{display:none!important}body.kijkmodus #btnPri
 
 <script>
 "use strict";
-const VERSIE="49.6";
+const VERSIE="49.7";
 const VERSIE_DATUM="03-11-2026";
 /* ---------- Basis ---------- */
 const PALET=["#2d6a4f","#1B5EBE","#E8007D","#c77d1a","#7a4fa0","#0f8b8d","#5b6b2f","#3d5a80","#a0522d","#7AB648"];
@@ -5191,7 +5191,7 @@ function klantKaart(naam,kaal){if(kaal!==undefined)kkKaal=kaal;const k=klantVan(
 /* orderformulier: één klant, één week, alle soorten onder elkaar; alleen aantallen (en evt. prijs) invullen */
 let ofWeek=null;
 function orderForm(naam,t){const kk=klantVan(naam)||{naam},nu=+dezeWeek();if(t!=null)ofWeek=t;if(ofWeek==null||ofWeek<nu)ofWeek=+plusWeken(new Date(nu),1);
-  const per=new Map();for(const r of afleverRegels())if(r.aantal>0&&r.t===ofWeek&&(!teeltFilter||r.p.soortId===teeltFilter)){const k=r.product+"|"+r.soort;per.set(k,(per.get(k)||0)+r.aantal)}
+  const per=new Map();for(const r of afleverRegels())if(r.aantal>0&&r.t===ofWeek){const k=r.product+"|"+r.soort;   /* altijd alle teelten, los van de keuze bovenin */per.set(k,(per.get(k)||0)+r.aantal)}
   const wks=[];for(let i=0;i<16;i++)wks.push(+plusWeken(new Date(nu),i));
   const rijen=[...per.keys()].sort((a,b)=>a.localeCompare(b,"nl"));let vor="",h=`<div class="rij" style="gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:10px"><button type="button" class="groenvraag" title="Uitleg van het orderformulier" onclick="toonOrderUitleg()">?</button><b>Week</b><select onchange="orderForm(this.dataset.k,+this.value)" data-k="${esc(kk.naam||naam)}">${wks.map(w=>`<option value="${w}" ${w===ofWeek?"selected":""}>wk ${isoWeek(new Date(w)).w}${w===nu?" (deze week)":""}</option>`).join("")}</select>
     ${rijen.length?`<span class="status" id="ofTot" style="margin-left:12px">0 planten</span><span class="noprint" style="margin-left:auto;display:flex;gap:6px;align-items:center">${kk.email&&!/Android|iPhone|iPad/i.test(navigator.userAgent)?`<span class="status">aanbod</span><select id="ofPct" title="Welk deel van wat vrij is in de mail zetten (afgerond op 100)" onchange="ofAanbod(+this.value)">${[100,90,80,70,60,50,40,30,20,10].map(x=>`<option value="${x}" ${x===ofPctVan()?"selected":""}>${x}%</option>`).join("")}</select><button class="btn licht" onclick="orderMail(this.dataset.k)" data-k="${esc(kk.naam||naam)}" title="Gmail met het aanbod van deze week voor deze klant (Ctrl + V om te plakken)">✉ ${mailNaam()} aanbod</button>`:""}<button class="btn" onclick="orderOpslaan(this.dataset.k)" data-k="${esc(kk.naam||naam)}">✔ Opslaan</button></span>`:""}</div>`;
