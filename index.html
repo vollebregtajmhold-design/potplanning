@@ -199,8 +199,8 @@ tr.kostrij td{background:#eef4fb}tr.vastrij td{background:#ece9e2}tr.groepkop{cu
 tr.kostrij input.kostnaam{width:100%;font-size:12px;border:1px dashed #9fc0dd;background:#f6faff}
 tr.kosttot td{background:#d3e5f5;font-size:11px;text-align:right}tr.kosttot td.vast{text-align:left!important}
 table.oppot.invoer td.vast{position:sticky;left:0;z-index:2;background:var(--vlak)}
-table.oppot.invoer td.vulbron::after{content:"";position:absolute;right:-1px;bottom:-1px;width:9px;height:9px;background:#2d6a4f;border:2px solid #fff;cursor:crosshair}
-table.oppot.invoer td.vulsel input{outline:2px dashed #2d6a4f;outline-offset:-2px;background:#d8f0e0!important}
+table.prgtab td.vulbron{position:relative}table.prgtab td.vulbron::after,table.oppot.invoer td.vulbron::after{content:"";position:absolute;right:-1px;bottom:-1px;width:9px;height:9px;background:#2d6a4f;border:2px solid #fff;cursor:crosshair}
+table.prgtab td.vulsel input,table.oppot.invoer td.vulsel input{outline:2px dashed #2d6a4f;outline-offset:-2px;background:#d8f0e0!important}
 body.vulsleep,body.vulsleep *{cursor:crosshair!important;user-select:none}
 tr.nieuwsoort select{width:100%;font-style:italic;border:1px dashed #2d6a4f;background:#f6fbf7;font-size:13px}
 .snr{color:#6b6558;font-size:11px;font-weight:600;margin-right:2px}
@@ -1001,7 +1001,7 @@ body.sales .navMidden>.mknop.groot{display:none!important}body.kijkmodus #btnPri
 
 <script>
 "use strict";
-const VERSIE="47.8";
+const VERSIE="48.0";
 const VERSIE_DATUM="03-11-2026";
 /* ---------- Basis ---------- */
 const PALET=["#2d6a4f","#1B5EBE","#E8007D","#c77d1a","#7a4fa0","#0f8b8d","#5b6b2f","#3d5a80","#a0522d","#7AB648"];
@@ -4129,13 +4129,12 @@ function prgSoorten(){return data.teeltduren.filter(t=>!prgTeelt||t.id===prgTeel
 /* terugrekenen: afleverweek − teeltduur = opzetweek; met uitval, raaptijd en afronden op fust */
 /* zelfde rekenwijze als de partijen: weken fase 1 + weken fase 2 (afgerond naar boven) */
 function prgDuur(t,r,o){const D=duurVan(t,r),w=isoWeek(new Date(o)).w,f1=(D.fase1||[])[w-1],f2=(D.fase2||[])[w-1];if(f1!=null&&f2!=null)return Math.ceil(f1)+Math.ceil(f2);return +((D.totaal||t.totaal||[])[w-1])||0}
-function prgVoorstel(t,r,J){const W=prgWeken(J),u=(r.uitval!=null&&r.uitval!==""?+r.uitval:(+t.uitval||0))/100,R=r.raaptijd||1,pct=raapVerdeling(r),fa=fustAantal(r.fust||t.fust)||0;
-  const plan=new Map(),uit=new Map(),wk=7*864e5;
-  for(const a of W){const P=prgGet(r.id,a);if(!P&&!(plan.get(a)>0))continue;const rest=P-(plan.get(a)||0);if(rest<=0)continue;
-    /* opzetweek zoeken waarvan de eerste afleverweek = a */
+/* per afleverweek: opzetweek = de week waarvan de soort vanaf die afleverweek klaar is (begin raaptijd).
+   aantal = prognose + uitval, afgerond op hele trays. Totaal opzet = totaal prognose + uitval */
+function prgVoorstel(t,r,J){const W=prgWeken(J),u=(r.uitval!=null&&r.uitval!==""?+r.uitval:(+t.uitval||0))/100,R=r.raaptijd||1,fa=fustAantal(r.fust||t.fust)||0,uit=new Map(),wk=7*864e5;
+  for(const a of W){const P=prgGet(r.id,a);if(!P)continue;
     const doel=a+R*wk;let best=null,bd=1e9;for(let o=doel-70*wk;o<=doel;o+=wk){const d=prgDuur(t,r,o);if(!d)continue;const v=Math.abs(o+d*wk-doel);if(v<bd){bd=v;best=o}}
-    if(best==null)continue;let n=rest/((1-u)*(pct[0]/100));n=Math.ceil(n);if(fa>1)n=Math.ceil(n/fa)*fa;
-    uit.set(best,(uit.get(best)||0)+n);for(let k=0;k<R;k++){const x=a+k*wk;plan.set(x,(plan.get(x)||0)+n*(1-u)*pct[k]/100)}}
+    if(best==null)continue;let n=Math.ceil(P/(1-Math.min(u,.9)));if(fa>1)n=Math.ceil(n/fa)*fa;uit.set(best,(uit.get(best)||0)+n)}
   return uit}
 const prgNu=(r,o)=>{const{y,w}=isoWeek(new Date(o));return +(((r.aantallen||{})[y]||[])[w-1])||0};
 function toonPrognose(){if(prgJaar==null){const nu=dezeWeek();prgJaar=nu>=seizoenVan(new Date(nu).getFullYear())?new Date(nu).getFullYear():new Date(nu).getFullYear()-1}
@@ -4151,13 +4150,13 @@ function toonPrognose(){if(prgJaar==null){const nu=dezeWeek();prgJaar=nu>=seizoe
   if(!G.length){h+=`<div class="status">Nog geen soorten. Maak eerst teelten en soorten aan bij Parameters.</div>`;$("#inhoud").innerHTML=h;return}
   if(prgWeerg==="voorstel"){h+=prgVoorstelTabel(J,G);$("#inhoud").innerHTML=h;return}
   const vorigW=W.map((t,i)=>seizoenVan(J-1)+i*7*864e5);
-  const waarde=(t,r,i)=>prgWeerg==="vorig"?verkSom(prgSoortKey(t,r),vorigW[i]):prgWeerg==="nu"||prgWeerg==="stand"?verkSom(prgSoortKey(t,r),W[i]):prgGet(r.id,W[i]);
+  let prgRi=0;const waarde=(t,r,i)=>prgWeerg==="vorig"?verkSom(prgSoortKey(t,r),vorigW[i]):prgWeerg==="nu"||prgWeerg==="stand"?verkSom(prgSoortKey(t,r),W[i]):prgGet(r.id,W[i]);
   h+=`<div class="scroll"><table class="ovtabel prgtab"><tr><th class="ovnaam">Teelt · soort</th>${W.map(t=>`<th class="${t===nuW?"nu":""}">${wl(t)}</th>`).join("")}<th class="kltot">Totaal</th></tr>`;
   for(const{t,R}of G){const som=W.map((w,i)=>R.reduce((a,r)=>a+waarde(t,r,i),0)),somP=W.map(w=>R.reduce((a,r)=>a+prgGet(r.id,w),0));
     const cel=(v,p)=>prgWeerg==="stand"?(p?`<span class="${v>=p?"prgok":v>=p*.7?"prgmid":"prgweinig"}" title="gereserveerd ${getal(v)} van prognose ${getal(p)}">${Math.round(v/p*100)}%</span>`:v?getal(v):""):v?getal(v):"";
     h+=`<tr class="prgteelt"><td class="ovnaam"><b>${esc(teeltLabel(t))}</b></td>${som.map((v,i)=>`<td>${cel(v,somP[i])}</td>`).join("")}<td class="kltot"><b>${getal(som.reduce((a,b)=>a+b,0))}</b></td></tr>`;
-    for(const r of R){const v=W.map((w,i)=>waarde(t,r,i));
-      h+=`<tr><td class="ovnaam">${esc(r.naam)}</td>${W.map((w,i)=>prgWeerg==="prog"&&!kijker?`<td class="${w===nuW?"nu":""}"><input class="prgin" inputmode="numeric" data-r="${r.id}" data-t="${w}" value="${v[i]||""}" onchange="prgZet(this)"></td>`:`<td class="${w===nuW?"nu":""}">${cel(v[i],prgGet(r.id,w))}</td>`).join("")}<td class="kltot"><b>${getal(v.reduce((a,b)=>a+b,0))}</b></td></tr>`}}
+    for(const r of R){const v=W.map((w,i)=>waarde(t,r,i)),ri=prgRi++;
+      h+=`<tr><td class="ovnaam">${esc(r.naam)}</td>${W.map((w,i)=>prgWeerg==="prog"&&!kijker?`<td class="${w===nuW?"nu":""}"><input class="prgin" inputmode="numeric" data-r="${r.id}" data-t="${w}" data-ri="${ri}" data-ci="${i}" value="${v[i]||""}" onchange="prgZet(this)"></td>`:`<td class="${w===nuW?"nu":""}">${cel(v[i],prgGet(r.id,w))}</td>`).join("")}<td class="kltot"><b>${getal(v.reduce((a,b)=>a+b,0))}</b></td></tr>`}}
   h+=`</table></div>`;$("#inhoud").innerHTML=h}
 function prgZet(inp){const n=Math.max(0,Math.round(+String(inp.value).replace(/\./g,"").replace(",",".")||0)),P=data.prognose=data.prognose||{},k=prgKey(inp.dataset.r,+inp.dataset.t);
   if(n)P[k]=n;else delete P[k];inp.value=n||"";opslaanLater()}
@@ -4189,7 +4188,7 @@ const prgOverAlles=()=>prgOver("");
 function prgOpen(){if(!(isBeheerder()&&mod3Mag()))return;if(!opt("prognose"))zetOptie("prognose",true);try{if(isSales())zetWeergave("alles")}catch(e){}naar("prognose")}
 function prgUitleg(){toonPop("📈 Prognose · uitleg",`<ol style="padding-left:18px;line-height:1.5;margin:0">
   <li><b>Prognose invullen</b>: per soort en afleverweek hoeveel planten u verwacht te verkopen.<br>Snel: <b>📋 Vorig seizoen overnemen</b> (de reserveringen van vorig seizoen, met evt. + of − %), daarna <b>± %</b> of per week aanpassen.</li>
-  <li><b>🧮 Voorstel inkoop</b>: de app rekent terug: afleverweek − teeltduur = opzetweek. Met de <b>uitval-%</b> en <b>raaptijd</b> van de soort (Parameters) en afgerond op hele trays (fust).</li>
+  <li><b>🧮 Voorstel inkoop</b>: de app rekent terug: afleverweek − teeltduur = opzetweek. Dan is de soort vanaf die afleverweek klaar. Aantal = prognose + <b>uitval-%</b> (Parameters), afgerond op hele trays (fust).</li>
   <li><b>✓ Overnemen</b>: per soort, per teelt of alles. Het komt in Inkoop. Ctrl + Z = terug.</li>
   <li><b>Gereserveerd t.o.v. prognose</b>: tijdens het seizoen ziet u per week hoeveel % al gereserveerd is: <span class="prgok">groen</span> = op schema, <span class="prgmid">oranje</span> = iets achter, <span class="prgweinig">rood</span> = veel achter.</li></ol>`)}
 function toonKlanten(){const n=data.klanten.length;
@@ -5332,16 +5331,22 @@ function rgSchuif(){const lo=document.getElementById("rgLo"),hi=document.getElem
 
 /* ---------- Inkoop: aantal doortrekken zoals in Excel (sleep het groene blokje rechtsonder) ---------- */
 let vul=null,vulKlikWeg=false;
-const vulInp=td=>td&&td.querySelector("input.ac,input.kost");
-function vulCel(e){const td=e.target.closest&&e.target.closest("table.oppot.invoer td");return vulInp(td)?td:null}
+const vulInp=td=>td&&td.querySelector("input.ac,input.kost,input.prgin");
+const VUL_TD="table.oppot.invoer td,table.prgtab td";
+function vulCel(e){const td=e.target.closest&&e.target.closest(VUL_TD);return vulInp(td)?td:null}
 document.addEventListener("mouseover",e=>{if(vul)return;const td=vulCel(e);if(td&&td.classList.contains("vulbron"))return;
   document.querySelectorAll("td.vulbron").forEach(x=>x.classList.remove("vulbron"));if(td&&vulInp(td).value.trim())td.classList.add("vulbron")});
 document.addEventListener("mousedown",e=>{const td=vulCel(e);if(!td||!td.classList.contains("vulbron")||e.button!==0)return;
   const b=td.getBoundingClientRect();if(e.clientX<b.right-12||e.clientY<b.bottom-12)return; /* alleen het blokje rechtsonder */
-  const inp=vulInp(td),kost=inp.classList.contains("kost");if(document.activeElement===inp){if(kost)inp.dispatchEvent(new Event("change",{bubbles:true}));else zetAantal(inp,inp.value)}
+  const inp=vulInp(td);if(inp.classList.contains("prgin")){if(document.activeElement===inp)prgZet(inp);e.preventDefault();vul={inp,prg:true,r:+inp.dataset.ri,w:+inp.dataset.ci,x:e.clientX,y:e.clientY,doel:[]};document.body.classList.add("vulsleep");return}
+  const kost=inp.classList.contains("kost");if(document.activeElement===inp){if(kost)inp.dispatchEvent(new Event("change",{bubbles:true}));else zetAantal(inp,inp.value)}
   e.preventDefault();vul={inp,kost,kf:inp.dataset.kf,r:+inp.dataset.r,w:+(inp.dataset.c??inp.dataset.w),x:e.clientX,y:e.clientY,doel:[]};document.body.classList.add("vulsleep")});
 document.addEventListener("mousemove",e=>{if(!vul)return;document.querySelectorAll("td.vulsel").forEach(x=>x.classList.remove("vulsel"));vul.doel=[];
-  const el=document.elementFromPoint(e.clientX,e.clientY),td=el&&el.closest&&el.closest("table.oppot.invoer td"),i=vulInp(td);if(!i)return;
+  const el=document.elementFromPoint(e.clientX,e.clientY),td=el&&el.closest&&el.closest(VUL_TD),i=vulInp(td);if(!i)return;
+  if(vul.prg){if(!i.classList.contains("prgin"))return;const r1=+i.dataset.ri,c1=+i.dataset.ci,q=(r,c)=>document.querySelector(`input.prgin[data-ri="${r}"][data-ci="${c}"]`);
+    if(Math.abs(e.clientX-vul.x)>=Math.abs(e.clientY-vul.y)){for(let c=Math.min(vul.w,c1);c<=Math.max(vul.w,c1);c++)if(c!==vul.w){const x=q(vul.r,c);if(x)vul.doel.push(x)}}
+    else{for(let r=Math.min(vul.r,r1);r<=Math.max(vul.r,r1);r++)if(r!==vul.r){const x=q(r,vul.w);if(x)vul.doel.push(x)}}
+    vul.doel.forEach(c=>c.closest("td").classList.add("vulsel"));return}
   const r1=+i.dataset.r,w1=+(i.dataset.c??i.dataset.w);
   if(vul.kost){for(let w=Math.min(vul.w,w1);w<=Math.max(vul.w,w1);w++)if(w!==vul.w){const c=document.querySelector(`input.kost[data-kf="${vul.kf}"][data-w="${w}"]`);if(c)vul.doel.push(c)}} /* kosten: alleen weken */
   else if(i.classList.contains("kost"))return;
@@ -5350,7 +5355,8 @@ document.addEventListener("mousemove",e=>{if(!vul)return;document.querySelectorA
   vul.doel.forEach(c=>c.closest("td").classList.add("vulsel"))});
 document.addEventListener("mouseup",()=>{if(!vul)return;const v=vul;vul=null;document.body.classList.remove("vulsleep");
   document.querySelectorAll("td.vulsel").forEach(x=>x.classList.remove("vulsel"));if(!v.doel.length)return;vulKlikWeg=true;setTimeout(()=>vulKlikWeg=false,300);
-  const n=v.inp.value;if(v.kost){for(const c of v.doel){c.value=n;c.dispatchEvent(new Event("change",{bubbles:true}))}melding(`✓ ${v.kf.startsWith("vast")?esc(n)+" m²":"€ "+esc(n)} gekopieerd naar ${v.doel.length} weken`,"#2d6a4f");return}
+  const n=v.inp.value;if(v.prg){for(const c of v.doel){c.value=n;prgZet(c)}wijzig();melding(`✓ ${esc(n)} gekopieerd naar ${v.doel.length} ${v.doel.length===1?"vak":"vakken"} (Ctrl + Z = terug)`,"#2d6a4f");return}
+  if(v.kost){for(const c of v.doel){c.value=n;c.dispatchEvent(new Event("change",{bubbles:true}))}melding(`✓ ${v.kf.startsWith("vast")?esc(n)+" m²":"€ "+esc(n)} gekopieerd naar ${v.doel.length} weken`,"#2d6a4f");return}
   for(const c of v.doel)zetAantal(c,n);
   melding(`✓ ${esc(n)} planten gekopieerd naar ${v.doel.length} ${v.doel.length===1?"vak":"vakken"} (Ctrl + Z = terug)`,"#2d6a4f")});
 document.addEventListener("click",e=>{if(vulKlikWeg){e.stopPropagation();e.preventDefault();vulKlikWeg=false}},true);
