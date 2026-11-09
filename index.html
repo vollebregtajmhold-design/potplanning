@@ -1001,7 +1001,7 @@ body.sales .navMidden>.mknop.groot{display:none!important}body.kijkmodus #btnPri
 
 <script>
 "use strict";
-const VERSIE="47.2";
+const VERSIE="47.3";
 const VERSIE_DATUM="03-11-2026";
 /* ---------- Basis ---------- */
 const PALET=["#2d6a4f","#1B5EBE","#E8007D","#c77d1a","#7a4fa0","#0f8b8d","#5b6b2f","#3d5a80","#a0522d","#7AB648"];
@@ -5024,7 +5024,7 @@ function klantMenu(naam,el){sluitKlantMenu();const k=klantVan(naam)||{naam},r=el
     ${k.id?it("📦","Fust per teelt",`klantPerTeelt('${k.id}')`):""}
     ${niveau()>1&&k.id&&!geenPrijs()?it("💶","Prijzen",`prijsTabel('${k.id}')`):""}
     ${it("＋","Reservering",`vo={datum:datumTekst(new Date()),klant:${N},teelt:teeltFilter||'',soort:'',n:''};verkoopOrder()`)}
-    ${mod4()?it("🧾","Orderformulier",`orderForm(${N})`):""}
+    ${it("🧾","Orderformulier",`orderForm(${N})`)}
     ${it("📋","Overzicht pakbonnen",`klantKaart(${N},true)`)}`;
   document.body.appendChild(m);const h=m.offsetHeight;m.style.left=Math.min(r.left+20,innerWidth-m.offsetWidth-8)+"px";m.style.top=Math.max(8,Math.min(r.bottom-6,innerHeight-h-8))+"px";
   setTimeout(()=>document.addEventListener("click",klMenuBuiten,true),0)}
@@ -5055,7 +5055,7 @@ function klantKaart(naam,kaal){if(kaal!==undefined)kkKaal=kaal;const k=klantVan(
   toonPop((kkKaal?"📋 Pakbonnen · ":"👤 ")+esc(k.naam||naam),h);const m=document.querySelector("#mobPop .mpop");if(m)m.classList.add("breed")}
 /* orderformulier: één klant, één week, alle soorten onder elkaar; alleen aantallen (en evt. prijs) invullen */
 let ofWeek=null;
-function orderForm(naam,t){if(!mod4()){melding("Zet eerst Aanbodlijst aan (Bestand → vinkje)");return}const kk=klantVan(naam)||{naam},nu=+dezeWeek();if(t!=null)ofWeek=t;if(ofWeek==null||ofWeek<nu)ofWeek=+plusWeken(new Date(nu),1);
+function orderForm(naam,t){const kk=klantVan(naam)||{naam},nu=+dezeWeek();if(t!=null)ofWeek=t;if(ofWeek==null||ofWeek<nu)ofWeek=+plusWeken(new Date(nu),1);
   const per=new Map();for(const r of afleverRegels())if(r.aantal>0&&r.t===ofWeek&&(!teeltFilter||r.p.soortId===teeltFilter)){const k=r.product+"|"+r.soort;per.set(k,(per.get(k)||0)+r.aantal)}
   const wks=[];for(let i=0;i<16;i++)wks.push(+plusWeken(new Date(nu),i));
   const rijen=[...per.keys()].sort((a,b)=>a.localeCompare(b,"nl"));let vor="",h=`<div class="rij" style="gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:10px"><button type="button" class="groenvraag" title="Uitleg van het orderformulier" onclick="toonOrderUitleg()">?</button><b>Week</b><select onchange="orderForm(this.dataset.k,+this.value)" data-k="${esc(kk.naam||naam)}">${wks.map(w=>`<option value="${w}" ${w===ofWeek?"selected":""}>wk ${isoWeek(new Date(w)).w}${w===nu?" (deze week)":""}</option>`).join("")}</select>
