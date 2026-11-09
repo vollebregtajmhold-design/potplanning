@@ -1001,7 +1001,7 @@ body.sales .navMidden>.mknop.groot{display:none!important}body.kijkmodus #btnPri
 
 <script>
 "use strict";
-const VERSIE="48.2";
+const VERSIE="48.3";
 const VERSIE_DATUM="03-11-2026";
 /* ---------- Basis ---------- */
 const PALET=["#2d6a4f","#1B5EBE","#E8007D","#c77d1a","#7a4fa0","#0f8b8d","#5b6b2f","#3d5a80","#a0522d","#7AB648"];
@@ -4146,7 +4146,7 @@ function toonPrognose(){if(prgJaar==null){const nu=dezeWeek();prgJaar=nu>=seizoe
     <select onchange="prgWeerg=this.value;render()" title="Wat ziet u">${[["prog","✏️ Prognose invullen"],["vorig","Vorig seizoen (gereserveerd)"],["nu","Dit seizoen gereserveerd"],["stand","Gereserveerd t.o.v. prognose"],["voorstel","🧮 Voorstel inkoop"]].map(([v,n])=>`<option value="${v}" ${v===prgWeerg?"selected":""}>${n}</option>`).join("")}</select>
     ${prgWeerg==="prog"?`<button class="ovk inkcsv" onclick="prgKopieer()" title="Neem de reserveringen van vorig seizoen over als prognose">📋 Vorig seizoen overnemen</button><button class="ovk inkcsv" onclick="prgProcent()" title="Alle prognoses (van de gekozen teelt) een % hoger of lager">± %</button>`:""}
     ${prgWeerg==="voorstel"?`<button class="ovk inkcsv" onclick="prgOverAlles()" title="Zet het voorstel in Inkoop voor alle soorten hieronder">✓ Neem alles over in Inkoop</button>`:""}
-    <button class="ovk ovlink" onclick="prgUitleg()">Uitleg</button></div>`;
+    <button class="ovk inkcsv" onclick="prgExcel()" title="Deze weergave als Excel-bestand">Excel</button><button class="ovk ovlink" onclick="prgUitleg()">Uitleg</button></div>`;
   if(!G.length){h+=`<div class="status">Nog geen soorten. Maak eerst teelten en soorten aan bij Parameters.</div>`;$("#inhoud").innerHTML=h;return}
   if(prgWeerg==="voorstel"){h+=prgVoorstelTabel(J,G);$("#inhoud").innerHTML=h;return}
   const vorigW=W.map((t,i)=>seizoenVan(J-1)+i*7*864e5);
@@ -4184,6 +4184,20 @@ function prgOver(tid,rid){const J=prgJaar,G=prgSoorten().filter(x=>!tid||x.t.id=
     for(let o=a;o<=b;o+=wk){const{y,w}=isoWeek(new Date(o)),A=r.aantallen[y]=r.aantallen[y]||Array(53).fill(null);A[w-1]=m.get(o)||null;n++}telOp(t,data.rassen)}
   wijzig();melding(`✓ Voorstel staat in Inkoop (${lijst.length} soort${lijst.length===1?"":"en"})`,"#2d6a4f")}
 const prgOverAlles=()=>prgOver("");
+/* Excel van de weergave die u ziet */
+async function prgExcel(){const J=prgJaar,G=prgSoorten(),wk=7*864e5;let kol=[],val,titel;
+  const nm={prog:"Prognose",vorig:"Vorig seizoen gereserveerd",nu:"Gereserveerd",stand:"Gereserveerd",voorstel:"Voorstel inkoop"}[prgWeerg]||"Prognose";
+  if(prgWeerg==="voorstel"){const V=new Map();let all=[];for(const{t,R}of G)for(const r of R){const m=prgVoorstel(t,r,J);V.set(r.id,m);all.push(...m.keys())}
+    if(!all.length){melding("Nog geen voorstel: vul eerst de prognose in.");return}const a=Math.min(...all),b=Math.max(...all);for(let o=a;o<=b;o+=wk)kol.push(o);val=(t,r,o)=>V.get(r.id).get(o)||0}
+  else{kol=prgWeken(J);const vw=kol.map((t,i)=>seizoenVan(J-1)+i*wk);val=(t,r,w,i)=>prgWeerg==="vorig"?verkSom(prgSoortKey(t,r),vw[i]):prgWeerg==="nu"||prgWeerg==="stand"?verkSom(prgSoortKey(t,r),w):prgGet(r.id,w)}
+  const kop=kol.map(o=>{const{y,w}=isoWeek(new Date(o));return String(y).slice(2)+String(w).padStart(2,"0")});
+  const rijen=[["Teelt","Soort",...kop,"Totaal"]],tot=Array(kol.length).fill(0);
+  for(const{t,R}of G)for(const r of R){const v=kol.map((o,i)=>val(t,r,o,i));if(!v.some(x=>x))continue;v.forEach((x,i)=>tot[i]+=x);rijen.push([teeltLabel(t),r.naam,...v.map(x=>x||null),v.reduce((a,b)=>a+b,0)])}
+  if(rijen.length<2){melding("Er staat niets in deze weergave.");return}
+  const nData=rijen.length;rijen.push(["Totaal","",...tot.map(x=>x||null),tot.reduce((a,b)=>a+b,0)]);
+  const naam=`${nm} ${J}-${String(J+1).slice(2)}`;
+  try{melding("Excel-bestand maken…");await xlsxDownload(rijen,naam+".xlsx",nm.slice(0,28),nData,2);melding("⬇ "+naam+" als Excel-bestand gedownload","#2d6a4f")}
+  catch(e){const q=x=>`"${String(x??"").replace(/"/g,'""')}"`,a=document.createElement("a");a.href=URL.createObjectURL(new Blob(["\ufeff"+rijen.map(r=>r.map(v=>typeof v==="number"?v:q(v)).join(";")).join("\n")],{type:"text/csv"}));a.download=naam+".csv";document.body.appendChild(a);a.click();a.remove();melding("⬇ "+naam+" als CSV gedownload","#2d6a4f")}}
 /* openen vanuit Zoeken: zet het vinkje vanzelf aan */
 function prgOpen(){if(!(isBeheerder()&&mod3Mag()))return;if(!opt("prognose"))zetOptie("prognose",true);try{if(isSales())zetWeergave("alles")}catch(e){}naar("prognose")}
 function prgUitleg(){toonPop("📈 Prognose · uitleg",`<ol style="padding-left:18px;line-height:1.5;margin:0">
