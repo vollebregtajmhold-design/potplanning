@@ -707,6 +707,7 @@ table.oppot th.jaarstart,table.oppot td.jaarstart{border-left:3px solid #4b2a6e!
 
 .ovtabel .klE{position:sticky;right:0;z-index:2;min-width:96px;box-sizing:border-box;box-shadow:inset 1px 0 0 #c9c2b6}.ovtabel .klT.r0{right:0}
 .logtab td{font-size:13px;white-space:nowrap}.logtab td:nth-child(2),.logtab td:nth-child(3),.logtab th:nth-child(2),.logtab th:nth-child(3){text-align:left}.logtab .logop{color:#2d6a4f}.logtab .logaf{color:#b3261e}
+.lrzelf{width:90px;font:inherit;font-size:14px;text-align:right;padding:3px 5px;border:1px solid #cfc6b4;border-radius:5px}
 .trkKnop{background:#2d6a4f;color:#fff;border:0;border-radius:10px;padding:8px 16px;font-size:15px;font-weight:700;cursor:pointer;box-shadow:0 2px 6px rgba(45,106,79,.35);margin-right:6px;white-space:nowrap}.trkKnop:hover{background:#245a42}
 .trkform{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:8px}.trkform input,.trkform select{min-width:0;box-sizing:border-box;max-width:100%}.trkform label{display:flex;flex-direction:column;font-size:13px;color:#555;gap:3px}.trkform select,.trkform input{font:inherit;font-size:15px;padding:6px;border:1px solid #cfc6b4;border-radius:6px}
 .trkres{display:grid;grid-template-columns:auto 1fr;gap:4px 12px;margin-top:12px;padding:10px;background:#eef6f0;border-radius:8px}.trktab{border-collapse:collapse;font-size:14px}.trktab td,.trktab th{padding:3px 10px;text-align:right;border-bottom:1px solid #e3ddd0}.trktab td:first-child,.trktab th:first-child{text-align:left}.trktab tr.trkdoel td{background:#fff3c4;font-weight:700}.trktab tr.tot td{font-weight:700}
@@ -1005,7 +1006,7 @@ body.sales .navMidden>.mknop.groot{display:none!important}body.kijkmodus #btnPri
 
 <script>
 "use strict";
-const VERSIE="49.0";
+const VERSIE="49.1";
 const VERSIE_DATUM="03-11-2026";
 /* ---------- Basis ---------- */
 const PALET=["#2d6a4f","#1B5EBE","#E8007D","#c77d1a","#7a4fa0","#0f8b8d","#5b6b2f","#3d5a80","#a0522d","#7AB648"];
@@ -3145,9 +3146,13 @@ function legeRuimte(){const t=data.teeltduren.find(x=>x.id===oppotKeuze),bruto=+
   const ras=srt.find(x=>x.id===lrSoort),fn=ras?fustAantal(ras.fust):0,af=n=>fn?Math.floor(n/fn)*fn:n;
   toonPop("🪴 Lege ruimte vullen · "+esc(teeltNaam(t))+" "+j,`<p class="status" style="margin:0 0 8px">Per opzetweek: hoeveel planten er nog bij passen zonder dat een week tijdens de teelt boven de bruto ${getal(bruto)} m² komt. Elke week is apart berekend; na toevoegen rekent de lijst opnieuw.</p>
     ${srt.length?`<div class="rij" style="margin-bottom:8px"><span class="status">Toevoegen bij soort</span><select onchange="lrSoort=this.value;legeRuimte()">${srt.map(x=>`<option value="${x.id}" ${x.id===lrSoort?"selected":""}>${esc(x.naam)}${x.fust?" ("+esc(x.fust)+")":""}</option>`).join("")}</select></div>`:""}
-    ${r.length?`<table class="kvtab"><tr><th>Opzetweek</th><th>Leeg m² nu</th><th>Past nog bij</th><th>Krapste week</th><th></th></tr>${r.map(x=>{const n=af(x.extra);return`<tr><td>${String(j).slice(2)}${String(x.w+1).padStart(2,"0")}</td><td>${getal(Math.round(x.leeg))}</td><td><b>${getal(n)}</b>${fn?` <span class="status">(${getal(n/fn)} trays)</span>`:""}</td><td>${wkCode(x.krap)}</td><td>${n>0&&!kijker?`<button class="btn klein" onclick="lrToevoegen(${x.w},${n})">+ toevoegen</button>`:""}</td></tr>`}).join("")}</table>`
+    ${r.length?`<table class="kvtab"><tr><th>Opzetweek</th><th>Leeg m² nu</th><th>Past nog bij</th><th>Krapste week</th><th title="Leeg = alles wat past">Zelf aantal</th><th></th></tr>${r.map(x=>{const n=af(x.extra);return`<tr><td>${String(j).slice(2)}${String(x.w+1).padStart(2,"0")}</td><td>${getal(Math.round(x.leeg))}</td><td><b>${getal(n)}</b>${fn?` <span class="status">(${getal(n/fn)} trays)</span>`:""}</td><td>${wkCode(x.krap)}</td><td>${n>0&&!kijker?`<input class="lrzelf" id="lrz${x.w}" inputmode="numeric" placeholder="${getal(n)}" title="Vul zelf een aantal in. Leeg = alles wat past (${getal(n)})" onkeydown="if(event.key==='Enter')lrZelf(${x.w},${n},${fn||0})">`:""}</td><td>${n>0&&!kijker?`<button class="btn klein" onclick="lrZelf(${x.w},${n},${fn||0})">+ toevoegen</button>`:""}</td></tr>`}).join("")}</table>`
       :`<p>Er past vanaf deze week <b>niets</b> meer bij zonder dat de kas te vol wordt.</p>`}`);
   const m=document.querySelector("#mobPop .mpop");if(m){m.style.maxWidth="720px";m.style.width="auto"}}
+/* + toevoegen: het zelf ingevulde aantal (afgerond op hele trays), of leeg = alles wat past */
+function lrZelf(w,max,fn){const i=document.getElementById("lrz"+w),v=i&&i.value.trim();if(!v)return lrToevoegen(w,max);
+  let n=Math.round(+v.replace(/\./g,"").replace(",",".")||0);if(n<=0){melding("Vul een aantal in");return}if(fn>1)n=Math.ceil(n/fn)*fn;
+  if(n>max&&!confirm(`${getal(n)} is meer dan er past (${getal(max)}). Toch toevoegen?`))return;lrToevoegen(w,n)}
 function lrToevoegen(w,n){const t=data.teeltduren.find(x=>x.id===oppotKeuze);if(!t)return;const b=bronArr(lrSoort?"r:"+lrSoort:"l:"+t.id,planJaar);if(!b)return;
   const kk=planJaar+"|"+(lrSoort?"r:"+lrSoort:"l:"+t.id)+"|"+w;if(!inkWijz.has(kk))inkWijz.set(kk,b.arr[w]??null);b.arr[w]=(+b.arr[w]||0)+n;telOp(t,data.rassen);wijzig();
   melding(`✓ ${getal(n)} planten erbij in week ${w+1} (Ctrl + Z = terug)`,"#2d6a4f");legeRuimte()}
