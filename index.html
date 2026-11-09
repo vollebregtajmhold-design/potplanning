@@ -1001,7 +1001,7 @@ body.sales .navMidden>.mknop.groot{display:none!important}body.kijkmodus #btnPri
 
 <script>
 "use strict";
-const VERSIE="48.0";
+const VERSIE="48.2";
 const VERSIE_DATUM="03-11-2026";
 /* ---------- Basis ---------- */
 const PALET=["#2d6a4f","#1B5EBE","#E8007D","#c77d1a","#7a4fa0","#0f8b8d","#5b6b2f","#3d5a80","#a0522d","#7AB648"];
@@ -2609,10 +2609,10 @@ $("#jaarVerder").onclick=()=>{planJaar++;render()};
 /* ---------- Teeltduren per oppotweek: totaal + oppotfase, uitzetfase berekend ---------- */
 function opslaanLater(){clearTimeout(opslaanTimer);opslaanTimer=setTimeout(opslaan,400)}
 function toonDuren(){
-  const nuWk=isoWeek(nuWk()).w;
+  const nuWkN=isoWeek(nuWk()).w;
   let h=stapBlok(3,`<b>Vul per teelt in hoe lang die duurt.</b> Vul de <b>totale teeltduur</b> en de <b>oppotfase</b> in (weken). Verandert de teeltduur in de loop van het jaar? Vul dan in het lege vakje de week in waar de periode stopt. Er komt dan een nieuwe regel bij.`,volgende("oppot","Naar Inkoop / opzetten"),stappen().duren?"goed":"aandacht");
   if(!data.teeltduren.length)h+=`<div class="leeg">Nog geen teelten. <button class="btn" onclick="tab='soorten';render()">Naar Teelt ▶</button></div>`;
-  const wkKopD=Array.from({length:52},(_,w)=>`<th class="wk ${w+1===nuWk?"nu":""}">${w+1}</th>`).join("");
+  const wkKopD=Array.from({length:52},(_,w)=>`<th class="wk ${w+1===nuWkN?"nu":""}">${w+1}</th>`).join("");
   /* keuzelijst: één teelt tegelijk (of alle) */
   if(data.teeltduren.length&&duurKeuze!=="alle"&&!data.teeltduren.some(t=>t.id===duurKeuze))duurKeuze=data.teeltduren[0].id;
   const okP=o=>o.perioden.every(p=>p.totaal!==null&&p.fase1!==null&&p.totaal>=p.fase1);
@@ -2664,7 +2664,7 @@ function duurKort(o){if(!o.perioden||!o.perioden.length)return"";if(o.perioden.l
 let duurPop={teeltId:"",rasId:""};
 function openDuur(teeltId,rasId){duurPop={teeltId,rasId:rasId||""};vulDuur();$("#duurVenster").showModal()}
 function vulDuur(){const t=data.teeltduren.find(x=>x.id===duurPop.teeltId);if(!t){$("#duurVenster").close();return}
-  const nuWk=isoWeek(nuWk()).w,wkKopD=Array.from({length:52},(_,w)=>`<th class="wk ${w+1===nuWk?"nu":""}">${w+1}</th>`).join("");
+  const nuWkN=isoWeek(nuWk()).w,wkKopD=Array.from({length:52},(_,w)=>`<th class="wk ${w+1===nuWkN?"nu":""}">${w+1}</th>`).join("");
   const r=data.rassen.find(x=>x.id===duurPop.rasId),lv=r&&data.leveranciers.find(l=>l.id===r.leverancierId);
   let h="";
   if(r){$("#dvTitel").innerHTML=`Teeltduur · ${esc(r.naam||"?")} <span class="status">${esc(teeltNaam(t))}${lv?" · "+esc(lv.naam):""}</span>`;
@@ -4127,13 +4127,13 @@ function prgWeken(J){const a=seizoenVan(J),b=seizoenVan(J+1),L=[];for(let t=a;t<
 const prgSoortKey=(t,r)=>teeltLabel(t)+"|"+r.naam;
 function prgSoorten(){return data.teeltduren.filter(t=>!prgTeelt||t.id===prgTeelt).map(t=>({t,R:data.rassen.filter(r=>r.teeltId===t.id)})).filter(x=>x.R.length)}
 /* terugrekenen: afleverweek − teeltduur = opzetweek; met uitval, raaptijd en afronden op fust */
-/* zelfde rekenwijze als de partijen: weken fase 1 + weken fase 2 (afgerond naar boven) */
-function prgDuur(t,r,o){const D=duurVan(t,r),w=isoWeek(new Date(o)).w,f1=(D.fase1||[])[w-1],f2=(D.fase2||[])[w-1];if(f1!=null&&f2!=null)return Math.ceil(f1)+Math.ceil(f2);return +((D.totaal||t.totaal||[])[w-1])||0}
-/* per afleverweek: opzetweek = de week waarvan de soort vanaf die afleverweek klaar is (begin raaptijd).
-   aantal = prognose + uitval, afgerond op hele trays. Totaal opzet = totaal prognose + uitval */
-function prgVoorstel(t,r,J){const W=prgWeken(J),u=(r.uitval!=null&&r.uitval!==""?+r.uitval:(+t.uitval||0))/100,R=r.raaptijd||1,fa=fustAantal(r.fust||t.fust)||0,uit=new Map(),wk=7*864e5;
+/* teeltduur uit Parameters (totaal, in weken) voor de opzetweek */
+function prgDuur(t,r,o){const D=duurVan(t,r),w=isoWeek(new Date(o)).w;return Math.round(+((D.totaal||t.totaal||[])[w-1])||0)}
+/* eenvoudig: opzetweek = afleverweek − (teeltduur − 1 week). Raaptijd telt niet mee.
+   aantal = prognose + uitval, afgerond op hele trays */
+function prgVoorstel(t,r,J){const W=prgWeken(J),u=(r.uitval!=null&&r.uitval!==""?+r.uitval:(+t.uitval||0))/100,fa=fustAantal(r.fust||t.fust)||0,uit=new Map(),wk=7*864e5;
   for(const a of W){const P=prgGet(r.id,a);if(!P)continue;
-    const doel=a+R*wk;let best=null,bd=1e9;for(let o=doel-70*wk;o<=doel;o+=wk){const d=prgDuur(t,r,o);if(!d)continue;const v=Math.abs(o+d*wk-doel);if(v<bd){bd=v;best=o}}
+    const doel=a+wk;let best=null,bd=1e9;for(let o=doel-70*wk;o<=doel;o+=wk){const d=prgDuur(t,r,o);if(!d)continue;const v=Math.abs(o+d*wk-doel);if(v<bd){bd=v;best=o}}
     if(best==null)continue;let n=Math.ceil(P/(1-Math.min(u,.9)));if(fa>1)n=Math.ceil(n/fa)*fa;uit.set(best,(uit.get(best)||0)+n)}
   return uit}
 const prgNu=(r,o)=>{const{y,w}=isoWeek(new Date(o));return +(((r.aantallen||{})[y]||[])[w-1])||0};
@@ -4188,7 +4188,7 @@ const prgOverAlles=()=>prgOver("");
 function prgOpen(){if(!(isBeheerder()&&mod3Mag()))return;if(!opt("prognose"))zetOptie("prognose",true);try{if(isSales())zetWeergave("alles")}catch(e){}naar("prognose")}
 function prgUitleg(){toonPop("📈 Prognose · uitleg",`<ol style="padding-left:18px;line-height:1.5;margin:0">
   <li><b>Prognose invullen</b>: per soort en afleverweek hoeveel planten u verwacht te verkopen.<br>Snel: <b>📋 Vorig seizoen overnemen</b> (de reserveringen van vorig seizoen, met evt. + of − %), daarna <b>± %</b> of per week aanpassen.</li>
-  <li><b>🧮 Voorstel inkoop</b>: de app rekent terug: afleverweek − teeltduur = opzetweek. Dan is de soort vanaf die afleverweek klaar. Aantal = prognose + <b>uitval-%</b> (Parameters), afgerond op hele trays (fust).</li>
+  <li><b>🧮 Voorstel inkoop</b>: de app rekent terug: opzetweek = afleverweek − (teeltduur − 1 week). De teeltduur komt uit Parameters; de raaptijd telt niet mee. Aantal = prognose + <b>uitval-%</b> (Parameters), afgerond op hele trays (fust).</li>
   <li><b>✓ Overnemen</b>: per soort, per teelt of alles. Het komt in Inkoop. Ctrl + Z = terug.</li>
   <li><b>Gereserveerd t.o.v. prognose</b>: tijdens het seizoen ziet u per week hoeveel % al gereserveerd is: <span class="prgok">groen</span> = op schema, <span class="prgmid">oranje</span> = iets achter, <span class="prgweinig">rood</span> = veel achter.</li></ol>`)}
 function toonKlanten(){const n=data.klanten.length;
