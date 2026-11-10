@@ -1015,7 +1015,7 @@ body.sales .navMidden>.mknop.groot{display:none!important}body.kijkmodus #btnPri
 
 <script>
 "use strict";
-const VERSIE="50.7";
+const VERSIE="50.8";
 const VERSIE_DATUM="03-11-2026";
 /* ---------- Basis ---------- */
 const PALET=["#2d6a4f","#1B5EBE","#E8007D","#c77d1a","#7a4fa0","#0f8b8d","#5b6b2f","#3d5a80","#a0522d","#7AB648"];
@@ -4882,6 +4882,7 @@ async function fotoPop(id){if(!fotoMag())return;const r=data.rassen.find(x=>x.id
   let i=Math.min(fotoIdx[id]||0,Math.max(0,L.length-1));fotoIdx[id]=i;const suf=L[i],img=L.length?await fotoLaadS(id,suf):null,N=`'${id}'`,her=`fotoPop(${N})`;
   const duim=await Promise.all(L.map(x=>fotoLaadS(id,x)));
   toonPop("📷 "+esc(r.naam||"soort"),`${galOpen?`<button class="btn licht" style="margin-bottom:8px" onclick="fotoGalerij()">‹ Terug naar galerij</button>`:""}<div class="fotogroot">${img?`<img src="${img}" alt="">`:`<div class="status" style="padding:30px;text-align:center">Nog geen foto.</div>`}</div>
+    ${img?`<div class="rij" style="gap:8px;margin-top:8px;align-items:center"><label class="status" for="fnIn">Naam</label><input id="fnIn" class="mwveld" style="margin:0;flex:1" list="fnTips" value="${esc(fotoNaam(id,suf))}" placeholder="bijv. de artikelcode: ${esc(r.fdArt||((r.verp||[])[0]||{}).code||"CURLY MIX X4")}" ${mag?"":"disabled"} onchange="fotoNaamZet(${N},'${suf}',this.value)">${fotoNaamTips(r)}</div>`:""}
     ${L.length>1?`<div class="fotoduimen">${duim.map((u,j)=>`<button class="${j===i?"aan":""}" onclick="fotoIdx[${N}]=${j};${her}" title="Foto ${j+1}${j===0?" (hoofdfoto)":""}">${u?`<img src="${u}" alt="">`:j+1}${j===0?"<b>⭐</b>":""}</button>`).join("")}</div>`:""}
     ${img?`<div class="rij" style="margin-top:10px;gap:8px;flex-wrap:wrap"><button class="btn licht" onclick="fotoDown(${N},'${suf}',${i+1})" title="Deze foto op de computer bewaren">⬇ Download</button>${L.length>1?`<button class="btn licht" onclick="fotoDownAlle(${N})" title="Alle foto's van deze soort bewaren">⬇ Alle ${L.length} foto's</button>`:""}</div>`:""}
     ${mag?`<div class="rij" style="margin-top:10px;gap:8px;flex-wrap:wrap">${L.length?`<span class="status">Foto ${i+1} van ${L.length}${i===0?" · ⭐ hoofdfoto":""}</span>`:""}<span style="flex:1"></span>
@@ -4922,6 +4923,10 @@ async function fotoWegS(id,suf,na){if(!confirm("Deze foto weghalen?"))return;con
     if(E[id]&&!E[id].length)delete E[id];fotoIdx[id]=0;opslaanLater();melding("Foto weggehaald","#2d6a4f");if(na)na()}
   catch(e){alert("Lukt niet: "+e.message)}}
 const fotoIdx={};
+/* naam per foto (bijv. de Floriday-artikelcode). Soort-foto's: data.fotoNaam["<soortId>|<code>"], foto-map: data.fotoMap[teelt][i].n */
+const fotoNaam=(id,suf)=>((data.fotoNaam||{})[id+"|"+(suf||"")])||"";
+function fotoNaamZet(id,suf,v){const N=data.fotoNaam=data.fotoNaam||{},k=id+"|"+(suf||"");v=String(v||"").trim();if(v)N[k]=v;else delete N[k];opslaanLater();melding(v?"✓ Naam: "+esc(v):"Naam weggehaald","#2d6a4f")}
+function fotoNaamTips(r){const L=new Set();if(r){if(r.fdArt)L.add(r.fdArt);for(const v of r.verp||[]){if(v.code)L.add(v.code);if(v.naam)L.add(r.naam+" "+v.naam)}L.add(r.naam)}return`<datalist id="fnTips">${[...L].map(x=>`<option value="${esc(x)}">`).join("")}</datalist>`}
 /* ---------- Foto-galerij (alleen beheerder, via Zoeken): alle foto's van alle soorten, per teelt ---------- */
 let galTeelt="",galOpen=0,galIn=0;
 /* ✕ van een foto uit de galerij: terug naar de galerij. Klikken naast de popup: alles dicht */
@@ -4929,8 +4934,8 @@ function popX(){if(galOpen&&!galIn)fotoGalerij();else sluitMobSoort()}
 function fotoGalerij(tid){if(!isBeheerder()||!fotoMag())return;galOpen=0;if(!wolkDoc){alert("Foto's werken alleen als u online bent ingelogd.");return}
   if(tid!=null)galTeelt=tid;const T=(data.teeltduren||[]).filter(t=>!galTeelt||t.id===galTeelt);let n=0;
   const blok=T.map(t=>{const R=data.rassen.filter(r=>r.teeltId===t.id&&fotoLijst(r.id).length),M=fmapLijst(t.id);if(!R.length&&!M.length)return"";
-    const fotos=R.flatMap(r=>fotoLijst(r.id).map((s,j)=>{n++;return`<button class="galfoto" data-gid="${r.id}" data-gs="${s}" onclick="galOpen=1;fotoIdx['${r.id}']=${j};fotoPop('${r.id}')" title="${esc(r.naam)} · foto ${j+1}${j?"":" ⭐"}"><span>${esc(r.naam)}${j?"":" ⭐"}</span></button>`}))
-      .concat(M.map(x=>{n++;return`<button class="galfoto" data-gm="${t.id}" data-gs="${x.s}" onclick="galOpen=1;fotoMapToon('${t.id}','${x.s}')" title="Foto-map"><span>📁 map</span></button>`}));
+    const fotos=R.flatMap(r=>fotoLijst(r.id).map((s,j)=>{n++;return`<button class="galfoto" data-gid="${r.id}" data-gs="${s}" onclick="galOpen=1;fotoIdx['${r.id}']=${j};fotoPop('${r.id}')" title="${esc(r.naam)} · foto ${j+1}${j?"":" ⭐"}${fotoNaam(r.id,s)?" · "+esc(fotoNaam(r.id,s)):""}"><span>${esc(fotoNaam(r.id,s)||r.naam)}${j?"":" ⭐"}</span></button>`}))
+      .concat(M.map(x=>{n++;return`<button class="galfoto" data-gm="${t.id}" data-gs="${x.s}" onclick="galOpen=1;fotoMapToon('${t.id}','${x.s}')" title="Foto-map${x.n?" · "+esc(x.n):""}"><span>📁 ${esc(x.n||"map")}</span></button>`}));
     return`<h4 style="margin:14px 0 6px">${esc(teeltLabel(t))} <span class="status">(${fotos.length})</span></h4><div class="galgrid">${fotos.join("")}</div>`}).join("");
   toonPop("🖼 Foto-galerij",`<select class="mwveld" onchange="fotoGalerij(this.value)"><option value="">Alle teelten</option>${(data.teeltduren||[]).map(t=>`<option value="${t.id}" ${t.id===galTeelt?"selected":""}>${esc(teeltLabel(t))}</option>`).join("")}</select>
     ${blok||`<div class="status" style="padding:12px 0">Nog geen foto's.</div>`}`);
@@ -4950,11 +4955,11 @@ async function fotoMapPop(tid,kies){if(!fotoMag())return;if(kies!=null)fmapKies=
   const L=fmapLijst(tid),mag=!kijker,T=data.teeltduren||[];
   toonPop("📁 Foto-map",`<select class="mwveld" onchange="fotoMapPop(this.value)">${T.map(t=>`<option value="${t.id}" ${t.id===tid?"selected":""}>${esc(teeltLabel(t))} (${fmapLijst(t.id).length})</option>`).join("")}</select>
     ${fmapKies?`<p class="status" style="margin:0 0 6px">Tik op een foto om die te gebruiken voor het aanbod.</p>`:""}
-    <div class="fmapgrid">${L.map(x=>`<button data-fm="${x.s}" onclick="${fmapKies?`fotoMapKies('${tid}','${x.s}')`:`fotoMapToon('${tid}','${x.s}')`}"></button>`).join("")||`<div class="status" style="padding:10px 0;grid-column:1/-1">Nog geen foto's in deze map.</div>`}</div>
+    <div class="fmapgrid">${L.map(x=>`<button class="galfoto" data-fm="${x.s}" title="${esc(x.n||"")}" onclick="${fmapKies?`fotoMapKies('${tid}','${x.s}')`:`fotoMapToon('${tid}','${x.s}')`}">${x.n?`<span>${esc(x.n)}</span>`:""}</button>`).join("")||`<div class="status" style="padding:10px 0;grid-column:1/-1">Nog geen foto's in deze map.</div>`}</div>
     <div class="rij" style="margin-top:10px;gap:8px;flex-wrap:wrap">${fmapKies?`<button class="btn licht" onclick="aanbodOpen()">‹ Terug</button>`:""}<span style="flex:1"></span>
       ${mag&&L.length<FMAP_MAX?`<label class="btn" style="cursor:pointer">➕ Foto's toevoegen<input type="file" accept="image/*" multiple hidden onchange="fotoMapErbij('${tid}',this.files)"></label>`:""}</div>
     <p class="status" style="font-size:12px;margin:6px 0 0">Maximaal ${FMAP_MAX} foto's per teelt. U kunt er meerdere tegelijk kiezen.</p>`);
-  document.querySelectorAll("#mobPop [data-fm]").forEach(async b=>{const u=await fmapLaad(tid,b.dataset.fm);if(u&&b.isConnected)b.innerHTML=`<img src="${u}" alt="">`})}
+  document.querySelectorAll("#mobPop [data-fm]").forEach(async b=>{const u=await fmapLaad(tid,b.dataset.fm);if(u&&b.isConnected)b.insertAdjacentHTML("afterbegin",`<img src="${u}" alt="">`)})}
 async function fotoMapErbij(tid,files){files=[...(files||[])];if(!files.length)return;const M=data.fotoMap=data.fotoMap||{},L=M[tid]=M[tid]||[];
   const ruimte=FMAP_MAX-L.length;if(files.length>ruimte){alert(`Er kunnen nog ${ruimte} foto's bij in deze map.`);files=files.slice(0,ruimte)}
   let n=0;for(const f of files){try{melding(`Foto bewaren… ${++n}/${files.length}`);let img=await fotoKlein(f,800);if(img.length>700000)img=await fotoKlein(f,480);
@@ -4962,20 +4967,23 @@ async function fotoMapErbij(tid,files){files=[...(files||[])];if(!files.length)r
     catch(e){alert("Foto bewaren lukt niet: "+e.message);break}}
   opslaanLater();melding("📁 "+n+" foto"+(n===1?"":"'s")+" bewaard","#2d6a4f");fotoMapPop(tid)}
 async function fotoMapToon(tid,s){const u=await fmapLaad(tid,s),t=(data.teeltduren||[]).find(x=>x.id===tid)||{},nr=fmapLijst(tid).findIndex(x=>x.s===s)+1;
+  const xm=fmapLijst(tid).find(x=>x.s===s)||{},RT=data.rassen.filter(r=>r.teeltId===tid);
   toonPop("📁 "+esc(teeltLabel(t)),`<div class="fotogroot">${u?`<img src="${u}" alt="">`:"–"}</div>
+    <div class="rij" style="gap:8px;margin-top:8px;align-items:center"><label class="status" for="fnIn">Naam</label><input id="fnIn" class="mwveld" style="margin:0;flex:1" list="fnTips" value="${esc(xm.n||"")}" placeholder="bijv. de artikelcode" ${kijker?"disabled":""} onchange="fmapNaamZet('${tid}','${s}',this.value)"><datalist id="fnTips">${[...new Set(RT.flatMap(r=>[r.fdArt,...(r.verp||[]).map(v=>v.code)]).filter(Boolean))].map(x=>`<option value="${esc(x)}">`).join("")}</datalist></div>
     <div class="rij" style="margin-top:10px;gap:8px;flex-wrap:wrap"><button class="btn licht" onclick="${galOpen?"fotoGalerij()":`fotoMapPop('${tid}')`}">‹ Terug</button><span style="flex:1"></span>
       ${mod4()?`<button class="btn licht" onclick="fotoMapKies('${tid}','${s}')">📤 Voor aanbod</button>`:""}
       <button class="btn licht" onclick="fotoMapDown('${tid}','${s}',${nr})">⬇ Download</button>
       ${!kijker?`<button class="btn rood" onclick="fotoMapWeg('${tid}','${s}')">🗑 Weghalen</button>`:""}</div>`)}
+async function fmapNaamZet(tid,s,v){const x=fmapLijst(tid).find(x=>x.s===s);if(!x)return;v=String(v||"").trim();if(v)x.n=v;else delete x.n;opslaanLater();melding(v?"✓ Naam: "+esc(v):"Naam weggehaald","#2d6a4f")}
 async function fotoMapKies(tid,s){const u=await fmapLaad(tid,s);if(!u)return;aanbod=aanbod||{img:"",naam:"",prijs:"",kar:"",tekst:""};aanbod.img=u;
   if(!aanbod.naam){const t=(data.teeltduren||[]).find(x=>x.id===tid);if(t)aanbod.naam=teeltLabel(t)}aanbodBewaar();fmapKies=false;aanbodOpen()}
 async function fotoMapDown(tid,s,nr){const u=await fmapLaad(tid,s);if(!u)return;const t=(data.teeltduren||[]).find(x=>x.id===tid)||{};
-  const a=document.createElement("a");a.href=u;a.download=(teeltLabel(t)+" map foto "+nr).replace(/[^\w .-]+/g," ").replace(/\s+/g," ").trim()+".jpg";document.body.appendChild(a);a.click();a.remove()}
+  const a=document.createElement("a");a.href=u;a.download=((fmapLijst(tid).find(x=>x.s===s)||{}).n||(teeltLabel(t)+" map foto "+nr)).replace(/[^\w .-]+/g," ").replace(/\s+/g," ").trim()+".jpg";document.body.appendChild(a);a.click();a.remove()}
 async function fotoMapWeg(tid,s){if(!confirm("Deze foto weghalen?"))return;try{await fmapDoc(tid,s).delete()}catch(e){}
   const M=data.fotoMap||{};M[tid]=(M[tid]||[]).filter(x=>x.s!==s);if(!M[tid].length)delete M[tid];delete fotoCache["fmap|"+tid+"|"+s];opslaanLater();melding("Foto weggehaald","#2d6a4f");fotoMapPop(tid)}
 /* foto bewaren op de computer (de verkleinde foto zoals die in de app staat) */
 async function fotoDown(id,suf,nr){const img=await fotoLaadS(id,suf);if(!img)return;const r=data.rassen.find(x=>x.id===id)||{},t=data.teeltduren.find(x=>x.id===r.teeltId)||{};
-  const a=document.createElement("a");a.href=img;a.download=(teeltLabel(t)+" "+(r.naam||"soort")+" foto "+nr).replace(/[^\w .-]+/g," ").replace(/\s+/g," ").trim()+".jpg";document.body.appendChild(a);a.click();a.remove()}
+  const a=document.createElement("a");a.href=img;a.download=(fotoNaam(id,suf)||(teeltLabel(t)+" "+(r.naam||"soort")+" foto "+nr)).replace(/[^\w .-]+/g," ").replace(/\s+/g," ").trim()+".jpg";document.body.appendChild(a);a.click();a.remove()}
 async function fotoDownAlle(id){const L=fotoLijst(id);for(let j=0;j<L.length;j++){await fotoDown(id,L[j],j+1);await new Promise(r=>setTimeout(r,400))}}
 function fotoStap(id,d,na){const n=fotoLijst(id).length;if(n<2)return;fotoIdx[id]=((fotoIdx[id]||0)+d+n)%n;na()}
 /* mobiel: foto(s) bovenin de popup. De foto die u ziet, gaat mee bij Delen */
