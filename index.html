@@ -1020,7 +1020,7 @@ body.sales .navMidden>.mknop.groot{display:none!important}body.kijkmodus #btnPri
 
 <script>
 "use strict";
-const VERSIE="51.2";
+const VERSIE="51.3";
 const VERSIE_DATUM="03-11-2026";
 /* ---------- Basis ---------- */
 const PALET=["#2d6a4f","#1B5EBE","#E8007D","#c77d1a","#7a4fa0","#0f8b8d","#5b6b2f","#3d5a80","#a0522d","#7AB648"];
@@ -3920,7 +3920,7 @@ async function mobDelenIn2(k,zonder,tekst,el){
     const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=naam;a.click();melding("⬇ Plaatje gedownload","#2d6a4f")}
   catch(e){alert("Delen lukt niet: "+e.message)}}
 function aflSoort(k){const n=isoWeek(nuWk());mobSoort(k.replace("|"," · "),+maandagIso(n.y,n.w))}
-function sluitMobSoort(){try{galOpen=0;fzVia=0}catch(e){}const m=document.getElementById("mobPop");if(m&&!m.hidden&&!window.ofKlaar&&[...m.querySelectorAll(".oftab .ofn")].some(i=>+i.value>0)&&!confirm("De order is nog niet opgeslagen.\nToch sluiten? (Klik op Annuleren en daarna op ✔ Opslaan)"))return;window.ofKlaar=false;if(m)m.hidden=true;if(tab==="oppotov"||tab==="aflever"||tab==="mobiel")render()}
+function sluitMobSoort(){try{galOpen=0;fzVia=0;fmapVoor=""}catch(e){}const m=document.getElementById("mobPop");if(m&&!m.hidden&&!window.ofKlaar&&[...m.querySelectorAll(".oftab .ofn")].some(i=>+i.value>0)&&!confirm("De order is nog niet opgeslagen.\nToch sluiten? (Klik op Annuleren en daarna op ✔ Opslaan)"))return;window.ofKlaar=false;if(m)m.hidden=true;if(tab==="oppotov"||tab==="aflever"||tab==="mobiel")render()}
 function mobWeek(d){const t=plusWeken(mobWeekStart(),d),n=isoWeek(t);mob.week=n.w;mob.jaar=n.y;mob.partijId="";render()}
 /* ---------- Post-it: opmerkingen en vragen voor iedereen (gedeeld via de online planning) ---------- */
 let postitAlles=false;
@@ -4894,7 +4894,7 @@ async function fotoPop(id){if(!fotoMag())return;const r=data.rassen.find(x=>x.id
     ${mag?`<div class="rij" style="margin-top:10px;gap:8px;flex-wrap:wrap">${L.length?`<span class="status">Foto ${i+1} van ${L.length}${i===0?" · ⭐ hoofdfoto":""}</span>`:""}<span style="flex:1"></span>
       ${i>0?`<button class="btn licht" onclick="fotoHoofd(${N},'${suf}',()=>{${her};render()})">⭐ Maak hoofdfoto</button>`:""}
       ${img?`<button class="btn rood" onclick="fotoWegS(${N},'${suf}',()=>{${her};render()})">🗑 Weghalen</button>`:""}
-      ${L.length<FOTO_MAX?`<label class="btn" style="cursor:pointer">➕ Foto toevoegen<input type="file" accept="image/*" hidden onchange="fotoErbij(${N},this.files[0],()=>{${her};render()})"></label>`:""}</div>
+      ${L.length<FOTO_MAX?`<button class="btn" onclick="fotoUitMap(${N})" title="Een foto uit de foto-map van de teelt kiezen">🖼 Uit foto-map</button><label class="btn licht" style="cursor:pointer" title="Een foto van de computer of telefoon kiezen">➕ Van computer<input type="file" accept="image/*" hidden onchange="fotoErbij(${N},this.files[0],()=>{${her};render()})"></label>`:""}</div>
       <p class="status" style="margin:6px 0 0;font-size:12px">Maximaal ${FOTO_MAX} foto's per soort. De hoofdfoto (⭐) komt in de aanbodlijst en de catalogus.</p>`:wolkDoc?"":`<p class="status">Foto's werken alleen als u online bent ingelogd.</p>`}`)}
 function fotoKlein(file,max=480){return new Promise((ok,nee)=>{const u=URL.createObjectURL(file),im=new Image();im.onload=()=>{const f=Math.min(1,max/Math.max(im.width,im.height)),c=document.createElement("canvas");
     c.width=Math.round(im.width*f);c.height=Math.round(im.height*f);c.getContext("2d").drawImage(im,0,0,c.width,c.height);URL.revokeObjectURL(u);ok(c.toDataURL("image/jpeg",0.72))};im.onerror=()=>nee(new Error("Dit is geen foto"));im.src=u})}
@@ -4956,7 +4956,14 @@ const fmapDoc=(tid,s)=>wolkDoc.parent.doc("fmap_"+tid+"_"+s);
 const fmapLijst=tid=>((data.fotoMap||{})[tid])||[];
 async function fmapLaad(tid,s){const c="fmap|"+tid+"|"+s;if(c in fotoCache)return fotoCache[c];if(!wolkDoc)return null;try{const d=await fmapDoc(tid,s).get();fotoCache[c]=d.exists?d.data().img:null}catch(e){return null}return fotoCache[c]}
 const fmapTeelt=t=>{const L=data.teeltduren||[];if(t&&L.some(x=>x.id===t))return t;let v="";try{v=localStorage.getItem("potplanning-fmap")||""}catch(e){}return L.some(x=>x.id===v)?v:(L[0]||{}).id||""};
-let fmapKies=false;
+let fmapKies=false,fmapVoor="";
+/* foto voor een soort kiezen uit de foto-map (in plaats van een bestand op de computer) */
+function fotoUitMap(rid){const r=data.rassen.find(x=>x.id===rid);if(!r)return;fmapVoor=rid;fmapKies=false;fzT="";fotoMapPop(r.teeltId)}
+async function fotoMapNaarSoort(tid,s){const rid=fmapVoor,u=await fmapLaad(tid,s);if(!rid||!u)return;
+  try{const bl=await (await fetch(u)).blob(),f=new File([bl],"map.jpg",{type:bl.type||"image/jpeg"});const x=fmapLijst(tid).find(x=>x.s===s);
+    if(x&&!x.r&&data.rassen.some(q=>q.id===rid&&q.teeltId===tid))x.r=rid;
+    fmapVoor="";await fotoErbij(rid,f,()=>{const L=fotoLijst(rid),xm=fmapLijst(tid).find(q=>q.s===s);if(xm&&xm.n&&L.length&&!fotoNaam(rid,L[L.length-1]))fotoNaamZet(rid,L[L.length-1],xm.n);fotoIdx[rid]=L.length-1;fotoPop(rid);render()})}
+  catch(e){alert("Foto overzetten lukt niet: "+e.message)}}
 /* zoeken in foto-map en galerij: filtert de knoppen op data-z (naam, code, soort, teelt) */
 let fzT="",fzVia=0;
 /* beschikbaar per week voor één soort (afleverplan min gereserveerd), vanaf deze week */
@@ -4995,14 +5002,14 @@ function fotoZoek(v){fzT=v=String(v||"");v=v.trim().toLowerCase();const P=docume
   P.querySelectorAll(".galfoto").forEach(b=>{const ok=!v||(b.dataset.z||"").toLowerCase().includes(v);b.style.display=ok?"":"none";if(ok)n++});
   P.querySelectorAll(".galgrid").forEach(g=>{const any=[...g.children].some(c=>c.style.display!=="none"),h=g.previousElementSibling;g.style.display=any?"":"none";if(h&&h.tagName==="H4")h.style.display=any?"":"none"});
   const e=P.querySelector("#fzLeeg");if(e)e.style.display=(v&&!n)?"":"none"}
-async function fotoMapPop(tid,kies){if(!fotoMag())return;if(kies!=null)fmapKies=!!kies;tid=fmapTeelt(tid);try{localStorage.setItem("potplanning-fmap",tid)}catch(e){}
+async function fotoMapPop(tid,kies){if(!fotoMag())return;if(kies!=null){fmapKies=!!kies;fmapVoor=""}tid=fmapTeelt(tid);try{localStorage.setItem("potplanning-fmap",tid)}catch(e){}
   if(!wolkDoc){alert("Foto's werken alleen als u online bent ingelogd.");return}
-  const L=fmapLijst(tid),mag=!kijker,T=data.teeltduren||[];
-  toonPop("📁 Foto-map",`<select class="mwveld" onchange="fotoMapPop(this.value)">${T.map(t=>`<option value="${t.id}" ${t.id===tid?"selected":""}>${esc(teeltLabel(t))} (${fmapLijst(t.id).length})</option>`).join("")}</select>
-    ${fmapKies?`<p class="status" style="margin:0 0 6px">Tik op een foto om die te gebruiken voor het aanbod.</p>`:""}
+  const L=fmapVoor?[...fmapLijst(tid)].sort((a,b)=>(b.r===fmapVoor)-(a.r===fmapVoor)):fmapLijst(tid),mag=!kijker,T=data.teeltduren||[];
+  toonPop(fmapVoor?"🖼 Kies een foto":"📁 Foto-map",`<select class="mwveld" onchange="fotoMapPop(this.value)">${T.map(t=>`<option value="${t.id}" ${t.id===tid?"selected":""}>${esc(teeltLabel(t))} (${fmapLijst(t.id).length})</option>`).join("")}</select>
+    ${fmapVoor?`<p class="status" style="margin:0 0 6px">Tik op een foto om die bij <b>${esc((data.rassen.find(r=>r.id===fmapVoor)||{}).naam||"")}</b> te zetten. Kies bovenin een andere teelt als dat nodig is.</p>`:fmapKies?`<p class="status" style="margin:0 0 6px">Tik op een foto om die te gebruiken voor het aanbod.</p>`:""}
     ${L.length?`<input type="search" class="mwveld" style="margin:6px 0" placeholder="🔍 Zoek op naam of code…" value="${esc(fzT)}" oninput="fotoZoek(this.value)"><div id="fzLeeg" class="status" style="padding:10px 0;display:none">Niets gevonden.</div>`:""}
-    <div class="fmapgrid" ${mag?`ondragover="event.preventDefault();this.classList.add('slepen')" ondragleave="this.classList.remove('slepen')" ondrop="event.preventDefault();this.classList.remove('slepen');fotoMapErbij('${tid}',event.dataTransfer.files)"`:""}>${L.map(x=>`<button class="galfoto" data-z="${esc([x.n,(data.rassen.find(q=>q.id===x.r)||{}).naam].filter(Boolean).join(" "))}" data-fm="${x.s}" title="${esc(x.n||"")}" onclick="${fmapKies?`fotoMapKies('${tid}','${x.s}')`:`fotoMapToon('${tid}','${x.s}')`}">${x.n?`<span>${esc(x.n)}</span>`:""}</button>`).join("")||`<div class="status" style="padding:10px 0;grid-column:1/-1">Nog geen foto's in deze map.</div>`}</div>
-    <div class="rij" style="margin-top:10px;gap:8px;flex-wrap:wrap">${fmapKies?`<button class="btn licht" onclick="aanbodOpen()">‹ Terug</button>`:""}<span style="flex:1"></span>
+    <div class="fmapgrid" ${mag?`ondragover="event.preventDefault();this.classList.add('slepen')" ondragleave="this.classList.remove('slepen')" ondrop="event.preventDefault();this.classList.remove('slepen');fotoMapErbij('${tid}',event.dataTransfer.files)"`:""}>${L.map(x=>`<button class="galfoto" data-z="${esc([x.n,(data.rassen.find(q=>q.id===x.r)||{}).naam].filter(Boolean).join(" "))}" data-fm="${x.s}" title="${esc(x.n||"")}" onclick="${fmapVoor?`fotoMapNaarSoort('${tid}','${x.s}')`:fmapKies?`fotoMapKies('${tid}','${x.s}')`:`fotoMapToon('${tid}','${x.s}')`}">${x.n?`<span>${esc(x.n)}</span>`:""}</button>`).join("")||`<div class="status" style="padding:10px 0;grid-column:1/-1">Nog geen foto's in deze map.</div>`}</div>
+    <div class="rij" style="margin-top:10px;gap:8px;flex-wrap:wrap">${fmapVoor?`<button class="btn licht" onclick="const r='${fmapVoor}';fmapVoor='';fotoPop(r)">‹ Terug</button>`:fmapKies?`<button class="btn licht" onclick="aanbodOpen()">‹ Terug</button>`:""}<span style="flex:1"></span>
       ${mag&&L.length<FMAP_MAX?`<label class="btn" style="cursor:pointer">➕ Foto's toevoegen<input type="file" accept="image/*" multiple hidden onchange="fotoMapErbij('${tid}',this.files)"></label>`:""}</div>
     <p class="status" style="font-size:12px;margin:6px 0 0">Maximaal ${FMAP_MAX} foto's per teelt (nu ${L.length}). Kies er veel tegelijk, of sleep ze vanaf de computer in het vak. Staat de soort of artikelcode in de bestandsnaam? Dan krijgt de foto die naam en wordt hij meteen gekoppeld.</p>`);
   fotoZoek(fzT);const io=new IntersectionObserver(es=>es.forEach(async e=>{if(!e.isIntersecting)return;io.unobserve(e.target);const b=e.target,u=await fmapLaad(tid,b.dataset.fm);if(u&&b.isConnected)b.insertAdjacentHTML("afterbegin",`<img src="${u}" alt="" loading="lazy">`)}),{rootMargin:"300px"});
