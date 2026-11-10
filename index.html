@@ -839,6 +839,10 @@ body.sales .navMidden>.mknop.groot{display:none!important}body.kijkmodus #btnPri
 @media (max-width:700px){html,body{overflow-x:hidden;max-width:100%}}
 
 @media (max-width:370px){.navMidden .mknop.groot{padding:4px 3px!important;font-size:10px!important}}
+.fzbesch{margin-top:10px;padding:10px;border:1px solid #cfe3d8;background:#f3faf6;border-radius:10px}
+.fzwk{display:grid;grid-template-columns:repeat(5,1fr);gap:4px;margin-top:6px}
+.fzwk div{display:flex;flex-direction:column;align-items:center;background:#fff;border-radius:6px;padding:4px 2px;font-size:12px}
+.fzwk b{font-size:14px}
 </style>
 </head>
 <body>
@@ -1015,7 +1019,7 @@ body.sales .navMidden>.mknop.groot{display:none!important}body.kijkmodus #btnPri
 
 <script>
 "use strict";
-const VERSIE="51.0";
+const VERSIE="51.1";
 const VERSIE_DATUM="03-11-2026";
 /* ---------- Basis ---------- */
 const PALET=["#2d6a4f","#1B5EBE","#E8007D","#c77d1a","#7a4fa0","#0f8b8d","#5b6b2f","#3d5a80","#a0522d","#7AB648"];
@@ -3915,7 +3919,7 @@ async function mobDelenIn2(k,zonder,tekst,el){
     const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=naam;a.click();melding("⬇ Plaatje gedownload","#2d6a4f")}
   catch(e){alert("Delen lukt niet: "+e.message)}}
 function aflSoort(k){const n=isoWeek(nuWk());mobSoort(k.replace("|"," · "),+maandagIso(n.y,n.w))}
-function sluitMobSoort(){try{galOpen=0}catch(e){}const m=document.getElementById("mobPop");if(m&&!m.hidden&&!window.ofKlaar&&[...m.querySelectorAll(".oftab .ofn")].some(i=>+i.value>0)&&!confirm("De order is nog niet opgeslagen.\nToch sluiten? (Klik op Annuleren en daarna op ✔ Opslaan)"))return;window.ofKlaar=false;if(m)m.hidden=true;if(tab==="oppotov"||tab==="aflever"||tab==="mobiel")render()}
+function sluitMobSoort(){try{galOpen=0;fzVia=0}catch(e){}const m=document.getElementById("mobPop");if(m&&!m.hidden&&!window.ofKlaar&&[...m.querySelectorAll(".oftab .ofn")].some(i=>+i.value>0)&&!confirm("De order is nog niet opgeslagen.\nToch sluiten? (Klik op Annuleren en daarna op ✔ Opslaan)"))return;window.ofKlaar=false;if(m)m.hidden=true;if(tab==="oppotov"||tab==="aflever"||tab==="mobiel")render()}
 function mobWeek(d){const t=plusWeken(mobWeekStart(),d),n=isoWeek(t);mob.week=n.w;mob.jaar=n.y;mob.partijId="";render()}
 /* ---------- Post-it: opmerkingen en vragen voor iedereen (gedeeld via de online planning) ---------- */
 let postitAlles=false;
@@ -4883,6 +4887,7 @@ async function fotoPop(id){if(!fotoMag())return;const r=data.rassen.find(x=>x.id
   const duim=await Promise.all(L.map(x=>fotoLaadS(id,x)));
   toonPop("📷 "+esc(r.naam||"soort"),`${galOpen?`<button class="btn licht" style="margin-bottom:8px" onclick="fotoGalerij()">‹ Terug naar galerij</button>`:""}<div class="fotogroot">${img?`<img src="${img}" alt="">`:`<div class="status" style="padding:30px;text-align:center">Nog geen foto.</div>`}</div>
     ${img?`<div class="rij" style="gap:8px;margin-top:8px;align-items:center"><label class="status" for="fnIn">Naam</label><input id="fnIn" class="mwveld" style="margin:0;flex:1" list="fnTips" value="${esc(fotoNaam(id,suf))}" placeholder="bijv. de artikelcode: ${esc(r.fdArt||((r.verp||[])[0]||{}).code||"CURLY MIX X4")}" ${mag?"":"disabled"} onchange="fotoNaamZet(${N},'${suf}',this.value)">${fotoNaamTips(r)}</div>`:""}
+    ${fzVia&&img?fotoBeschBlok(id,"s",id,suf,fotoNaam(id,suf)):""}
     ${L.length>1?`<div class="fotoduimen">${duim.map((u,j)=>`<button class="${j===i?"aan":""}" onclick="fotoIdx[${N}]=${j};${her}" title="Foto ${j+1}${j===0?" (hoofdfoto)":""}">${u?`<img src="${u}" alt="">`:j+1}${j===0?"<b>⭐</b>":""}</button>`).join("")}</div>`:""}
     ${img?`<div class="rij" style="margin-top:10px;gap:8px;flex-wrap:wrap"><button class="btn licht" onclick="fotoDown(${N},'${suf}',${i+1})" title="Deze foto op de computer bewaren">⬇ Download</button>${L.length>1?`<button class="btn licht" onclick="fotoDownAlle(${N})" title="Alle foto's van deze soort bewaren">⬇ Alle ${L.length} foto's</button>`:""}</div>`:""}
     ${mag?`<div class="rij" style="margin-top:10px;gap:8px;flex-wrap:wrap">${L.length?`<span class="status">Foto ${i+1} van ${L.length}${i===0?" · ⭐ hoofdfoto":""}</span>`:""}<span style="flex:1"></span>
@@ -4935,7 +4940,7 @@ function fotoGalerij(tid){if(!isBeheerder()||!fotoMag())return;galOpen=0;if(!wol
   if(tid!=null)galTeelt=tid;const T=(data.teeltduren||[]).filter(t=>!galTeelt||t.id===galTeelt);let n=0;
   const blok=T.map(t=>{const R=data.rassen.filter(r=>r.teeltId===t.id&&fotoLijst(r.id).length),M=fmapLijst(t.id);if(!R.length&&!M.length)return"";
     const fotos=R.flatMap(r=>fotoLijst(r.id).map((s,j)=>{n++;return`<button class="galfoto" data-z="${esc([fotoNaam(r.id,s),r.naam,r.fdArt,...(r.verp||[]).map(v=>v.code),teeltLabel(t)].filter(Boolean).join(" "))}" data-gid="${r.id}" data-gs="${s}" onclick="galOpen=1;fotoIdx['${r.id}']=${j};fotoPop('${r.id}')" title="${esc(r.naam)} · foto ${j+1}${j?"":" ⭐"}${fotoNaam(r.id,s)?" · "+esc(fotoNaam(r.id,s)):""}"><span>${esc(fotoNaam(r.id,s)||r.naam)}${j?"":" ⭐"}</span></button>`}))
-      .concat(M.map(x=>{n++;return`<button class="galfoto" data-z="${esc([x.n,"map",teeltLabel(t)].filter(Boolean).join(" "))}" data-gm="${t.id}" data-gs="${x.s}" onclick="galOpen=1;fotoMapToon('${t.id}','${x.s}')" title="Foto-map${x.n?" · "+esc(x.n):""}"><span>📁 ${esc(x.n||"map")}</span></button>`}));
+      .concat(M.map(x=>{n++;return`<button class="galfoto" data-z="${esc([x.n,"map",teeltLabel(t),(data.rassen.find(q=>q.id===x.r)||{}).naam].filter(Boolean).join(" "))}" data-gm="${t.id}" data-gs="${x.s}" onclick="galOpen=1;fotoMapToon('${t.id}','${x.s}')" title="Foto-map${x.n?" · "+esc(x.n):""}"><span>📁 ${esc(x.n||"map")}</span></button>`}));
     return`<h4 style="margin:14px 0 6px">${esc(teeltLabel(t))} <span class="status">(${fotos.length})</span></h4><div class="galgrid">${fotos.join("")}</div>`}).join("");
   toonPop("🖼 Foto-galerij",`<select class="mwveld" onchange="fotoGalerij(this.value)"><option value="">Alle teelten</option>${(data.teeltduren||[]).map(t=>`<option value="${t.id}" ${t.id===galTeelt?"selected":""}>${esc(teeltLabel(t))}</option>`).join("")}</select>
     ${blok?`<input type="search" class="mwveld" style="margin:6px 0" placeholder="🔍 Zoek op naam of code…" value="${esc(fzT)}" oninput="fotoZoek(this.value)"><div id="fzLeeg" class="status" style="padding:10px 0;display:none">Niets gevonden.</div>`:""}
@@ -4952,7 +4957,39 @@ async function fmapLaad(tid,s){const c="fmap|"+tid+"|"+s;if(c in fotoCache)retur
 const fmapTeelt=t=>{const L=data.teeltduren||[];if(t&&L.some(x=>x.id===t))return t;let v="";try{v=localStorage.getItem("potplanning-fmap")||""}catch(e){}return L.some(x=>x.id===v)?v:(L[0]||{}).id||""};
 let fmapKies=false;
 /* zoeken in foto-map en galerij: filtert de knoppen op data-z (naam, code, soort, teelt) */
-let fzT="";
+let fzT="",fzVia=0;
+/* beschikbaar per week voor één soort (afleverplan min gereserveerd), vanaf deze week */
+function soortBeschik(rid,n){const ras=data.rassen.find(r=>r.id===rid);if(!ras)return null;const t0=+dezeWeek(),l=afleverRegels().filter(r=>r.rasId===rid&&r.t>=t0),tl=data.teeltduren.find(x=>x.id===ras.teeltId)||{};
+  const vk=l.length?l[0].product+"|"+l[0].soort:teeltLabel(tl)+"|"+ras.naam,per=new Map();l.forEach(r=>per.set(r.t,(per.get(r.t)||0)+r.aantal));
+  return{ras,tl,wk:Array.from({length:n||10},(_,i)=>{const tt=+plusWeken(new Date(t0),i),b=(per.get(tt)||0)-verkSom(vk,tt);return{t:tt,w:isoWeek(new Date(tt)).w,b:Math.max(0,b)}})}}
+/* blok onder een foto die via 🔍 Zoeken is geopend: 10 weken beschikbaar + mail klaarzetten */
+function fotoBeschBlok(rid,soort,a,b,naam){if(isTeler())return"";const B=soortBeschik(rid,10);if(!B)return"";
+  return`<div class="fzbesch"><div><b>📦 Beschikbaar ${esc(B.ras.naam)}</b> <span class="status">· ${esc(teeltLabel(B.tl))} · komende 10 weken</span></div>
+    <div class="fzwk">${B.wk.map(x=>`<div><span>wk ${x.w}</span><b class="${x.b?"":"status"}">${x.b?getal(x.b):"—"}</b></div>`).join("")}</div>
+    <div class="rij" style="gap:8px;margin-top:8px;flex-wrap:wrap"><span class="status" style="font-size:12px">Onder voorbehoud van tussentijdse verkoop.</span><span style="flex:1"></span>
+    <button class="btn" onclick="fotoMail('${rid}','${soort}','${a}','${b}',${esc(JSON.stringify(naam||""))})">✉ Mail klaarzetten</button></div></div>`}
+async function fotoMail(rid,soort,a,b,naam){const B=soortBeschik(rid,10);if(!B)return;const img=soort==="m"?await fmapLaad(a,b):await fotoLaadS(a,b);
+  const nm=naam||B.ras.naam,code=B.ras.fdArt&&B.ras.fdArt!==nm?B.ras.fdArt:"",wk=B.wk.filter(x=>x.b),G="#2d6a4f",F="font-family:Arial,Helvetica,sans-serif;";
+  const su=`Aanbod: ${nm}${KLANT.appNaam?" – "+KLANT.appNaam:""}`;
+  let t=`Beste klant,\n\nHierbij ${nm} (${teeltLabel(B.tl)})${code?" – code "+code:""}.\n\nBeschikbaar:\n`;
+  t+=wk.length?wk.map(x=>`- week ${x.w}: ${getal(x.b)} st`).join("\n"):"(de komende 10 weken niets vrij)";t+="\n\nOnder voorbehoud van tussentijdse verkoop.\n";
+  const td="padding:4px 12px;border-bottom:1px solid #e6e0d4;font-size:14px;";
+  const h=`<div style="${F}color:#222"><p>Beste klant,</p><p>Hierbij <b>${esc(nm)}</b> (${esc(teeltLabel(B.tl))})${code?" – code "+esc(code):""}.</p>
+    ${img?`<img src="${img}" width="360" style="width:360px;max-width:100%;border-radius:10px;display:block;margin:8px 0" alt="${esc(nm)}">`:""}
+    <table style="border-collapse:collapse;${F}"><tr><th style="background:${G};color:#fff;padding:5px 12px;text-align:left;font-size:14px">Week</th><th style="background:${G};color:#fff;padding:5px 12px;text-align:right;font-size:14px">Beschikbaar</th></tr>
+    ${wk.length?wk.map(x=>`<tr><td style="${td}">week ${x.w}</td><td style="${td}text-align:right">${getal(x.b)} st</td></tr>`).join(""):`<tr><td colspan="2" style="${td}">de komende 10 weken niets vrij</td></tr>`}</table>
+    <p style="font-size:12px;color:#555">Onder voorbehoud van tussentijdse verkoop.</p></div>`;
+  const mob=/Android|iPhone|iPad/i.test(navigator.userAgent);
+  if(mob){if(img&&navigator.canShare){try{const bl=await (await fetch(img)).blob(),f=new File([bl],nm.replace(/[^\w .-]+/g," ").trim()+".jpg",{type:bl.type||"image/jpeg"});
+      if(navigator.canShare({files:[f]})){await navigator.share({files:[f],title:su,text:t});return}}catch(e){if(e&&e.name==="AbortError")return}}
+    location.href=`mailto:?subject=${encodeURIComponent(su)}&body=${encodeURIComponent(t)}`;return}
+  if(mailProg()==="standaard"){mailGa(mailUrl("",su,t));return}
+  const w=window.open("about:blank","_blank");let ok=false;
+  try{await navigator.clipboard.write([new ClipboardItem({"text/html":new Blob([h],{type:"text/html"}),"text/plain":new Blob([t],{type:"text/plain"})})]);ok=true}catch(e){}
+  mailGa(mailUrl("",su,ok?"":t),w);
+  melding(ok?`✉ ${mailNaam()} gaat open · klik in de mail en druk op Ctrl + V: foto en beschikbaarheid komen erin`:`✉ ${mailNaam()} gaat open met de tekst`,"#2d6a4f")}
+function fmapSoortZet(tid,s,v){const x=fmapLijst(tid).find(x=>x.s===s);if(!x)return;if(v)x.r=v;else delete x.r;opslaanLater();
+  const r=data.rassen.find(q=>q.id===v);melding(r?"🔗 Gekoppeld aan "+esc(r.naam):"Koppeling weggehaald","#2d6a4f");fotoMapToon(tid,s)}
 function fotoZoek(v){fzT=v=String(v||"");v=v.trim().toLowerCase();const P=document.getElementById("mobPop");if(!P)return;let n=0;
   P.querySelectorAll(".galfoto").forEach(b=>{const ok=!v||(b.dataset.z||"").toLowerCase().includes(v);b.style.display=ok?"":"none";if(ok)n++});
   P.querySelectorAll(".galgrid").forEach(g=>{const any=[...g.children].some(c=>c.style.display!=="none"),h=g.previousElementSibling;g.style.display=any?"":"none";if(h&&h.tagName==="H4")h.style.display=any?"":"none"});
@@ -4978,6 +5015,8 @@ async function fotoMapToon(tid,s){const u=await fmapLaad(tid,s),t=(data.teeltdur
   const xm=fmapLijst(tid).find(x=>x.s===s)||{},RT=data.rassen.filter(r=>r.teeltId===tid);
   toonPop("📁 "+esc(teeltLabel(t)),`<div class="fotogroot">${u?`<img src="${u}" alt="">`:"–"}</div>
     <div class="rij" style="gap:8px;margin-top:8px;align-items:center"><label class="status" for="fnIn">Naam</label><input id="fnIn" class="mwveld" style="margin:0;flex:1" list="fnTips" value="${esc(xm.n||"")}" placeholder="bijv. de artikelcode" ${kijker?"disabled":""} onchange="fmapNaamZet('${tid}','${s}',this.value)"><datalist id="fnTips">${[...new Set(RT.flatMap(r=>[r.fdArt,...(r.verp||[]).map(v=>v.code)]).filter(Boolean))].map(x=>`<option value="${esc(x)}">`).join("")}</datalist></div>
+    <div class="rij" style="gap:8px;margin-top:6px;align-items:center"><label class="status" for="fsIn">🔗 Soort</label><select id="fsIn" class="mwveld" style="margin:0;flex:1" ${kijker?"disabled":""} onchange="fmapSoortZet('${tid}','${s}',this.value)"><option value="">– niet gekoppeld –</option>${RT.map(r=>`<option value="${r.id}" ${xm.r===r.id?"selected":""}>${esc(r.naam)}</option>`).join("")}</select></div>
+    ${fzVia&&xm.r&&u?fotoBeschBlok(xm.r,"m",tid,s,xm.n||""):""}
     <div class="rij" style="margin-top:10px;gap:8px;flex-wrap:wrap"><button class="btn licht" onclick="${galOpen?"fotoGalerij()":`fotoMapPop('${tid}')`}">‹ Terug</button><span style="flex:1"></span>
       ${mod4()?`<button class="btn licht" onclick="fotoMapKies('${tid}','${s}')">📤 Voor aanbod</button>`:""}
       <button class="btn licht" onclick="fotoMapDown('${tid}','${s}',${nr})">⬇ Download</button>
@@ -5962,10 +6001,10 @@ function zoekItems(q){if(data.instellingen.eenvoudig)return zoekItemsE(q);q=q.tr
 function zoekFotos(r,past,score){if(!fotoMag()||!wolkDoc)return;let i=0;
   for(const x of data.rassen){const L=fotoLijst(x.id);if(!L.length)continue;const t=data.teeltduren.find(y=>y.id===x.teeltId),tl=t?teeltLabel(t):"";
     let raak=false;L.forEach((sf,j)=>{const n=fotoNaam(x.id,sf);if(n&&past(n,x.naam,x.fdArt||"")){raak=true;
-      r.push({ic:"📷",naam:"Foto · "+n,sub:x.naam+(tl?" · "+tl:""),grp:"Foto",s:score(n)+.4+(i++)*.001,f:()=>{galOpen=0;fotoIdx[x.id]=j;fotoPop(x.id)}})}});
-    if(!raak&&past(x.naam,x.fdArt||"",...(x.verp||[]).map(v=>v.code||"")))r.push({ic:"📷",naam:"Foto's · "+x.naam+" ("+L.length+")",sub:tl,grp:"Foto",s:score(x.naam)+.75+(i++)*.001,f:()=>{galOpen=0;fotoIdx[x.id]=0;fotoPop(x.id)}})}
-  for(const t of data.teeltduren||[])for(const m of fmapLijst(t.id))if(m.n&&past(m.n,teeltLabel(t)))
-    r.push({ic:"📁",naam:"Foto · "+m.n,sub:"foto-map "+teeltLabel(t),grp:"Foto",s:score(m.n)+.4+(i++)*.001,f:()=>{galOpen=0;fotoMapToon(t.id,m.s)}})}
+      r.push({ic:"📷",naam:"Foto · "+n,sub:x.naam+(tl?" · "+tl:""),grp:"Foto",s:score(n)+.4+(i++)*.001,f:()=>{galOpen=0;fzVia=1;fotoIdx[x.id]=j;fotoPop(x.id)}})}});
+    if(!raak&&past(x.naam,x.fdArt||"",...(x.verp||[]).map(v=>v.code||"")))r.push({ic:"📷",naam:"Foto's · "+x.naam+" ("+L.length+")",sub:tl,grp:"Foto",s:score(x.naam)+.75+(i++)*.001,f:()=>{galOpen=0;fzVia=1;fotoIdx[x.id]=0;fotoPop(x.id)}})}
+  for(const t of data.teeltduren||[])for(const m of fmapLijst(t.id)){const ks=m.r&&data.rassen.find(q=>q.id===m.r),nm=m.n||(ks?ks.naam:"");if(nm&&past(nm,teeltLabel(t),ks?ks.naam:"",ks&&ks.fdArt||""))
+    r.push({ic:"📁",naam:"Foto · "+nm,sub:(ks&&m.n?ks.naam+" · ":"")+"foto-map "+teeltLabel(t),grp:"Foto",s:score(nm)+.4+(i++)*.001,f:()=>{galOpen=0;fzVia=1;fotoMapToon(t.id,m.s)}})}}
 function zoekKlanten(r,past,score){if(niveau()<2||isTeler())return;
   for(const k of data.klanten||[])if(k.naam&&past(k.naam,k.plaats||"",k.contact||""))r.push({ic:"👤",naam:k.naam,sub:k.plaats||"",grp:"Klant",s:score(k.naam)+.3,
     f:()=>{const b=Math.min(300,innerWidth-16),x=Math.max(8,innerWidth/2-b/2-20);klantMenu(k.naam,{getBoundingClientRect:()=>({left:x,right:x+b,top:70,bottom:90,width:b,height:20})})}})}
