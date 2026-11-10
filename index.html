@@ -839,6 +839,7 @@ body.sales .navMidden>.mknop.groot{display:none!important}body.kijkmodus #btnPri
 @media (max-width:700px){html,body{overflow-x:hidden;max-width:100%}}
 
 @media (max-width:370px){.navMidden .mknop.groot{padding:4px 3px!important;font-size:10px!important}}
+.fmapgrid.slepen{outline:3px dashed #2d6a4f;outline-offset:4px;background:#eef6f1}
 .fzbesch{margin-top:10px;padding:10px;border:1px solid #cfe3d8;background:#f3faf6;border-radius:10px}
 .fzwk{display:grid;grid-template-columns:repeat(5,1fr);gap:4px;margin-top:6px}
 .fzwk div{display:flex;flex-direction:column;align-items:center;background:#fff;border-radius:6px;padding:4px 2px;font-size:12px}
@@ -1019,7 +1020,7 @@ body.sales .navMidden>.mknop.groot{display:none!important}body.kijkmodus #btnPri
 
 <script>
 "use strict";
-const VERSIE="51.1";
+const VERSIE="51.2";
 const VERSIE_DATUM="03-11-2026";
 /* ---------- Basis ---------- */
 const PALET=["#2d6a4f","#1B5EBE","#E8007D","#c77d1a","#7a4fa0","#0f8b8d","#5b6b2f","#3d5a80","#a0522d","#7AB648"];
@@ -4950,7 +4951,7 @@ function fotoGalerij(tid){if(!isBeheerder()||!fotoMag())return;galOpen=0;if(!wol
   const io=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){io.unobserve(e.target);laad(e.target)}}),{rootMargin:"300px"});
   document.querySelectorAll("#mobPop .galfoto").forEach(b=>io.observe(b))}
 /* ---------- Foto-map per teelt: foto's die niet bij één soort horen. Plaatjes in planning/fmap_<teelt>_<code>, lijst in data.fotoMap[teelt] ---------- */
-const FMAP_MAX=30;
+const FMAP_MAX=150;
 const fmapDoc=(tid,s)=>wolkDoc.parent.doc("fmap_"+tid+"_"+s);
 const fmapLijst=tid=>((data.fotoMap||{})[tid])||[];
 async function fmapLaad(tid,s){const c="fmap|"+tid+"|"+s;if(c in fotoCache)return fotoCache[c];if(!wolkDoc)return null;try{const d=await fmapDoc(tid,s).get();fotoCache[c]=d.exists?d.data().img:null}catch(e){return null}return fotoCache[c]}
@@ -5000,17 +5001,28 @@ async function fotoMapPop(tid,kies){if(!fotoMag())return;if(kies!=null)fmapKies=
   toonPop("📁 Foto-map",`<select class="mwveld" onchange="fotoMapPop(this.value)">${T.map(t=>`<option value="${t.id}" ${t.id===tid?"selected":""}>${esc(teeltLabel(t))} (${fmapLijst(t.id).length})</option>`).join("")}</select>
     ${fmapKies?`<p class="status" style="margin:0 0 6px">Tik op een foto om die te gebruiken voor het aanbod.</p>`:""}
     ${L.length?`<input type="search" class="mwveld" style="margin:6px 0" placeholder="🔍 Zoek op naam of code…" value="${esc(fzT)}" oninput="fotoZoek(this.value)"><div id="fzLeeg" class="status" style="padding:10px 0;display:none">Niets gevonden.</div>`:""}
-    <div class="fmapgrid">${L.map(x=>`<button class="galfoto" data-z="${esc(x.n||"")}" data-fm="${x.s}" title="${esc(x.n||"")}" onclick="${fmapKies?`fotoMapKies('${tid}','${x.s}')`:`fotoMapToon('${tid}','${x.s}')`}">${x.n?`<span>${esc(x.n)}</span>`:""}</button>`).join("")||`<div class="status" style="padding:10px 0;grid-column:1/-1">Nog geen foto's in deze map.</div>`}</div>
+    <div class="fmapgrid" ${mag?`ondragover="event.preventDefault();this.classList.add('slepen')" ondragleave="this.classList.remove('slepen')" ondrop="event.preventDefault();this.classList.remove('slepen');fotoMapErbij('${tid}',event.dataTransfer.files)"`:""}>${L.map(x=>`<button class="galfoto" data-z="${esc([x.n,(data.rassen.find(q=>q.id===x.r)||{}).naam].filter(Boolean).join(" "))}" data-fm="${x.s}" title="${esc(x.n||"")}" onclick="${fmapKies?`fotoMapKies('${tid}','${x.s}')`:`fotoMapToon('${tid}','${x.s}')`}">${x.n?`<span>${esc(x.n)}</span>`:""}</button>`).join("")||`<div class="status" style="padding:10px 0;grid-column:1/-1">Nog geen foto's in deze map.</div>`}</div>
     <div class="rij" style="margin-top:10px;gap:8px;flex-wrap:wrap">${fmapKies?`<button class="btn licht" onclick="aanbodOpen()">‹ Terug</button>`:""}<span style="flex:1"></span>
       ${mag&&L.length<FMAP_MAX?`<label class="btn" style="cursor:pointer">➕ Foto's toevoegen<input type="file" accept="image/*" multiple hidden onchange="fotoMapErbij('${tid}',this.files)"></label>`:""}</div>
-    <p class="status" style="font-size:12px;margin:6px 0 0">Maximaal ${FMAP_MAX} foto's per teelt. U kunt er meerdere tegelijk kiezen.</p>`);
-  fotoZoek(fzT);document.querySelectorAll("#mobPop [data-fm]").forEach(async b=>{const u=await fmapLaad(tid,b.dataset.fm);if(u&&b.isConnected)b.insertAdjacentHTML("afterbegin",`<img src="${u}" alt="">`)})}
-async function fotoMapErbij(tid,files){files=[...(files||[])];if(!files.length)return;const M=data.fotoMap=data.fotoMap||{},L=M[tid]=M[tid]||[];
+    <p class="status" style="font-size:12px;margin:6px 0 0">Maximaal ${FMAP_MAX} foto's per teelt (nu ${L.length}). Kies er veel tegelijk, of sleep ze vanaf de computer in het vak. Staat de soort of artikelcode in de bestandsnaam? Dan krijgt de foto die naam en wordt hij meteen gekoppeld.</p>`);
+  fotoZoek(fzT);const io=new IntersectionObserver(es=>es.forEach(async e=>{if(!e.isIntersecting)return;io.unobserve(e.target);const b=e.target,u=await fmapLaad(tid,b.dataset.fm);if(u&&b.isConnected)b.insertAdjacentHTML("afterbegin",`<img src="${u}" alt="" loading="lazy">`)}),{rootMargin:"300px"});
+  document.querySelectorAll("#mobPop [data-fm]").forEach(b=>io.observe(b))}
+/* naam uit de bestandsnaam (niet bij camera-namen zoals IMG_1234) en soort zoeken die in de naam staat */
+function fmapUitBestand(tid,fn){const b=String(fn||"").replace(/\.[^.]+$/,"").replace(/[_]+/g," ").trim();
+  const cam=/^(img|dsc|dscn|pxl|photo|image|whatsapp image|screenshot|schermafbeelding)[\s\d_.()-]/i.test(b+" ")||/^[\d\s_.()-]+$/.test(b);
+  const lb=b.toLowerCase();let best=null,bl=0;
+  for(const r of data.rassen.filter(r=>r.teeltId===tid))for(const k of [r.naam,r.fdArt,...(r.verp||[]).map(v=>v.code)])if(k&&String(k).length>2&&lb.includes(String(k).toLowerCase())&&String(k).length>bl){best=r;bl=String(k).length}
+  return{n:cam?"":b.slice(0,60),r:best?best.id:""}}
+async function fotoMapErbij(tid,files){files=[...(files||[])].filter(f=>/^image\//.test(f.type)||/\.(jpe?g|png|webp|gif|heic)$/i.test(f.name));if(!files.length){alert("Geen foto's gevonden.");return}
+  const M=data.fotoMap=data.fotoMap||{},L=M[tid]=M[tid]||[];
   const ruimte=FMAP_MAX-L.length;if(files.length>ruimte){alert(`Er kunnen nog ${ruimte} foto's bij in deze map.`);files=files.slice(0,ruimte)}
-  let n=0;for(const f of files){try{melding(`Foto bewaren… ${++n}/${files.length}`);let img=await fotoKlein(f,800);if(img.length>700000)img=await fotoKlein(f,480);
-      const s=Date.now().toString(36)+n;await fmapDoc(tid,s).set({img,t:new Date().toISOString(),door:wolkMail});fotoCache["fmap|"+tid+"|"+s]=img;L.push({s,t:Date.now()})}
-    catch(e){alert("Foto bewaren lukt niet: "+e.message);break}}
-  opslaanLater();melding("📁 "+n+" foto"+(n===1?"":"'s")+" bewaard","#2d6a4f");fotoMapPop(tid)}
+  let n=0,k=0,fout=0,kop=0;const rij=[...files];
+  const werk=async()=>{while(rij.length){const f=rij.shift();try{let img=await fotoKlein(f,800);if(img.length>700000)img=await fotoKlein(f,480);
+      const s=Date.now().toString(36)+(k++),u=fmapUitBestand(tid,f.name);await fmapDoc(tid,s).set({img,t:new Date().toISOString(),door:wolkMail});fotoCache["fmap|"+tid+"|"+s]=img;
+      const x={s,t:Date.now()};if(u.n)x.n=u.n;if(u.r){x.r=u.r;kop++}L.push(x);n++}catch(e){fout++}
+    melding(`📁 Foto's bewaren… ${n+fout}/${files.length}`)}};
+  await Promise.all([werk(),werk(),werk()]);
+  opslaanLater();melding("📁 "+n+" foto"+(n===1?"":"'s")+" bewaard"+(kop?` · ${kop} meteen gekoppeld aan een soort`:"")+(fout?` · ${fout} lukte niet (bijv. HEIC van iPhone)`:""),fout?"#b45309":"#2d6a4f");fotoMapPop(tid)}
 async function fotoMapToon(tid,s){const u=await fmapLaad(tid,s),t=(data.teeltduren||[]).find(x=>x.id===tid)||{},nr=fmapLijst(tid).findIndex(x=>x.s===s)+1;
   const xm=fmapLijst(tid).find(x=>x.s===s)||{},RT=data.rassen.filter(r=>r.teeltId===tid);
   toonPop("📁 "+esc(teeltLabel(t)),`<div class="fotogroot">${u?`<img src="${u}" alt="">`:"–"}</div>
