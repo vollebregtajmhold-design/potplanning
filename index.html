@@ -1020,7 +1020,7 @@ body.sales .navMidden>.mknop.groot{display:none!important}body.kijkmodus #btnPri
 
 <script>
 "use strict";
-const VERSIE="51.3";
+const VERSIE="51.4";
 const VERSIE_DATUM="03-11-2026";
 /* ---------- Basis ---------- */
 const PALET=["#2d6a4f","#1B5EBE","#E8007D","#c77d1a","#7a4fa0","#0f8b8d","#5b6b2f","#3d5a80","#a0522d","#7AB648"];
@@ -4961,8 +4961,10 @@ let fmapKies=false,fmapVoor="";
 function fotoUitMap(rid){const r=data.rassen.find(x=>x.id===rid);if(!r)return;fmapVoor=rid;fmapKies=false;fzT="";fotoMapPop(r.teeltId)}
 async function fotoMapNaarSoort(tid,s){const rid=fmapVoor,u=await fmapLaad(tid,s);if(!rid||!u)return;
   try{const bl=await (await fetch(u)).blob(),f=new File([bl],"map.jpg",{type:bl.type||"image/jpeg"});const x=fmapLijst(tid).find(x=>x.s===s);
-    if(x&&!x.r&&data.rassen.some(q=>q.id===rid&&q.teeltId===tid))x.r=rid;
-    fmapVoor="";await fotoErbij(rid,f,()=>{const L=fotoLijst(rid),xm=fmapLijst(tid).find(q=>q.s===s);if(xm&&xm.n&&L.length&&!fotoNaam(rid,L[L.length-1]))fotoNaamZet(rid,L[L.length-1],xm.n);fotoIdx[rid]=L.length-1;fotoPop(rid);render()})}
+    /* de foto verhuist van de map naar de soort: daarna staat hij er maar één keer in */
+    fmapVoor="";await fotoErbij(rid,f,()=>{const L=fotoLijst(rid);if(x&&x.n&&L.length&&!fotoNaam(rid,L[L.length-1]))fotoNaamZet(rid,L[L.length-1],x.n);
+      const M=data.fotoMap||{};M[tid]=(M[tid]||[]).filter(q=>q.s!==s);if(!M[tid].length)delete M[tid];opslaanLater();
+      fotoIdx[rid]=L.length-1;fotoPop(rid);render();melding("📷 Foto verplaatst van de foto-map naar "+esc((data.rassen.find(q=>q.id===rid)||{}).naam||"de soort"),"#2d6a4f")})}
   catch(e){alert("Foto overzetten lukt niet: "+e.message)}}
 /* zoeken in foto-map en galerij: filtert de knoppen op data-z (naam, code, soort, teelt) */
 let fzT="",fzVia=0;
@@ -5006,7 +5008,7 @@ async function fotoMapPop(tid,kies){if(!fotoMag())return;if(kies!=null){fmapKies
   if(!wolkDoc){alert("Foto's werken alleen als u online bent ingelogd.");return}
   const L=fmapVoor?[...fmapLijst(tid)].sort((a,b)=>(b.r===fmapVoor)-(a.r===fmapVoor)):fmapLijst(tid),mag=!kijker,T=data.teeltduren||[];
   toonPop(fmapVoor?"🖼 Kies een foto":"📁 Foto-map",`<select class="mwveld" onchange="fotoMapPop(this.value)">${T.map(t=>`<option value="${t.id}" ${t.id===tid?"selected":""}>${esc(teeltLabel(t))} (${fmapLijst(t.id).length})</option>`).join("")}</select>
-    ${fmapVoor?`<p class="status" style="margin:0 0 6px">Tik op een foto om die bij <b>${esc((data.rassen.find(r=>r.id===fmapVoor)||{}).naam||"")}</b> te zetten. Kies bovenin een andere teelt als dat nodig is.</p>`:fmapKies?`<p class="status" style="margin:0 0 6px">Tik op een foto om die te gebruiken voor het aanbod.</p>`:""}
+    ${fmapVoor?`<p class="status" style="margin:0 0 6px">Tik op een foto om die naar <b>${esc((data.rassen.find(r=>r.id===fmapVoor)||{}).naam||"")}</b> te verplaatsen (hij gaat dan uit de map). Kies bovenin een andere teelt als dat nodig is.</p>`:fmapKies?`<p class="status" style="margin:0 0 6px">Tik op een foto om die te gebruiken voor het aanbod.</p>`:""}
     ${L.length?`<input type="search" class="mwveld" style="margin:6px 0" placeholder="🔍 Zoek op naam of code…" value="${esc(fzT)}" oninput="fotoZoek(this.value)"><div id="fzLeeg" class="status" style="padding:10px 0;display:none">Niets gevonden.</div>`:""}
     <div class="fmapgrid" ${mag?`ondragover="event.preventDefault();this.classList.add('slepen')" ondragleave="this.classList.remove('slepen')" ondrop="event.preventDefault();this.classList.remove('slepen');fotoMapErbij('${tid}',event.dataTransfer.files)"`:""}>${L.map(x=>`<button class="galfoto" data-z="${esc([x.n,(data.rassen.find(q=>q.id===x.r)||{}).naam].filter(Boolean).join(" "))}" data-fm="${x.s}" title="${esc(x.n||"")}" onclick="${fmapVoor?`fotoMapNaarSoort('${tid}','${x.s}')`:fmapKies?`fotoMapKies('${tid}','${x.s}')`:`fotoMapToon('${tid}','${x.s}')`}">${x.n?`<span>${esc(x.n)}</span>`:""}</button>`).join("")||`<div class="status" style="padding:10px 0;grid-column:1/-1">Nog geen foto's in deze map.</div>`}</div>
     <div class="rij" style="margin-top:10px;gap:8px;flex-wrap:wrap">${fmapVoor?`<button class="btn licht" onclick="const r='${fmapVoor}';fmapVoor='';fotoPop(r)">‹ Terug</button>`:fmapKies?`<button class="btn licht" onclick="aanbodOpen()">‹ Terug</button>`:""}<span style="flex:1"></span>
