@@ -842,6 +842,8 @@ body.sales .navMidden>.mknop.groot{display:none!important}body.kijkmodus #btnPri
 .fmapgrid.slepen{outline:3px dashed #2d6a4f;outline-offset:4px;background:#eef6f1}
 .ovmail{margin-left:6px;border:0;background:#2d6a4f;color:#fff;border-radius:6px;font-size:12px;padding:1px 6px;cursor:pointer;opacity:0;vertical-align:middle}
 tr:hover .ovmail{opacity:1}@media (hover:none),(max-width:700px){.ovmail{display:none}}
+.amkaart{margin-top:10px;padding:10px;border:1px solid #e6e0d4;border-radius:10px;background:#fbf9f4}
+.amduim{width:54px;height:54px;border-radius:8px;overflow:hidden;background:#eee;display:flex;align-items:center;justify-content:center;font-size:22px;cursor:pointer;flex:none;border:1px solid #ddd}.amduim img{width:100%;height:100%;object-fit:cover}
 .galfoto.amsel{outline:3px solid #2d6a4f;outline-offset:1px}
 .fzbesch{margin-top:10px;padding:10px;border:1px solid #cfe3d8;background:#f3faf6;border-radius:10px}
 .fzwk{display:grid;grid-template-columns:repeat(5,1fr);gap:4px;margin-top:6px}
@@ -1023,7 +1025,7 @@ tr:hover .ovmail{opacity:1}@media (hover:none),(max-width:700px){.ovmail{display
 
 <script>
 "use strict";
-const VERSIE="51.6";
+const VERSIE="51.8";
 const VERSIE_DATUM="03-11-2026";
 /* ---------- Basis ---------- */
 const PALET=["#2d6a4f","#1B5EBE","#E8007D","#c77d1a","#7a4fa0","#0f8b8d","#5b6b2f","#3d5a80","#a0522d","#7AB648"];
@@ -4755,52 +4757,68 @@ function soortPop(ks){const[pr,so]=ks.split(" · "),k=pr+"|"+so,nu=+dezeWeek(),p
   const h=rijen.length?`<table class="kvtab"><tr><th>Week</th><th>Afleverplan</th><th>Gereserveerd</th><th>Nog beschikbaar</th></tr>${rijen.map(([t,a])=>{const v=verkSom(k,t),b=a-v;sP+=a;sV+=v;
       return`<tr class="${t<nu?"oud":""} ${b<0?"stover":a>0&&v>0&&b<a*0.1?"stkrap":""}" style="cursor:pointer" onclick="sluitMobSoort();aflKlik({dataset:{k:'${esc(k).replace(/'/g,"\\'")}',w:${t}}})" title="Klik: reserveren in deze week"><td>${wkCode(t)}</td><td>${a?getal(a):"–"}</td><td>${v?getal(v):"–"}</td><td><b>${getal(b)}</b></td></tr>`}).join("")}
       <tr class="tot"><td>Totaal</td><td>${getal(sP)}</td><td>${getal(sV)}</td><td>${getal(sP-sV)}</td></tr></table>`:`<p class="status">Geen afleveringen of reserveringen gevonden.</p>`;
-  toonPop(esc(pr)+" · "+esc(so),`${h}<div class="rij" style="margin-top:10px"><span class="status">Klik op een week om te reserveren.</span><span style="flex:1"></span>${ras?`<button class="btn klein" onclick="aanbMailPop('${ras.id}')">✉ Aanbieding mailen</button> <button class="btn licht klein" onclick="sluitMobSoort();naarSoort('${ras.id}')">Naar parameters ›</button>`:""}</div>`);
+  toonPop(esc(pr)+" · "+esc(so),`${h}<div class="rij" style="margin-top:10px"><span class="status">Klik op een week om te reserveren.</span><span style="flex:1"></span>${ras?`<button class="btn klein" onclick="am=null;aanbMailPop('${ras.id}')">✉ Aanbieding mailen</button> <button class="btn licht klein" onclick="sluitMobSoort();naarSoort('${ras.id}')">Naar parameters ›</button>`:""}</div>`);
   const m=document.querySelector("#mobPop .mpop");if(m){m.style.maxWidth="620px";m.style.width="auto"}}
 
 
 /* ---------- ✉ Aanbieding mailen (computer): soort + weken + prijs + foto + klant → opgemaakte mail ---------- */
 let am=null;
 const amWk=()=>{try{return +localStorage.getItem("potplanning-amwk")||6}catch(e){return 6}};
-function amFotos(){const L=[];for(const r of data.rassen)for(const sf of fotoLijst(r.id)){const t=data.teeltduren.find(x=>x.id===r.teeltId)||{};L.push({k:"s",a:r.id,b:sf,n:fotoNaam(r.id,sf)||r.naam,rid:r.id,tid:r.teeltId,z:[fotoNaam(r.id,sf),r.naam,r.fdArt,teeltLabel(t)].join(" ")})}
-  for(const t of data.teeltduren||[])for(const x of fmapLijst(t.id)){const r=data.rassen.find(q=>q.id===x.r);L.push({k:"m",a:t.id,b:x.s,n:fmN(x)||(r?r.naam:"map"),rid:x.r||"",tid:t.id,z:[fmN(x),r&&r.naam,teeltLabel(t),"map"].join(" ")})}
+function amFotos(){const L=[];for(const r of data.rassen)for(const sf of fotoLijst(r.id)){const t=data.teeltduren.find(x=>x.id===r.teeltId)||{};L.push({k:"s",a:r.id,b:sf,n:fotoNaam(r.id,sf)||r.naam,rid:r.id,tid:r.teeltId,v:fotoVerpId(r.id,sf),z:[fotoNaam(r.id,sf),r.naam,r.fdArt,teeltLabel(t)].join(" ")})}
+  for(const t of data.teeltduren||[])for(const x of fmapLijst(t.id)){const r=data.rassen.find(q=>q.id===x.r);L.push({k:"m",a:t.id,b:x.s,n:fmN(x)||(r?r.naam:"map"),rid:x.r||"",tid:t.id,v:x.v||"",z:[fmN(x),r&&r.naam,teeltLabel(t),"map"].join(" ")})}
   return L}
-function aanbMailPop(rid,kl){if(!fotoMag()&&!rid)return;const r=data.rassen.find(x=>x.id===rid);if(!r)return;
-  if(!am||am.rid!==rid)am={rid,wk:amWk(),prijs:"",prijsAuto:true,foto:null,klant:kl||"",tekst:"",zoek:""};if(kl)am.klant=kl;
-  if(am.prijsAuto){const k=klantVan(am.klant),p=vkPrijs(k?k.id:"std",rid);am.prijs=p!=null?String(p).replace(".",","):""}
-  const F=fotoMag()?amFotos():[];if(!am.foto){const f=F.find(x=>x.k==="s"&&x.a===rid)||F.find(x=>x.k==="m"&&x.rid===rid);if(f)am.foto=f}
-  const B=soortBeschik(rid,am.wk),t=B.tl,sel=am.foto?am.foto.k+am.foto.a+am.foto.b:"";
-  toonPop("✉ Aanbieding · "+esc(r.naam),`
-    <div class="rij" style="gap:8px;flex-wrap:wrap;align-items:center"><label class="status">Komende <select id="amWk" onchange="am.wk=+this.value;try{localStorage.setItem('potplanning-amwk',am.wk)}catch(e){}aanbMailPop(am.rid)">${[2,4,6,8,10,13].map(n=>`<option ${n===am.wk?"selected":""}>${n}</option>`).join("")}</select> weken</label>
-      <label class="status">Prijs € <input id="amPr" style="width:80px" value="${esc(am.prijs)}" placeholder="0,00" oninput="am.prijs=this.value;am.prijsAuto=false"></label>
-      <label class="status" style="flex:1;min-width:200px">Klant <input id="amKl" class="mwveld" style="margin:0;width:100%" list="amKlL" value="${esc(am.klant)}" placeholder="leeg = zelf invullen in de mail" onchange="am.klant=this.value.trim();aanbMailPop(am.rid)"><datalist id="amKlL">${data.klanten.filter(k=>k.naam).map(k=>`<option value="${esc(k.naam)}">`).join("")}</datalist></label></div>
-    <div class="fzwk" style="margin-top:8px">${B.wk.map(x=>`<div><span>wk ${x.w}</span><b class="${x.b?"":"status"}">${x.b?getal(x.b):"—"}</b></div>`).join("")}</div>
-    ${fotoMag()?`<div style="margin-top:10px"><b>Foto</b> <span class="status">${am.foto?"· "+esc(am.foto.n):"· geen foto gekozen"}</span></div>
-    <input type="search" class="mwveld" style="margin:6px 0" placeholder="🔍 Zoek een foto in de galerij…" value="${esc(am.zoek)}" oninput="am.zoek=this.value;amFotoLijst()">
-    <div id="amFotoL" class="fmapgrid"></div>`:""}
-    <textarea id="amTx" class="mwveld" rows="2" style="width:100%;margin-top:8px" placeholder="Extra tekst (mag leeg)" oninput="am.tekst=this.value">${esc(am.tekst)}</textarea>
-    <div class="rij" style="margin-top:10px;gap:8px"><span class="status" style="font-size:12px">${esc(teeltLabel(t))} · onder voorbehoud van tussentijdse verkoop</span><span style="flex:1"></span>
-      <button class="btn" onclick="aanbMailMaak()">✉ Mail maken</button></div>`);
-  const m=document.querySelector("#mobPop .mpop");if(m){m.style.maxWidth="720px";m.style.width="auto"}
-  amFotoLijst()}
-function amFotoLijst(){const el=document.getElementById("amFotoL");if(!el||!am)return;const r=data.rassen.find(x=>x.id===am.rid)||{},q=am.zoek.trim().toLowerCase(),sel=am.foto?am.foto.k+am.foto.a+am.foto.b:"";
-  let L=amFotos();L=q?L.filter(f=>q.split(/\s+/).every(w=>f.z.toLowerCase().includes(w))):L.filter(f=>f.rid===am.rid||(f.k==="m"&&f.tid===r.teeltId));
-  L.sort((a,b)=>(b.rid===am.rid)-(a.rid===am.rid));L=L.slice(0,40);
-  el.innerHTML=L.length?L.map((f,i)=>`<button class="galfoto ${f.k+f.a+f.b===sel?"amsel":""}" data-i="${i}" title="${esc(f.n)}"><span>${esc(f.n)}</span></button>`).join(""):`<div class="status" style="grid-column:1/-1">Geen foto gevonden.</div>`;
-  el.querySelectorAll("button").forEach(b=>{const f=L[+b.dataset.i];b.onclick=()=>{am.foto=f;aanbMailPop(am.rid)};
-    (f.k==="m"?fmapLaad(f.a,f.b):fotoLaadS(f.a,f.b)).then(u=>{if(u&&b.isConnected)b.insertAdjacentHTML("afterbegin",`<img src="${u}" alt="" loading="lazy">`)})})}
-async function aanbMailMaak(){if(!am)return;const B=soortBeschik(am.rid,am.wk),r=B.ras,k=klantVan(am.klant),nm=(am.foto&&am.foto.n)||r.naam;
-  const img=am.foto?(am.foto.k==="m"?await fmapLaad(am.foto.a,am.foto.b):await fotoLaadS(am.foto.a,am.foto.b)):null;
-  const pr=prijsLees(am.prijs),prT=pr!=null?"€ "+pr.toLocaleString("nl-NL",{minimumFractionDigits:2,maximumFractionDigits:3})+" per stuk":"";
-  const aan=k?(k.contact||k.naam):am.klant,wk=B.wk.filter(x=>x.b),G="#2d6a4f",F="font-family:Arial,Helvetica,sans-serif;",td="padding:4px 12px;border-bottom:1px solid #e6e0d4;font-size:14px;";
-  const su=`Aanbieding: ${nm}${KLANT.appNaam?" – "+KLANT.appNaam:""}`;
-  let t=`Beste ${aan||""},\n\nGraag bieden wij u aan:\n${nm} (${teeltLabel(B.tl)})${prT?"\nPrijs: "+prT:""}\n\nBeschikbaar:\n`;
-  t+=wk.length?wk.map(x=>`- week ${x.w}: ${getal(x.b)} st`).join("\n"):"(de komende weken niets vrij)";t+=(am.tekst.trim()?"\n\n"+am.tekst.trim():"")+"\n\nOnder voorbehoud van tussentijdse verkoop.\n";
-  const h=`<div style="${F}color:#222"><p>Beste ${esc(aan||"")},</p><p>Graag bieden wij u aan:</p>
-    <div style="font-size:18px;font-weight:bold;color:${G}">${esc(nm)}</div><div style="font-size:13px;color:#555">${esc(teeltLabel(B.tl))}${prT?` · <b style="color:#222">${esc(prT)}</b>`:""}</div>
-    ${img?`<img src="${img}" width="360" style="width:360px;max-width:100%;border-radius:10px;display:block;margin:8px 0" alt="${esc(nm)}">`:""}
-    <table style="border-collapse:collapse;${F}"><tr><th style="background:${G};color:#fff;padding:5px 12px;text-align:left;font-size:14px">Week</th><th style="background:${G};color:#fff;padding:5px 12px;text-align:right;font-size:14px">Beschikbaar</th></tr>
-    ${wk.length?wk.map(x=>`<tr><td style="${td}">week ${x.w}</td><td style="${td}text-align:right">${getal(x.b)} st</td></tr>`).join(""):`<tr><td colspan="2" style="${td}">de komende weken niets vrij</td></tr>`}</table>
+/* belading: uit de verpakking van de foto, anders de eerste verpakking met een kar-waarde */
+function amBelVan(it){const r=data.rassen.find(x=>x.id===it.rid)||{},V=r.verp||[],v=(it.foto&&V.find(x=>x.id===it.foto.v))||V.find(x=>x.kar);return v&&v.kar?String(v.kar):""}
+function amItem(rid){const it={rid,prijs:"",prijsAuto:true,foto:null,bel:"",belAuto:true,zoek:""};const F=fotoMag()?amFotos():[];
+  it.foto=F.find(x=>x.k==="s"&&x.a===rid)||F.find(x=>x.k==="m"&&x.rid===rid)||null;return it}
+function aanbMailPop(rid,kl){const r=data.rassen.find(x=>x.id===rid);if(!r&&!am)return;
+  if(!am)am={wk:amWk(),klant:"",tekst:"",items:[],open:-1};
+  if(rid&&!am.items.some(x=>x.rid===rid)){if(am.items.length>=5){alert("Maximaal 5 soorten in één mail.");}else{am.items.push(amItem(rid));am.open=-1}}
+  if(kl)am.klant=kl;amTeken()}
+function amTeken(){const k=klantVan(am.klant);
+  for(const it of am.items){if(it.prijsAuto){const p=vkPrijs(k?k.id:"std",it.rid);it.prijs=p!=null?String(p).replace(".",","):""}if(it.belAuto)it.bel=amBelVan(it)}
+  const kaart=(it,i)=>{const B=soortBeschik(it.rid,am.wk);if(!B)return"";return`<div class="amkaart">
+    <div class="rij" style="gap:8px;align-items:center;flex-wrap:wrap"><div class="amduim" data-i="${i}" onclick="am.open=am.open===${i}?-1:${i};amTeken()" title="Foto kiezen">${fotoMag()?"🖼":""}</div>
+      <div style="flex:1;min-width:160px"><b>${esc(B.ras.naam)}</b> <span class="status">· ${esc(teeltLabel(B.tl))}</span>${it.foto?`<div class="status" style="font-size:12px">📷 ${esc(it.foto.n)}</div>`:""}</div>
+      <label class="status">Prijs € <input style="width:70px" value="${esc(it.prijs)}" placeholder="0,00" oninput="am.items[${i}].prijs=this.value;am.items[${i}].prijsAuto=false"></label>
+      <label class="status" title="Hoeveel er maximaal op één kar gaan, bijv. 40x8 (40 trays per laag × 8 lagen)">Belading <input style="width:80px" value="${esc(it.bel)}" placeholder="40x8" oninput="am.items[${i}].bel=this.value;am.items[${i}].belAuto=false"></label>
+      ${am.items.length>1?`<button class="btn licht klein" onclick="am.items.splice(${i},1);am.open=-1;amTeken()" title="Deze soort uit de mail halen">✕</button>`:""}</div>
+    <div class="fzwk" style="margin-top:6px">${B.wk.map(x=>`<div><span>wk ${x.w}</span><b class="${x.b?"":"status"}">${x.b?getal(x.b):"—"}</b></div>`).join("")}</div>
+    ${am.open===i&&fotoMag()?`<input type="search" class="mwveld" style="margin:8px 0 6px" placeholder="🔍 Zoek een foto in de galerij…" value="${esc(it.zoek)}" oninput="am.items[${i}].zoek=this.value;amFotoLijst(${i})"><div id="amFotoL" class="fmapgrid"></div>`:""}</div>`};
+  const R=[...data.rassen].filter(r=>r.naam&&!am.items.some(x=>x.rid===r.id)).map(r=>[r.id,teeltLabel(data.teeltduren.find(t=>t.id===r.teeltId)||{})+" · "+r.naam]).sort((a,b)=>a[1].localeCompare(b[1],"nl"));
+  toonPop("✉ Aanbieding mailen",`
+    <div class="rij" style="gap:8px;flex-wrap:wrap;align-items:center"><label class="status" title="Welk deel van wat echt beschikbaar is u laat zien. Afgerond naar beneden op 100-tallen. Zelfde instelling als de aanbodlijst.">Tonen <select onchange="blPct=+this.value;try{localStorage.setItem('potplanning-blpct',blPct)}catch(e){}amTeken()">${[100,90,80,70,60,50,40,30,20,10].map(x=>`<option value="${x}" ${x===blPct?"selected":""}>${x}%</option>`).join("")}</select></label>
+      <label class="status">Komende <select onchange="am.wk=+this.value;try{localStorage.setItem('potplanning-amwk',am.wk)}catch(e){}amTeken()">${[2,4,6,8,10,13].map(n=>`<option ${n===am.wk?"selected":""}>${n}</option>`).join("")}</select> weken</label>
+      <label class="status" style="flex:1;min-width:200px">Klant <input class="mwveld" style="margin:0;width:100%" list="amKlL" value="${esc(am.klant)}" placeholder="leeg = zelf invullen in de mail" onchange="am.klant=this.value.trim();amTeken()"><datalist id="amKlL">${data.klanten.filter(k=>k.naam).map(k=>`<option value="${esc(k.naam)}">`).join("")}</datalist></label></div>
+    ${am.items.map(kaart).join("")}
+    ${am.items.length<5?`<div class="rij" style="gap:8px;margin-top:8px;align-items:center"><input class="mwveld" style="margin:0;flex:1" list="amRL" placeholder="➕ Nog een soort erbij (typ een paar letters)…" onchange="const o=[...document.querySelectorAll('#amRL option')].find(x=>x.value===this.value);if(o)aanbMailPop(o.dataset.id)"><datalist id="amRL">${R.map(([id,n])=>`<option data-id="${id}" value="${esc(n)}">`).join("")}</datalist></div>`:""}
+    <textarea class="mwveld" rows="2" style="width:100%;margin-top:8px" placeholder="Extra tekst (mag leeg)" oninput="am.tekst=this.value">${esc(am.tekst)}</textarea>
+    <div class="rij" style="margin-top:10px;gap:8px"><span class="status" style="font-size:12px">Klik op 🖼 om een foto te kiezen · onder voorbehoud van tussentijdse verkoop</span><span style="flex:1"></span>
+      <button class="btn licht" onclick="am=null;sluitMobSoort()">Opnieuw beginnen</button><button class="btn" onclick="aanbMailMaak()">✉ Mail maken</button></div>`);
+  const m=document.querySelector("#mobPop .mpop");if(m){m.style.maxWidth="760px";m.style.width="auto"}
+  document.querySelectorAll("#mobPop .amduim").forEach(d=>{const it=am.items[+d.dataset.i];if(it&&it.foto)amImg(it.foto).then(u=>{if(u&&d.isConnected)d.innerHTML=`<img src="${u}" alt="">`})});
+  if(am.open>=0)amFotoLijst(am.open)}
+const amImg=f=>f.k==="m"?fmapLaad(f.a,f.b):fotoLaadS(f.a,f.b);
+function amFotoLijst(i){const el=document.getElementById("amFotoL"),it=am&&am.items[i];if(!el||!it)return;const r=data.rassen.find(x=>x.id===it.rid)||{},q=it.zoek.trim().toLowerCase(),sel=it.foto?it.foto.k+it.foto.a+it.foto.b:"";
+  let L=amFotos();L=q?L.filter(f=>q.split(/\s+/).every(w=>f.z.toLowerCase().includes(w))):L.filter(f=>f.rid===it.rid||(f.k==="m"&&f.tid===r.teeltId));
+  L.sort((a,b)=>(b.rid===it.rid)-(a.rid===it.rid));L=L.slice(0,40);
+  el.innerHTML=L.length?L.map((f,j)=>`<button class="galfoto ${f.k+f.a+f.b===sel?"amsel":""}" data-j="${j}" title="${esc(f.n)}"><span>${esc(f.n)}</span></button>`).join(""):`<div class="status" style="grid-column:1/-1">Geen foto gevonden.</div>`;
+  el.querySelectorAll("button").forEach(b=>{const f=L[+b.dataset.j];b.onclick=()=>{it.foto=f;am.open=-1;amTeken()};amImg(f).then(u=>{if(u&&b.isConnected)b.insertAdjacentHTML("afterbegin",`<img src="${u}" alt="" loading="lazy">`)})})}
+async function aanbMailMaak(){if(!am||!am.items.length)return;const k=klantVan(am.klant),aan=k?(k.contact||k.naam):am.klant,G="#2d6a4f",F="font-family:Arial,Helvetica,sans-serif;",td="padding:4px 12px;border-bottom:1px solid #e6e0d4;font-size:14px;";
+  const P=[];for(const it of am.items){const B=soortBeschik(it.rid,am.wk);if(!B)continue;const pr=prijsLees(it.prijs);
+    P.push({B,nm:(it.foto&&it.foto.n)||B.ras.naam,img:it.foto?await amImg(it.foto):null,prT:pr!=null?"€ "+pr.toLocaleString("nl-NL",{minimumFractionDigits:2,maximumFractionDigits:3})+" per stuk":"",bel:String(it.bel||"").trim(),wk:B.wk.filter(x=>x.b)})}
+  const su=`Aanbieding: ${P.map(x=>x.nm).join(", ")}${KLANT.appNaam?" – "+KLANT.appNaam:""}`;
+  let t=`Beste${aan?" "+aan:""},\n\nGraag bieden wij u aan:\n`;
+  for(const x of P){t+=`\n${x.nm} (${teeltLabel(x.B.tl)})${x.prT?"\nPrijs: "+x.prT:""}${x.bel?"\nBelading: max. "+x.bel+" per kar":""}\n`;t+=x.wk.length?x.wk.map(w=>`- week ${w.w}: ${getal(w.b)} st`).join("\n"):"(de komende weken niets vrij)";t+="\n"}
+  t+=(am.tekst.trim()?"\n"+am.tekst.trim()+"\n":"")+"\nOnder voorbehoud van tussentijdse verkoop.\n";
+  const blok=x=>`<td width="280" style="width:280px;vertical-align:top;padding:0 18px 14px 0;${F}"><div style="font-size:17px;font-weight:bold;color:${G}">${esc(x.nm)}</div>
+    <div style="font-size:13px;color:#555">${esc(teeltLabel(x.B.tl))}</div>
+    ${x.prT||x.bel?`<div style="font-size:13px;margin-top:2px">${x.prT?`<b>${esc(x.prT)}</b>`:""}${x.prT&&x.bel?" · ":""}${x.bel?`belading max. <b>${esc(x.bel)}</b> per kar`:""}</div>`:""}
+    ${x.img?`<img src="${x.img}" width="260" style="width:260px;max-width:100%;border-radius:10px;display:block;margin:8px 0" alt="${esc(x.nm)}">`:""}
+    <table width="260" style="width:260px;border-collapse:collapse;${F}"><tr><th style="background:${G};color:#fff;padding:5px 12px;text-align:left;font-size:14px">Week</th><th style="background:${G};color:#fff;padding:5px 12px;text-align:right;font-size:14px">Beschikbaar</th></tr>
+    ${x.wk.length?x.wk.map(w=>`<tr><td style="${td}">week ${w.w}</td><td style="${td}text-align:right">${getal(w.b)} st</td></tr>`).join(""):`<tr><td colspan="2" style="${td}">niets vrij</td></tr>`}</table></td>`;
+  let rij="";for(let i=0;i<P.length;i+=2)rij+=`<tr>${P.slice(i,i+2).map(blok).join("")}</tr>`;
+  const h=`<div style="${F}color:#222"><p>Beste${aan?" "+esc(aan):""},</p><p>Graag bieden wij u aan:</p><table style="border-collapse:collapse;width:auto">${rij}</table>
     ${am.tekst.trim()?`<p>${esc(am.tekst.trim()).replace(/\n/g,"<br>")}</p>`:""}<p style="font-size:12px;color:#555">Onder voorbehoud van tussentijdse verkoop.</p></div>`;
   const to=k&&k.email||"";
   if(mailProg()==="standaard"){mailGa(mailUrl(to,su,t));return}
@@ -4808,7 +4826,7 @@ async function aanbMailMaak(){if(!am)return;const B=soortBeschik(am.rid,am.wk),r
   try{await navigator.clipboard.write([new ClipboardItem({"text/html":new Blob([h],{type:"text/html"}),"text/plain":new Blob([t],{type:"text/plain"})})]);ok=true}catch(e){}
   mailGa(mailUrl(to,su,ok?"":t),w);
   melding(ok?`✉ ${mailNaam()} gaat open${to?" naar "+esc(to):""} · klik in de mail en druk op Ctrl + V`:`✉ ${mailNaam()} gaat open met de tekst`,"#2d6a4f")}
-function aanbMailK(ks){const[pr,so]=ks.split(" · "),r=vkRasVan(pr+"|"+so);if(!r){alert("Deze soort staat niet in Parameters.");return}sluitMobSoort();aanbMailPop(r.id)}
+function aanbMailK(ks){const[pr,so]=ks.split(" · "),r=vkRasVan(pr+"|"+so);if(!r){alert("Deze soort staat niet in Parameters.");return}sluitMobSoort();am=null;aanbMailPop(r.id)}
 /* ---------- Alle pakbonnen in één keer afdrukken ---------- */
 function pakbonnenPrint(){const paren=[...new Map(vkLaatsteLijst.filter(r=>!r.aanb).map(r=>[r.klant+"|"+r.code,{klant:r.klant,code:r.code,t:r.t}])).values()].sort((a,b)=>a.t-b.t||a.klant.localeCompare(b.klant,"nl"));
   if(!paren.length)return;if(paren.length>40&&!confirm(paren.length+" pakbonnen afdrukken?"))return;
@@ -5035,10 +5053,10 @@ let fzT="",fzVia=0;
 /* beschikbaar per week voor één soort (afleverplan min gereserveerd), vanaf deze week */
 function soortBeschik(rid,n){const ras=data.rassen.find(r=>r.id===rid);if(!ras)return null;const t0=+dezeWeek(),l=afleverRegels().filter(r=>r.rasId===rid&&r.t>=t0),tl=data.teeltduren.find(x=>x.id===ras.teeltId)||{};
   const vk=l.length?l[0].product+"|"+l[0].soort:teeltLabel(tl)+"|"+ras.naam,per=new Map();l.forEach(r=>per.set(r.t,(per.get(r.t)||0)+r.aantal));
-  return{ras,tl,wk:Array.from({length:n||10},(_,i)=>{const tt=+plusWeken(new Date(t0),i),b=(per.get(tt)||0)-verkSom(vk,tt);return{t:tt,w:isoWeek(new Date(tt)).w,b:Math.max(0,b)}})}}
+  return{ras,tl,wk:Array.from({length:n||10},(_,i)=>{const tt=+plusWeken(new Date(t0),i),b=(per.get(tt)||0)-verkSom(vk,tt);return{t:tt,w:isoWeek(new Date(tt)).w,b:Math.floor(Math.max(0,b)*blPct/10000)*100}})}}
 /* blok onder een foto die via 🔍 Zoeken is geopend: 10 weken beschikbaar + mail klaarzetten */
 function fotoBeschBlok(rid,soort,a,b,naam){if(isTeler())return"";const B=soortBeschik(rid,10);if(!B)return"";
-  return`<div class="fzbesch"><div><b>📦 Beschikbaar ${esc(B.ras.naam)}</b> <span class="status">· ${esc(teeltLabel(B.tl))} · komende 10 weken</span></div>
+  return`<div class="fzbesch"><div><b>📦 Beschikbaar ${esc(B.ras.naam)}</b> <span class="status">· ${esc(teeltLabel(B.tl))} · komende 10 weken · ${blPct}%, afgerond op 100</span></div>
     <div class="fzwk">${B.wk.map(x=>`<div><span>wk ${x.w}</span><b class="${x.b?"":"status"}">${x.b?getal(x.b):"—"}</b></div>`).join("")}</div>
     <div class="rij" style="gap:8px;margin-top:8px;flex-wrap:wrap"><span class="status" style="font-size:12px">Onder voorbehoud van tussentijdse verkoop.</span><span style="flex:1"></span>
     <button class="btn" onclick="fotoMail('${rid}','${soort}','${a}','${b}',${esc(JSON.stringify(naam||""))})">✉ Mail klaarzetten</button></div></div>`}
