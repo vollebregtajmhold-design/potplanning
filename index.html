@@ -1032,7 +1032,7 @@ tr:hover .ovmail{opacity:1}@media (hover:none),(max-width:700px){.ovmail{display
 
 <script>
 "use strict";
-const VERSIE="52.2";
+const VERSIE="52.3";
 const VERSIE_DATUM="03-11-2026";
 /* ---------- Basis ---------- */
 const PALET=["#2d6a4f","#1B5EBE","#E8007D","#c77d1a","#7a4fa0","#0f8b8d","#5b6b2f","#3d5a80","#a0522d","#7AB648"];
@@ -5053,7 +5053,12 @@ function fbHernoem(tid,se,k){const oud=k||se,n=(prompt((k?"Nieuwe naam voor kleu
   for(const x of fmapLijst(tid)){if(k){if((x.se||ZS)===se&&x.k===k)x.k=n}else if(x.se===se)x.se=n}
   if(k){if(T[se]&&T[se][k]){delete T[se][k];T[se][n]=1}}else if(T[se]){T[n]=Object.assign(T[n]||{},T[se]);delete T[se]}
   opslaanLater();fotoGalerij()}
-function fbWegLeeg(tid,se,k){const T=((data.fotoBoom||{})[tid])||{};if(k){if(T[se])delete T[se][k]}else delete T[se];opslaanLater();fotoGalerij()}
+/* serie of kleur weghalen: de foto's blijven bewaard en gaan terug naar (zonder serie) › (zonder kleur) */
+function fbWegLeeg(tid,se,k){const T=((data.fotoBoom||{})[tid])||{},L=fmapLijst(tid).filter(x=>(x.se||ZS)===se&&(!k||(x.k||ZK)===k));
+  if(L.length&&!confirm(`${k?"Kleur":"Serie"} "${k||se}" weghalen?\n\nDe ${L.length} foto${L.length===1?"":"'s"} blijven bewaard en gaan terug naar (zonder serie) › (zonder kleur).`))return;
+  for(const x of L){delete x.se;delete x.k}if(k){if(T[se])delete T[se][k]}else delete T[se];
+  galDicht.delete(tid+"|"+ZS);galDicht.delete(tid+"|"+ZS+"|"+ZK);galBewaarOpen();opslaanLater();
+  melding(`${k?"Kleur":"Serie"} weggehaald${L.length?` · ${L.length} foto${L.length===1?"":"'s"} naar ongesorteerd`:""}`,"#2d6a4f");fotoGalerij()}
 function galTik(b){const k=b.dataset.gm+"|"+b.dataset.gs;if(galKies){galSel.has(k)?galSel.delete(k):galSel.add(k);b.closest(".fbtegel").classList.toggle("amsel",galSel.has(k));galBalk();return}
   galOpen=1;fotoMapToon(b.dataset.gm,b.dataset.gs)}
 function galBalk(){const el=document.getElementById("galBalk");if(!el)return;
@@ -5086,9 +5091,9 @@ function fotoGalerij(tid){if(!isBeheerder()||!fotoMag())return;galOpen=0;if(!wol
   const blok=T.map(t=>{const B=fbBoom(t.id),n=fmapLijst(t.id).length;const sers=fbSort(Object.keys(B));
     const body=sers.map(se=>{if(se!==ZS)SE.add(se);const kls=fbSort(Object.keys(B[se])),ns=kls.reduce((a,k)=>a+B[se][k].length,0);
       return`<details class="fbse" ${open(t.id+"|"+se)} ontoggle="fbToggle(this,'${t.id}|${q(se)}')"><summary ${dz(t.id,se,ZK)}>📂 ${esc(se)} <span class="status">(${ns})</span>
-        ${se!==ZS&&!kijker?`<span class="fbacties"><button class="ovk ovlink" onclick="event.preventDefault();fbNieuw('${t.id}','${q(se)}')">➕ Kleur</button><button class="ovk ovlink" onclick="event.preventDefault();fbHernoem('${t.id}','${q(se)}')">✏</button>${ns?"":`<button class="ovk ovlink" onclick="event.preventDefault();fbWegLeeg('${t.id}','${q(se)}')">✕</button>`}</span>`:""}</summary>
+        ${se!==ZS&&!kijker?`<span class="fbacties"><button class="ovk ovlink" onclick="event.preventDefault();fbNieuw('${t.id}','${q(se)}')">➕ Kleur</button><button class="ovk ovlink" onclick="event.preventDefault();fbHernoem('${t.id}','${q(se)}')">✏</button><button class="ovk ovlink" title="Serie weghalen (foto's gaan naar ongesorteerd)" onclick="event.preventDefault();fbWegLeeg('${t.id}','${q(se)}')">✕</button></span>`:""}</summary>
         ${kls.map(k=>{if(k!==ZK)KL.add(k);const L=B[se][k];return`<details class="fbk" ${open(t.id+"|"+se+"|"+k)} ontoggle="fbToggle(this,'${t.id}|${q(se)}|${q(k)}')"><summary ${dz(t.id,se,k)}>🎨 ${esc(k)} <span class="status">(${L.length})</span>
-          ${!kijker?`<span class="fbacties"><label class="ovk ovlink" style="cursor:pointer" onclick="event.stopPropagation()">➕ Foto's<input type="file" accept="image/*" multiple hidden onchange="fbUpload('${t.id}','${q(se)}','${q(k)}',this.files)"></label>${k!==ZK?`<button class="ovk ovlink" onclick="event.preventDefault();fbHernoem('${t.id}','${q(se)}','${q(k)}')">✏</button>`:""}${L.length||k===ZK?"":`<button class="ovk ovlink" onclick="event.preventDefault();fbWegLeeg('${t.id}','${q(se)}','${q(k)}')">✕</button>`}</span>`:""}</summary>
+          ${!kijker?`<span class="fbacties"><label class="ovk ovlink" style="cursor:pointer" onclick="event.stopPropagation()">➕ Foto's<input type="file" accept="image/*" multiple hidden onchange="fbUpload('${t.id}','${q(se)}','${q(k)}',this.files)"></label>${k!==ZK?`<button class="ovk ovlink" onclick="event.preventDefault();fbHernoem('${t.id}','${q(se)}','${q(k)}')">✏</button>`:""}${k===ZK?"":`<button class="ovk ovlink" title="Kleur weghalen (foto's gaan naar ongesorteerd)" onclick="event.preventDefault();fbWegLeeg('${t.id}','${q(se)}','${q(k)}')">✕</button>`}</span>`:""}</summary>
           <div class="galgrid fbgrid" ${dz(t.id,se,k)}>${L.map(x=>tegel(t,x)).join("")||`<div class="status" style="grid-column:1/-1;font-size:12px">Nog geen foto's. Sleep een foto hierheen, of klik op ➕ Foto's.</div>`}</div></details>`}).join("")}</details>`}).join("");
     return`<details class="fbteelt" ${open(t.id)} ontoggle="fbToggle(this,'${t.id}')"><summary ${dz(t.id,null,null)}>🌱 ${esc(teeltLabel(t))} <span class="status">(${n})</span>${!kijker?`<span class="fbacties"><button class="ovk ovlink" onclick="event.preventDefault();fbNieuw('${t.id}')">➕ Serie</button><label class="ovk ovlink" style="cursor:pointer" onclick="event.stopPropagation()">➕ Foto's<input type="file" accept="image/*" multiple hidden onchange="fbUpload('${t.id}','','',this.files)"></label></span>`:""}</summary>${body||`<div class="status" style="padding:6px 0;font-size:12px">Nog leeg. Klik op ➕ Serie.</div>`}</details>`}).join("");
   toonPop("🖼 Fotobibliotheek",`<select class="mwveld" onchange="fotoGalerij(this.value)"><option value="">Alle teelten</option>${(data.teeltduren||[]).map(t=>`<option value="${t.id}" ${t.id===galTeelt?"selected":""}>${esc(teeltLabel(t))} (${fmapLijst(t.id).length})</option>`).join("")}</select>
