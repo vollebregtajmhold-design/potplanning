@@ -224,7 +224,7 @@ tr.nieuwsoort select{width:100%;font-style:italic;border:1px dashed #2d6a4f;back
 .zrknop{display:flex;align-items:center;gap:8px}.zr.sel .status{color:#dbe7fb!important}.zrknop .zrnaam{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .zrknop .zk{display:grid;grid-template-columns:110px 90px 140px;gap:6px;flex:none}.zrknop .zk .ovk{font-size:13px;padding:4px 8px;border-radius:6px;border:1px solid #7fa9d1;text-align:center}
 .mob .wkkeuze b{white-space:nowrap}.mobteelt{font-size:16px;font-weight:700;padding:6px 8px;border-radius:8px;border:2px solid #fff;background:#fff;color:#1f4d39;max-width:58vw}
-.fotoBtn{display:none!important}body.isBeheer:not(.klantApp) .fotoBtn{display:inline-block!important}
+.fotoBtn{display:none!important}body.isBeheer:not(.klantApp) .fotoBtn{display:inline-block!important}@media (max-width:700px){body.isBeheer .fotoBtn{display:none!important}}
 .alleenBeheer{display:none!important}body.isBeheer .alleenBeheer{display:block!important}
 body.rolTeler .nivVerk,body.rolTeler .zoeksnel,body.rolTeler [data-tab="klanten"],body.rolTeler [data-tab="verkoop"]{display:none!important}
 .mwrol{font:inherit;font-size:13px;padding:4px;border:1px solid #cfc6b4;border-radius:6px;max-width:130px}
@@ -1033,7 +1033,7 @@ tr:hover .ovmail{opacity:1}@media (hover:none),(max-width:700px){.ovmail{display
 
 <script>
 "use strict";
-const VERSIE="52.6";
+const VERSIE="52.7";
 const VERSIE_DATUM="03-11-2026";
 /* ---------- Basis ---------- */
 const PALET=["#2d6a4f","#1B5EBE","#E8007D","#c77d1a","#7a4fa0","#0f8b8d","#5b6b2f","#3d5a80","#a0522d","#7AB648"];
@@ -3866,7 +3866,7 @@ function mobSoort(k,start){const t=+dezeWeek(),l=afleverRegels().filter(r=>r.pro
 function mobInfo(ras,k){const pv=vkPrijs("",ras.id),mag=!kijker&&niveau()>1,K=esc(k).replace(/'/g,"&#39;");
   const vak=(ic,naam,waarde,f,tx)=>`<div class="minfo ${waarde&&!tx?"":"noshot"}" ${tx&&waarde?`data-deeltxt="${esc(tx)}"`:""} ${mag?`onclick="${f}('${ras.id}',this.closest('#mobPop').dataset.k)"`:""}><span class="status">${ic} ${naam}</span><b>${waarde?esc(waarde):`<span class="status">+ invullen</span>`}</b></div>`;
   setTimeout(()=>{const m=document.getElementById("mobPop");if(m)m.dataset.k=k});
-  return`<div class="minfos">${geenPrijs()?"":vak("💶","Prijs",pv!=null?prijsTxt(pv)+" p/st":"","mobPrijs")}${vak("🛒","Max op kar",ras.kar||rasBel(ras),"mobKar")}</div>`}
+  return`<div class="minfos">${geenPrijs()?"":vak("💶","Prijs",pv!=null?prijsTxt(pv):"","mobPrijs",pv!=null?"Prijs: "+prijsTxt(pv)+" per stuk":"")}${vak("🛒","Max op kar",ras.kar||rasBel(ras),"mobKar")}</div>`}
 /* belading uit de fotobibliotheek: eerst de hoofdfoto, dan een andere foto van deze soort */
 function rasBel(ras){if(!ras)return"";for(const s of fotoLijst(ras.id)){const o=fmZoek(s);if(o&&o.x.b)return o.x.b}return""}
 function mobPrijs(id,k){const P=data.vkPrijzen=data.vkPrijzen||{},o=P.std=P.std||{},v=prompt("Prijs per plant (standaard), bijv. 0,85 — leeg = weghalen:",o[id]!=null?pF(o[id]):"");if(v===null)return;
@@ -3886,7 +3886,7 @@ function aanbodOpen(){if(kijker||!mod4())return;aanbod=aanbod||{img:"",naam:"",p
   const veld=(id,lab,ph,mode)=>`<label class="status" style="display:block;margin:6px 0 2px">${lab}</label><input id="ab_${id}" value="${v(A[id])}" placeholder="${ph}" ${mode?`inputmode="${mode}"`:""} oninput="aanbodZet('${id}',this.value)" class="abveld">`;
   const h=`<div id="mobDeel"><div class="mpopKop"><b id="abKop">${v(A.naam)||v(A.soort)||"Aanbod"}</b><button class="noshot" onclick="sluitMobSoort()">✕</button></div><div class="mpopIn">
       ${A.img?`<div class="mfoto"><img src="${A.img}" alt=""></div>`:""}
-      <div class="minfos"><div class="minfo ${A.soort?"":"noshot"}" id="abSo"><span class="status">🌱 Soort</span><b>${v(A.soort)||"–"}</b></div><div class="minfo ${A.prijs&&!geenPrijs()?"":"noshot"}" id="abPr"><span class="status">💶 Prijs</span><b>${A.prijs?esc(prijsTxt(prijsLees(A.prijs)??A.prijs))+" p/st":"–"}</b></div><div class="minfo ${A.kar?"":"noshot"}" id="abKar"><span class="status">🛒 Max op kar</span><b>${v(A.kar)||"–"}</b></div></div>
+      <div class="minfos"><div class="minfo ${A.soort?"":"noshot"}" id="abSo"><span class="status">🌱 Soort</span><b>${v(A.soort)||"–"}</b></div><div class="minfo noshot" id="abPr" title="De prijs komt niet op het plaatje, maar gaat als losse tekst mee"><span class="status">💶 Prijs</span><b>${A.prijs?esc(prijsTxt(prijsLees(A.prijs)??A.prijs))+" p/st":"–"}</b></div><div class="minfo ${A.kar?"":"noshot"}" id="abKar"><span class="status">🛒 Max op kar</span><b>${v(A.kar)||"–"}</b></div></div>
       <div class="mtekst" id="abTekst" ${A.tekst&&A.tekst.trim()?"":"hidden"}>${v(A.tekst)}</div></div></div>
     <div class="mpopIn" style="padding-top:0">
       <div style="display:flex;gap:8px"><label class="btn ${A.img?"licht":""}" style="flex:1;display:flex;justify-content:center;box-sizing:border-box">📷 ${A.img?"Nieuwe foto":"Foto maken"}<input type="file" accept="image/*" capture="environment" hidden onchange="aanbodFoto(this.files[0])"></label><button class="btn licht" style="flex:1" onclick="fotoMapPop(null,true)" title="Kies een foto uit de foto-map van een teelt">🖼 Uit bibliotheek</button></div>
@@ -3898,14 +3898,15 @@ function aanbodOpen(){if(kijker||!mod4())return;aanbod=aanbod||{img:"",naam:"",p
 function aanbodZet(id,val){aanbod[id]=val;aanbodBewaar();const t=val.trim(),$=x=>document.getElementById(x);
   if(id==="naam"||id==="soort")$("abKop").textContent=(aanbod.naam||"").trim()||(aanbod.soort||"").trim()||"Aanbod";
   if(id==="soort"){$("abSo").classList.toggle("noshot",!t);$("abSo").querySelector("b").textContent=t||"–"}
-  if(id==="prijs"){$("abPr").classList.toggle("noshot",!t);$("abPr").querySelector("b").textContent=t?prijsTxt(prijsLees(t)??t)+" p/st":"–"}
+  if(id==="prijs"){$("abPr").querySelector("b").textContent=t?prijsTxt(prijsLees(t)??t)+" p/st":"–"}
   if(id==="kar"){$("abKar").classList.toggle("noshot",!t);$("abKar").querySelector("b").textContent=t||"–"}
   if(id==="tekst"){$("abTekst").textContent=val;$("abTekst").hidden=!t}}
 async function aanbodFoto(file){if(!file)return;try{melding("Foto klaarmaken…");aanbod.img=await fotoKlein(file,900);aanbodBewaar();aanbodOpen()}catch(e){alert("Foto lukt niet: "+e.message)}}
 function aanbodLeeg(){if(!confirm("Foto en tekst weghalen en opnieuw beginnen?"))return;aanbod=null;try{localStorage.removeItem("potplanning-aanbod")}catch(e){}aanbodOpen()}
 async function aanbodDelen(){const A=aanbod;if(!A.img&&!A.naam){alert("Maak eerst een foto of vul een naam in.");return}
-  /* alles staat op het plaatje: naam, soort, prijs, max op kar en tekst. Geen losse tekst eronder */
-  await mobDelenIn(A.naam||A.soort||"aanbod",false,"")}
+  /* op het plaatje: naam, soort, max op kar en tekst. De prijs gaat als losse tekst mee (niet op het plaatje) */
+  const pr=prijsLees(A.prijs),pt=geenPrijs()?"":pr!=null?prijsTxt(pr):String(A.prijs||"").trim();
+  await mobDelenIn(A.naam||A.soort||"aanbod",false,pt?"Prijs: "+pt+" per stuk":"")}
 /* mobiel oppotten: afdeling en vloer invullen voor één soort in één week */
 function mobOpPlek(rid,y,w,naam){const v=vloerEff(rid,y,w),eigen=vloerVan(rid,y,w)||{},st="width:100%;box-sizing:border-box;font:inherit;font-size:17px;padding:9px 10px;border:1px solid #cfc6b4;border-radius:8px";
   toonPop(`📍 ${esc(naam)} · wk ${w}`,`<label class="status">Afdeling</label><input id="mpAfd" style="${st}" value="${esc(eigen.opAfd||"")}" placeholder="${esc(v.opAfd||"bijv. 3")}">
