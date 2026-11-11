@@ -1032,7 +1032,7 @@ tr:hover .ovmail{opacity:1}@media (hover:none),(max-width:700px){.ovmail{display
 
 <script>
 "use strict";
-const VERSIE="52.3";
+const VERSIE="52.4";
 const VERSIE_DATUM="03-11-2026";
 /* ---------- Basis ---------- */
 const PALET=["#2d6a4f","#1B5EBE","#E8007D","#c77d1a","#7a4fa0","#0f8b8d","#5b6b2f","#3d5a80","#a0522d","#7AB648"];
@@ -3865,10 +3865,12 @@ function mobSoort(k,start){const t=+dezeWeek(),l=afleverRegels().filter(r=>r.pro
 function mobInfo(ras,k){const pv=vkPrijs("",ras.id),mag=!kijker&&niveau()>1,K=esc(k).replace(/'/g,"&#39;");
   const vak=(ic,naam,waarde,f,tx)=>`<div class="minfo ${waarde&&!tx?"":"noshot"}" ${tx&&waarde?`data-deeltxt="${esc(tx)}"`:""} ${mag?`onclick="${f}('${ras.id}',this.closest('#mobPop').dataset.k)"`:""}><span class="status">${ic} ${naam}</span><b>${waarde?esc(waarde):`<span class="status">+ invullen</span>`}</b></div>`;
   setTimeout(()=>{const m=document.getElementById("mobPop");if(m)m.dataset.k=k});
-  return`<div class="minfos">${geenPrijs()?"":vak("💶","Prijs",pv!=null?prijsTxt(pv):"","mobPrijs",pv!=null?"Prijs: "+prijsTxt(pv)+" per stuk":"")}${vak("🛒","Max op kar",ras.kar||"","mobKar")}</div>`}
+  return`<div class="minfos">${geenPrijs()?"":vak("💶","Prijs",pv!=null?prijsTxt(pv):"","mobPrijs",pv!=null?"Prijs: "+prijsTxt(pv)+" per stuk":"")}${vak("🛒","Max op kar",ras.kar||rasBel(ras),"mobKar")}</div>`}
+/* belading uit de fotobibliotheek: eerst de hoofdfoto, dan een andere foto van deze soort */
+function rasBel(ras){if(!ras)return"";for(const s of fotoLijst(ras.id)){const o=fmZoek(s);if(o&&o.x.b)return o.x.b}return""}
 function mobPrijs(id,k){const P=data.vkPrijzen=data.vkPrijzen||{},o=P.std=P.std||{},v=prompt("Prijs per plant (standaard), bijv. 0,85 — leeg = weghalen:",o[id]!=null?pF(o[id]):"");if(v===null)return;
   const pr=prijsLees(v);if(pr==null)delete o[id];else o[id]=pr;opslaanLater();mobSoort(k)}
-function mobKar(id,k){const r=data.rassen.find(x=>x.id===id);if(!r)return;const v=prompt("Max op kar (bijv. 24 trays / 720 st) — leeg = weghalen:",r.kar||"");if(v===null)return;
+function mobKar(id,k){const r=data.rassen.find(x=>x.id===id);if(!r)return;const v=prompt("Max op kar (bijv. 24 trays / 720 st) — leeg = weghalen:",r.kar||rasBel(r));if(v===null)return;
   const t=v.trim();if(t)r.kar=t;else delete r.kar;opslaanLater();mobSoort(k)}
 /* plaatje van de popup maken en delen via WhatsApp (of kopiëren / downloaden) */
 /* foto maken met de camera: wordt de foto van deze soort. Tekst per soort wordt onthouden (data.deelTekst) */
@@ -5218,7 +5220,10 @@ async function fotoMapToon(tid,s){const u=await fmapLaad(tid,s),t=(data.teeltdur
       ${!kijker?`<button class="btn rood" onclick="fotoMapWeg('${tid}','${s}')">🗑 Weghalen</button>`:""}</div>`)}
 async function fmapNaamZet(tid,s,v){const x=fmapLijst(tid).find(x=>x.s===s);if(!x)return;v=String(v||"").trim();if(v)x.n=v;else delete x.n;opslaanLater();melding(v?"✓ Naam: "+esc(v):"Naam weggehaald","#2d6a4f")}
 async function fotoMapKies(tid,s){const u=await fmapLaad(tid,s);if(!u)return;aanbod=aanbod||{img:"",naam:"",prijs:"",kar:"",tekst:""};aanbod.img=u;
-  if(!aanbod.naam){const t=(data.teeltduren||[]).find(x=>x.id===tid);if(t)aanbod.naam=teeltLabel(t)}aanbodBewaar();fmapKies=false;aanbodOpen()}
+  /* naam en belading (max op kar) komen mee uit de fotobibliotheek */
+  const x=fmapLijst(tid).find(q=>q.s===s)||{},r=fmRas(x),nm=fmN(x)||(r?r.naam:""),bel=x.b||(r?(r.kar||rasBel(r)):"");
+  if(nm)aanbod.naam=nm;else if(!aanbod.naam){const t=(data.teeltduren||[]).find(q=>q.id===tid);if(t)aanbod.naam=teeltLabel(t)}
+  if(bel)aanbod.kar=bel;aanbodBewaar();fmapKies=false;aanbodOpen()}
 async function fotoMapDown(tid,s,nr){const u=await fmapLaad(tid,s);if(!u)return;const t=(data.teeltduren||[]).find(x=>x.id===tid)||{};
   const a=document.createElement("a");a.href=u;a.download=(fmN(fmapLijst(tid).find(x=>x.s===s))||(teeltLabel(t)+" map foto "+nr)).replace(/[^\w .-]+/g," ").replace(/\s+/g," ").trim()+".jpg";document.body.appendChild(a);a.click();a.remove()}
 async function fotoMapWeg(tid,s){if(!confirm("Deze foto weghalen?"))return;try{await fmapDoc(tid,s).delete()}catch(e){}
