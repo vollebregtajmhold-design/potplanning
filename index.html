@@ -1033,7 +1033,7 @@ tr:hover .ovmail{opacity:1}@media (hover:none),(max-width:700px){.ovmail{display
 
 <script>
 "use strict";
-const VERSIE="52.7";
+const VERSIE="52.8";
 const VERSIE_DATUM="03-11-2026";
 /* ---------- Basis ---------- */
 const PALET=["#2d6a4f","#1B5EBE","#E8007D","#c77d1a","#7a4fa0","#0f8b8d","#5b6b2f","#3d5a80","#a0522d","#7AB648"];
@@ -3886,7 +3886,7 @@ function aanbodOpen(){if(kijker||!mod4())return;aanbod=aanbod||{img:"",naam:"",p
   const veld=(id,lab,ph,mode)=>`<label class="status" style="display:block;margin:6px 0 2px">${lab}</label><input id="ab_${id}" value="${v(A[id])}" placeholder="${ph}" ${mode?`inputmode="${mode}"`:""} oninput="aanbodZet('${id}',this.value)" class="abveld">`;
   const h=`<div id="mobDeel"><div class="mpopKop"><b id="abKop">${v(A.naam)||v(A.soort)||"Aanbod"}</b><button class="noshot" onclick="sluitMobSoort()">✕</button></div><div class="mpopIn">
       ${A.img?`<div class="mfoto"><img src="${A.img}" alt=""></div>`:""}
-      <div class="minfos"><div class="minfo ${A.soort?"":"noshot"}" id="abSo"><span class="status">🌱 Soort</span><b>${v(A.soort)||"–"}</b></div><div class="minfo noshot" id="abPr" title="De prijs komt niet op het plaatje, maar gaat als losse tekst mee"><span class="status">💶 Prijs</span><b>${A.prijs?esc(prijsTxt(prijsLees(A.prijs)??A.prijs))+" p/st":"–"}</b></div><div class="minfo ${A.kar?"":"noshot"}" id="abKar"><span class="status">🛒 Max op kar</span><b>${v(A.kar)||"–"}</b></div></div>
+      <div class="minfos"><div class="minfo noshot" id="abSo" title="De soort staat al bovenaan; komt niet nog eens op het plaatje"><span class="status">🌱 Soort</span><b>${v(A.soort)||"–"}</b></div><div class="minfo noshot" id="abPr" title="De prijs komt niet op het plaatje, maar gaat als losse tekst mee"><span class="status">💶 Prijs</span><b>${A.prijs?esc(prijsTxt(prijsLees(A.prijs)??A.prijs))+" p/st":"–"}</b></div><div class="minfo ${A.kar?"":"noshot"}" id="abKar"><span class="status">🛒 Max op kar</span><b>${v(A.kar)||"–"}</b></div></div>
       <div class="mtekst" id="abTekst" ${A.tekst&&A.tekst.trim()?"":"hidden"}>${v(A.tekst)}</div></div></div>
     <div class="mpopIn" style="padding-top:0">
       <div style="display:flex;gap:8px"><label class="btn ${A.img?"licht":""}" style="flex:1;display:flex;justify-content:center;box-sizing:border-box">📷 ${A.img?"Nieuwe foto":"Foto maken"}<input type="file" accept="image/*" capture="environment" hidden onchange="aanbodFoto(this.files[0])"></label><button class="btn licht" style="flex:1" onclick="fotoMapPop(null,true)" title="Kies een foto uit de foto-map van een teelt">🖼 Uit bibliotheek</button></div>
@@ -3897,7 +3897,7 @@ function aanbodOpen(){if(kijker||!mod4())return;aanbod=aanbod||{img:"",naam:"",p
   m.className="";m.innerHTML=`<div class="mpop">${h}</div>`;m.hidden=false}
 function aanbodZet(id,val){aanbod[id]=val;aanbodBewaar();const t=val.trim(),$=x=>document.getElementById(x);
   if(id==="naam"||id==="soort")$("abKop").textContent=(aanbod.naam||"").trim()||(aanbod.soort||"").trim()||"Aanbod";
-  if(id==="soort"){$("abSo").classList.toggle("noshot",!t);$("abSo").querySelector("b").textContent=t||"–"}
+  if(id==="soort"){$("abSo").querySelector("b").textContent=t||"–"}
   if(id==="prijs"){$("abPr").querySelector("b").textContent=t?prijsTxt(prijsLees(t)??t)+" p/st":"–"}
   if(id==="kar"){$("abKar").classList.toggle("noshot",!t);$("abKar").querySelector("b").textContent=t||"–"}
   if(id==="tekst"){$("abTekst").textContent=val;$("abTekst").hidden=!t}}
