@@ -858,6 +858,7 @@ tr:hover .ovmail{opacity:1}@media (hover:none),(max-width:700px){.ovmail{display
 .vgltab thead .vglsrt{z-index:2;background:#c9c9c9}.vgltab tfoot th,.vgltab tfoot td{background:#e3f1e7;font-weight:700}.vgltab tfoot .vglsrt{background:#e3f1e7}
 .vglp{color:#1a7f37;font-weight:700}.vglm{color:#c0262d;font-weight:700}.vgln{color:#111}.vgl0{color:#aaa}
 .vglnw,.vglweg{font-size:11px;font-weight:600;border-radius:5px;padding:0 4px;margin-left:4px}.vglnw{background:#dff0e6;color:#1a7f37}.vglweg{background:#fbe3e4;color:#c0262d}
+.bhchk{padding:5px 0;font-size:14px}.bhchk.nee{color:#b00020}
 .galkop{margin:12px 0 6px;font-size:14px;color:#1f4d39}.galbalk{gap:6px;flex-wrap:wrap;align-items:center;margin:6px 0;padding:6px 0;position:sticky;top:-1px;background:#fff;z-index:2}
 .galfoto.amsel{outline:3px solid #2d6a4f;outline-offset:1px}
 .fzbesch{margin-top:10px;padding:10px;border:1px solid #cfe3d8;background:#f3faf6;border-radius:10px}
@@ -1040,7 +1041,7 @@ tr:hover .ovmail{opacity:1}@media (hover:none),(max-width:700px){.ovmail{display
 
 <script>
 "use strict";
-const VERSIE="53.1";
+const VERSIE="53.3";
 const VERSIE_DATUM="03-11-2026";
 /* ---------- Basis ---------- */
 const PALET=["#2d6a4f","#1B5EBE","#E8007D","#c77d1a","#7a4fa0","#0f8b8d","#5b6b2f","#3d5a80","#a0522d","#7AB648"];
@@ -1436,7 +1437,8 @@ function deelZet(){if(!magDelen()){alert("Alleen "+deelBaas()+" mag dit verander
   wijzig();melding("👥 Opgeslagen: wie mag wat zien","#2d6a4f")}
 /* geen toegang tot de hele planning → kijken of er voor dit e-mailadres iets gedeeld is */
 function probeerDelen(db){if(wolkWw){firebase.auth().signOut();setTimeout(()=>toonLogin("Dit account heeft (nog) geen toegang. Vraag het aan uw werkgever."),400);return}db.collection("planning").doc("delen_"+String(wolkMail).toLowerCase()).onSnapshot(snap=>{
-    if(!snap.exists){wolkStatus("Geen toegang met dit account ("+wolkMail+")",false);melding("Met dit account ("+esc(wolkMail)+") is er niets gedeeld.","#6a3d9a");return}
+    if(!snap.exists){wolkStatus("Geen toegang met dit account ("+wolkMail+")",false);
+      toonLogin(`Het Google-account ${wolkMail} heeft (nog) geen toegang tot deze planning. Kies hieronder een ander Google-account, of vraag de beheerder om dit adres toe te voegen.`);return}
     let o={};try{o=JSON.parse(snap.data().json)||{}}catch(e){}
     const g=snap.data().gemaakt||"";meekijk={delen:o.delen||{},besch:o.besch||null,gemaakt:g};zetKijker(true);
     const b=document.getElementById("kijkLabel");if(b){b.textContent="👁 Meekijken";b.title="U kijkt mee met wat de klant deelt. U kunt niets veranderen."}
@@ -1833,7 +1835,9 @@ async function wolkStart(){
       else melding("☁️ Planning bijgewerkt"+(v.door&&v.door!==wolkMail?" door "+esc(v.door):""));
       laatsteKern=kernVan(data);zetTerugKnop();render();
       wolkStatus("Bijgewerkt om "+new Date().toLocaleTimeString("nl-NL"));
-    },e=>{if(e.code==="permission-denied"){probeerDelen(db);return}wolkStatus("⚠ "+e.message,false)});
+    },e=>{if(e.code==="permission-denied"){probeerDelen(db);return}wolkStatus("⚠ "+e.message,false);toonLogin("Verbinden lukt niet: "+e.message)});
+    /* na 20 seconden nog steeds niets binnen? Dan blokkeert waarschijnlijk het netwerk de online planning */
+    setTimeout(()=>{if(wolkEerste&&wolkDoc&&!kijker)wolkStatus("⚠ Nog geen verbinding met de online planning. Blokkeert het netwerk Google (firestore.googleapis.com)? Probeer 4G of de hotspot van uw telefoon.",false)},20000);
   });
   $("#btnUitlog").onclick=()=>{if(confirm("Uitloggen?"))firebase.auth().signOut()};
   $("#btnInlezen").onclick=()=>{const i=document.createElement("input");i.type="file";i.accept=".json,application/json";
@@ -5971,7 +5975,7 @@ function toonBeheer(){const B=beheerData(),ob=document.getElementById("ovBalk");
         ${veld("appUrl",i,"Webadres app","t","https://….github.io/naam/")}${veld("repo",i,"GitHub","t","https://github.com/…/naam")}
         ${veld("firebase",i,"firebaseConfig","ta","plak hier het stukje firebaseConfig = { … } uit Firebase")}${veld("emails",i,"E-mailadressen klant (1 per regel)","ta","naam@gmail.com")}${veld("notitie",i,"Notitie","t","")}</div>
       <div class="bhknop">${i?`<button class="ovk ovlink bhgroot" onclick="ghWizard(${i})" title="Maakt de GitHub-repository, zet index.html en klant.js erin en zet de website (Pages) aan">🧙 GitHub klaarzetten</button>`:""}<button class="ovk ovlink" onclick="bhOpen(${i},'repo')">GitHub ›</button><button class="ovk ovlink" onclick="bhOpen(${i},'fb')">Firebase ›</button>
-        <button class="ovk ovlink" onclick="bhVersie(${i})">↻ Versie</button>${i?`<button class="ovk ovlink" onclick="bhActief(${i})" title="Wanneer heeft deze klant voor het laatst in de app gewerkt? (eerste keer: inloggen bij deze klant)">🕒 Laatst actief</button>`:""}<button class="ovk ovlink" onclick="bhKlantJs(${i})">⬇ klant.js</button><button class="ovk ovlink" onclick="bhRegels(${i})">Regels Firebase</button><button class="ovk ovlink" onclick="bhMw(${i})" title="Wie heeft toegang bij deze klant, en hoeveel medewerkers mag de klant maken">👷 Medewerkers${i&&k.maxMw!=null&&k.maxMw!==""?" (max "+esc(k.maxMw)+")":""}</button></div></div>`}).join("")}
+        <button class="ovk ovlink" onclick="bhVersie(${i})">↻ Versie</button>${i?`<button class="ovk ovlink" onclick="bhActief(${i})" title="Wanneer heeft deze klant voor het laatst in de app gewerkt? (eerste keer: inloggen bij deze klant)">🕒 Laatst actief</button>`:""}<button class="ovk ovlink" onclick="bhKlantJs(${i})">⬇ klant.js</button><button class="ovk ovlink" onclick="bhRegels(${i})">Regels Firebase</button>${i?`<button class="ovk ovlink" onclick="bhToegang(${i})" title="De e-mailadressen van de klant online zetten (planning/toegang) en controleren of alles klaar is">🔑 Toegang &amp; controle</button>`:""}<button class="ovk ovlink" onclick="bhMw(${i})" title="Wie heeft toegang bij deze klant, en hoeveel medewerkers mag de klant maken">👷 Medewerkers${i&&k.maxMw!=null&&k.maxMw!==""?" (max "+esc(k.maxMw)+")":""}</button></div></div>`}).join("")}
 $("#inhoud").addEventListener("change",e=>{const el=e.target;if(!el.dataset||el.dataset.bk==null||tab!=="beheer")return;const B=beheerData(),k=B.klanten[+el.dataset.bi];if(!k)return;
   k[el.dataset.bk]=el.value.trim();opslaanLater();if(["naam","firebase"].includes(el.dataset.bk))render()});
 function bhNieuw(){const nid=uid();bhOpen1.add(nid);beheerData().klanten.push({id:nid,naam:"",appNaam:"",code:"",appUrl:"",repo:"",firebase:"",emails:"vollebregt.a@gmail.com",notitie:""});wijzig();setTimeout(()=>{const l=[...document.querySelectorAll('input[data-bk="naam"]')].pop();if(l){l.scrollIntoView({block:"center"});l.focus()}},80)}
@@ -6016,6 +6020,27 @@ async function bhMw(i){const k=beheerData().klanten[i];if(!k)return;const app=i?
       <p class="status" style="margin:0 0 8px">Gebruikt: <b>${L.length}</b> van de <b>${T.maxMw==null?0:+T.maxMw}</b>. De klant kan er niet meer maken dan dit maximum.</p>
       ${T.baas?`<p class="status" style="margin:0 0 8px">Baas (beheert de medewerkers): <b>${esc(T.baas)}</b></p>`:`<p class="let" style="margin:0 0 8px">Er is nog geen baas ingesteld (planning/toegang → baas).</p>`}`:`<p class="status" style="margin:0 0 8px">Uw eigen app: geen maximum.</p>`}
     ${L.length?L.map(([uid,x])=>`<div class="mwrij"><span class="mwnm"><b>${esc(x.naam||"–")}</b><small>${esc(x.mail||"")}</small><small>${mwLaatst(LG[uid])}</small></span><span class="status">${mwRolNaam(x.rol)}</span></div>`).join(""):`<div class="status" style="padding:6px 0">Nog geen medewerkers.</div>`}`)}
+/* Beheer: e-mailadressen van de klant in planning/toegang zetten + controle: regels, toegang, data online */
+async function bhToegang(i,zet){const k=beheerData().klanten[i];if(!k)return;const app=bhFbApp(k);if(!app){alert("Vul eerst de firebaseConfig in.");return}
+  const mails=[...new Set(String(k.emails||"").split(/[\s,;]+/).map(x=>x.trim().toLowerCase()).filter(x=>/@/.test(x)))];
+  toonPop("🔑 Toegang · "+esc(k.naam||""),`<div class="status">Controleren…</div>`);
+  let u=await bhAuthKlaar(app);
+  if(!u){try{const p=new firebase.auth.GoogleAuthProvider();p.setCustomParameters({prompt:"select_account"});u=(await app.auth().signInWithPopup(p)).user}catch(e){toonPop("🔑 Toegang",`<div class="let">Inloggen lukt niet: ${esc(e.message)}</div>`);return}}
+  const col=app.firestore().collection("planning"),ok=(b,t)=>`<div class="bhchk ${b?"ok":"nee"}">${b?"✅":"❌"} ${t}</div>`;
+  if(zet){try{const d=await col.doc("toegang").get(),o=d.exists?d.data():{};const nw={klant:mails};if(!o.baas&&mails[0])nw.baas=String(k.deelBaas||mails[0]).toLowerCase();
+      await col.doc("toegang").set(nw,{merge:true});melding("✓ Toegang online gezet","#2d6a4f")}
+    catch(e){toonPop("🔑 Toegang · "+esc(k.naam||""),`<div class="let">${e.code==="permission-denied"?"Opslaan mag niet. Plak eerst de nieuwe <b>Regels Firebase</b> bij deze klant en klik op Publish. Log in met "+esc(u.email||wolkMail)+".":esc(e.message)}</div>`);return}}
+  let T=null,fout="";try{const d=await col.doc("toegang").get();T=d.exists?d.data():{}}catch(e){fout=e.code||e.message}
+  let H=null;try{const d=await col.doc("laatst").get();H=d.exists?d.data():null}catch(e){}
+  const online=Array.isArray(T&&T.klant)?T.klant.map(x=>String(x).toLowerCase()):[],mist=mails.filter(m=>!online.includes(m));
+  toonPop("🔑 Toegang & controle · "+esc(k.naam||""),`
+    ${ok(!fout,fout?"Regels Firebase: <b>oud of niet gepubliceerd</b>. Klik op Regels Firebase, plak in Firebase → Firestore → Rules → Publish.":"Regels Firebase zijn goed (beheerder "+esc(u.email||"")+" mag de toegang lezen)")}
+    ${fout?"":ok(!!T&&Object.keys(T).length,T&&Object.keys(T).length?"Document planning/toegang bestaat":"Document planning/toegang bestaat nog niet")}
+    ${fout?"":ok(mails.length&&!mist.length,mails.length?(mist.length?"Nog niet online: <b>"+mist.map(esc).join(", ")+"</b>":"Alle e-mailadressen van de klant staan online"):"Vul eerst de e-mailadressen van de klant in")}
+    ${fout?"":`<div class="status" style="margin:4px 0 0 26px">Online bij klant: ${online.length?online.map(esc).join(", "):"–"}${T&&T.baas?` · baas: ${esc(T.baas)}`:""}</div>`}
+    ${fout?"":ok(!!H,H?"Planning is online gebruikt (laatst: "+esc(H.t?new Date(H.t).toLocaleString("nl-NL"):"?")+(H.door?" door "+esc(H.door):"")+")":"Nog geen teken dat de planning online gebruikt is (de klant moet een keer inloggen en iets opslaan, of een json inlezen)")}
+    <div class="rij" style="gap:8px;margin-top:12px"><span style="flex:1"></span>${!fout&&mails.length?`<button class="btn" onclick="bhToegang(${i},true)">🔑 E-mailadressen online zetten</button>`:""}<button class="btn licht" onclick="bhToegang(${i})">↻ Opnieuw controleren</button></div>
+    <p class="status" style="font-size:12px;margin:8px 0 0">Daarna: de klant opent ${esc(k.appUrl||"de link")} en logt in met Google.</p>`)}
 async function bhMwMax(){const b=window.__bhMw;if(!b)return;const n=Math.max(0,Math.round(+document.getElementById("bhMwMax").value||0));
   try{await b.col.doc("toegang").set({maxMw:n},{merge:true});const k=beheerData().klanten[b.i];k.maxMw=n;wijzig();melding("✓ Maximum: "+n+" medewerkers","#2d6a4f");bhMw(b.i)}
   catch(e){alert(e.code==="permission-denied"?"Geen toestemming. Plak eerst de nieuwe Regels Firebase bij deze klant.":e.message)}}
@@ -6339,6 +6364,10 @@ function toonWelkom(){const st=(t,n,tab,uitleg)=>`<button type="button" class="w
   try{const o=localStorage.getItem(OPSLAG_SLEUTEL);if(o)data=normaliseer(JSON.parse(o))}catch(e){}
   data=normaliseer(data);
   if(kanWolk()){wolkStart()}
+  else if(KLANT.code){toonLogin(location.protocol==="file:"?"Deze app is als bestand geopend. Open de app via de internetlink (https://…), dan kunt u inloggen en ziet u de planning."
+      :!window.firebase?"Kan Google (Firebase) niet bereiken. Controleer het internet. Op een bedrijfsnetwerk: vraag IT om gstatic.com, googleapis.com en firebaseapp.com toe te staan, of probeer 4G of de hotspot van uw telefoon."
+      :"Deze app is nog niet aan een online planning gekoppeld (klant.js ontbreekt of is leeg).");
+    const k=document.querySelector("#login button");if(k){k.textContent="↻ Opnieuw proberen";k.onclick=()=>location.reload()}}
   else if(!heeftApi){$("#geenApi").hidden=false;["#btnNieuw","#btnOpen"].forEach(s=>$(s).hidden=true)}
   else{const h=await haalHandle();
     if(h){const b=$("#btnVerder");b.hidden=false;b.textContent="▶ Verder met "+h.name;
