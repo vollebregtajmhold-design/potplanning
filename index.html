@@ -1041,7 +1041,7 @@ tr:hover .ovmail{opacity:1}@media (hover:none),(max-width:700px){.ovmail{display
 
 <script>
 "use strict";
-const VERSIE="53.4";
+const VERSIE="53.5";
 const VERSIE_DATUM="03-11-2026";
 /* ---------- Basis ---------- */
 const PALET=["#2d6a4f","#1B5EBE","#E8007D","#c77d1a","#7a4fa0","#0f8b8d","#5b6b2f","#3d5a80","#a0522d","#7AB648"];
@@ -1599,12 +1599,13 @@ function zetWeergave(v){try{localStorage.setItem("potplanning-weergave",v)}catch
   if(v==="sales"){if(!SALES_TABS.includes(tab))naar(window.innerWidth<700?"mobiel":"aflever");else render();melding("Weergave Sales: alleen Zoeken en Afleverplanning","#2d6a4f")}else{render();melding("Weergave Alles: alle pagina's","#2d6a4f")}}
 setTimeout(weergaveKnoppen,0);
 function startTab(){
-  if(isSales()&&data.teeltduren.length){const t=URL_TAB[location.hash.slice(1)];if(t&&SALES_TABS.includes(t)&&t!=="beheer")return t;if(window.innerWidth>=700){aflRij="teelt";aflMod=niveau()>1?"vers":"afl"}return window.innerWidth<700?"mobiel":"aflever"}
+  const breed=window.innerWidth>=700;/* op de computer nooit met de mobiele weergave beginnen (ook niet als #mobiel nog in het adres staat) */
+  if(isSales()&&data.teeltduren.length){const t=URL_TAB[location.hash.slice(1)];if(t&&SALES_TABS.includes(t)&&t!=="beheer"&&!(breed&&t==="mobiel"))return t;if(window.innerWidth>=700){aflRij="teelt";aflMod=niveau()>1?"vers":"afl"}return window.innerWidth<700?"mobiel":"aflever"}
   /* eerste keer in deze sessie: altijd Afleverplanning, teelt · soort, nog beschikbaar, 2 weken terug t/m 15 vooruit */
   let eerste=false;if(data.teeltduren.length)try{eerste=!sessionStorage.getItem("potplanning-sessie");sessionStorage.setItem("potplanning-sessie","1")}catch(e){}
   if(eerste&&window.innerWidth>=700){aflRij="teelt";aflMod=niveau()>1?"vers":"afl";aflS=null;
     try{const nu=+dezeWeek(),y=isoWeek(nuWk()).y;planJaar=nu>=+seizoenVan(y)?y:y-1}catch(e){}return"aflever"}
-  const t=URL_TAB[location.hash.slice(1)];if(t&&t!=="beheer"&&t!=="mkbesch")return t;return!data.teeltduren.length?"soorten":window.innerWidth<700?"mobiel":"aflever"}
+  const t=URL_TAB[location.hash.slice(1)];if(t&&t!=="beheer"&&t!=="mkbesch"&&!(breed&&t==="mobiel"))return t;return!data.teeltduren.length?"soorten":window.innerWidth<700?"mobiel":"aflever"}
 /* toetsen 0–4 */
 document.addEventListener("keydown",e=>{if(e.ctrlKey||e.metaKey||e.altKey||e.repeat)return;const t={"1":"soorten","2":"oppot","3":"oppotov","4":"aflever"}[e.key];if(!t)return;
   const el=document.activeElement;if(el&&el.closest("input,textarea,select,[contenteditable]"))return;const m=document.getElementById("mobPop");if((m&&!m.hidden)||document.querySelector("dialog[open]"))return;
