@@ -851,6 +851,12 @@ tr:hover .ovmail{opacity:1}@media (hover:none),(max-width:700px){.ovmail{display
 .fbtegel{display:flex;flex-direction:column;gap:3px;border-radius:9px;padding:3px;background:#fff;border:1px solid #e6e0d4;cursor:grab}.fbtegel:active{cursor:grabbing}
 .fbtegel .galfoto{position:relative}.fbicoon{position:absolute;top:4px;left:4px;background:rgba(255,255,255,.9);border-radius:6px;padding:0 4px;font-size:14px}
 .fbteelt>summary.slepen,.fbse>summary.slepen,.fbk>summary.slepen{background:#dff0e6;outline:2px dashed #2d6a4f}.fbtegel.amsel{outline:3px solid #2d6a4f}.fbin{font-size:12px;padding:3px 5px;border:1px solid #ddd;border-radius:6px;width:100%;box-sizing:border-box}
+.vglwrap{overflow:auto;max-height:70vh;border:1px solid #d8d2c4;border-radius:8px}
+.vgltab{border-collapse:collapse;font-size:14px;background:#f5f1e8}.vgltab th,.vgltab td{border:1px solid #d8d2c4;padding:5px 8px;text-align:right;white-space:nowrap}
+.vgltab thead th{position:sticky;top:0;background:#c9c9c9;z-index:1}.vgltab .vglsrt{position:sticky;left:0;background:#f5f1e8;text-align:left;font-weight:600;z-index:1}
+.vgltab thead .vglsrt{z-index:2;background:#c9c9c9}.vgltab tfoot th,.vgltab tfoot td{background:#e3f1e7;font-weight:700}.vgltab tfoot .vglsrt{background:#e3f1e7}
+.vglp{color:#1a7f37;font-weight:700}.vglm{color:#c0262d;font-weight:700}.vgln{color:#111}.vgl0{color:#aaa}
+.vglnw,.vglweg{font-size:11px;font-weight:600;border-radius:5px;padding:0 4px;margin-left:4px}.vglnw{background:#dff0e6;color:#1a7f37}.vglweg{background:#fbe3e4;color:#c0262d}
 .galkop{margin:12px 0 6px;font-size:14px;color:#1f4d39}.galbalk{gap:6px;flex-wrap:wrap;align-items:center;margin:6px 0;padding:6px 0;position:sticky;top:-1px;background:#fff;z-index:2}
 .galfoto.amsel{outline:3px solid #2d6a4f;outline-offset:1px}
 .fzbesch{margin-top:10px;padding:10px;border:1px solid #cfe3d8;background:#f3faf6;border-radius:10px}
@@ -977,7 +983,7 @@ tr:hover .ovmail{opacity:1}@media (hover:none),(max-width:700px){.ovmail{display
 </div></dialog>
 <dialog id="zoekVenster"><div class="vlak">
   <input id="zoekInvoer" placeholder="Zoek: teeltduur, vloeren, Cyclamen, P08, leverancier…" autocomplete="off">
-  <div class="zoeksnel"><span class="status">Snel naar:</span><button type="button" class="btn licht zsPrijs" onclick="$('#zoekVenster').close();prijsTabel()">💶 Prijzen</button><button type="button" class="btn licht zsGal" onclick="$('#zoekVenster').close();fotoGalerij()" title="Alle foto's van alle soorten">🖼 Fotobibliotheek</button></div>
+  <div class="zoeksnel"><span class="status">Snel naar:</span><button type="button" class="btn licht zsPrijs" onclick="$('#zoekVenster').close();prijsTabel()">💶 Prijzen</button><button type="button" class="btn licht" onclick="$('#zoekVenster').close();opzetVergelijk()" title="Opzetplan van twee jaren vergelijken, per teelt">📊 Opzet vergelijken</button><button type="button" class="btn licht zsGal" onclick="$('#zoekVenster').close();fotoGalerij()" title="Alle foto's van alle soorten">🖼 Fotobibliotheek</button></div>
   <div id="zoekLijst"></div>
   <p class="status" style="margin:8px 4px 0">↑ ↓ = kiezen · Enter = openen · Esc = sluiten</p>
 </div></dialog>
@@ -1033,7 +1039,7 @@ tr:hover .ovmail{opacity:1}@media (hover:none),(max-width:700px){.ovmail{display
 
 <script>
 "use strict";
-const VERSIE="52.8";
+const VERSIE="52.9";
 const VERSIE_DATUM="03-11-2026";
 /* ---------- Basis ---------- */
 const PALET=["#2d6a4f","#1B5EBE","#E8007D","#c77d1a","#7a4fa0","#0f8b8d","#5b6b2f","#3d5a80","#a0522d","#7AB648"];
@@ -5598,6 +5604,43 @@ function orderOpslaan(naam){const kk=klantVan(naam),code=wkCode(ofWeek);let r=0,
   window.ofKlaar=true;opslaanLater();render();melding(`✔ ${r} soort${r===1?"":"en"} · ${getal(n)} planten opgeslagen voor ${esc(naam)}`,"#2d6a4f");
   pakbonVan({dataset:{klant:kk?kk.naam:naam,code}},true)}
 /* prijstabel: soorten onder elkaar, klanten naast elkaar. Kolom Standaard = voor iedereen; klantkolom leeg = standaardprijs (grijs) */
+/* ---------- 📊 Opzet vergelijken: twee jaren naast elkaar, per teelt. Cel = nieuwste jaar − oudste jaar (per soort, per opzetweek) ---------- */
+let vgl=null;
+function opzetPerJaar(tid){const M={};/* M[jaar][soort][week] = planten opgezet */
+  for(const p of planPartijen()){const tl=data.teeltduren.find(x=>x.id===p.soortId)||data.teeltduren.find(x=>x.product===p.product&&String(x.potmaat)===String(p.potmaat));if(!tl||tl.id!==tid)continue;
+    const f=fasen(p),iw=isoWeek(f.s),j=iw.y,w=iw.w,srt=p.soorten&&p.soorten.length?p.soorten:[{rasId:"",naam:p.ras||"",aantal:planten(p)}];
+    for(const x of srt){const ras=data.rassen.find(q=>q.id===x.rasId)||data.rassen.find(q=>q.teeltId===tid&&q.naam===x.naam),nm=(ras?ras.naam:x.naam)||"(zonder soort)",n=Math.round(+x.aantal||0);if(!n)continue;
+      ((M[j]=M[j]||{})[nm]=M[j][nm]||{})[w]=(M[j][nm][w]||0)+n}}
+  return M}
+function opzetVergelijk(){const T=(data.teeltduren||[]).filter(t=>t.product);if(!T.length){alert("Er zijn nog geen teelten.");return}
+  if(!vgl){const nu=isoWeek(new Date()).y;vgl={tid:T[0].id,a:nu-1,b:nu}}
+  const M=opzetPerJaar(vgl.tid),jaren=[...new Set([...Object.keys(M).map(Number),vgl.a,vgl.b,isoWeek(new Date()).y])].sort((x,y)=>x-y);
+  const oud=Math.min(vgl.a,vgl.b),nieuw=Math.max(vgl.a,vgl.b),A=M[oud]||{},B=M[nieuw]||{};
+  const soorten=[...new Set([...Object.keys(A),...Object.keys(B)])].sort((x,y)=>x.localeCompare(y,"nl"));
+  const wk=[...new Set([...Object.values(A),...Object.values(B)].flatMap(o=>Object.keys(o).map(Number)))].sort((x,y)=>x-y);
+  const g=v=>v?getal(Math.abs(v)):"0",cel=(o,n,tt)=>{if(!o&&!n)return`<td class="vgl0">—</td>`;const d=n-o;return`<td class="${d>0?"vglp":d<0?"vglm":"vgln"}" title="${tt?esc(tt)+" · ":""}${nieuw}: ${getal(n)} · ${oud}: ${getal(o)}">${d>0?"+":d<0?"−":""}${g(d)}</td>`};
+  const som=(X,nm,w)=>((X[nm]||{})[w])||0,tot=(X,nm)=>Object.values(X[nm]||{}).reduce((a,b)=>a+b,0);
+  const rij=nm=>{const alleen=!A[nm]?` <span class="vglnw" title="Alleen in ${nieuw}">nieuw</span>`:!B[nm]?` <span class="vglweg" title="Alleen in ${oud}">alleen ${oud}</span>`:"";
+    return`<tr><th class="vglsrt">${esc(nm)}${alleen}</th>${wk.map(w=>cel(som(A,nm,w),som(B,nm,w),nm+" wk "+w)).join("")}${cel(tot(A,nm),tot(B,nm),nm+" totaal")}</tr>`};
+  const totW=(X,w)=>soorten.reduce((a,nm)=>a+som(X,nm,w),0),totA=soorten.reduce((a,nm)=>a+tot(A,nm),0),totB=soorten.reduce((a,nm)=>a+tot(B,nm),0);
+  const jsel=k=>`<select onchange="vgl.${k}=+this.value;opzetVergelijk()">${jaren.map(j=>`<option ${j===vgl[k]?"selected":""}>${j}</option>`).join("")}</select>`;
+  toonPop("📊 Opzet vergelijken",`<div class="rij" style="gap:10px;flex-wrap:wrap;align-items:center">
+      <label class="status">Teelt <select onchange="vgl.tid=this.value;opzetVergelijk()">${T.map(t=>`<option value="${t.id}" ${t.id===vgl.tid?"selected":""}>${esc(teeltLabel(t))}</option>`).join("")}</select></label>
+      <label class="status">Jaar ${jsel("b")}</label><span class="status">min</span><label class="status">jaar ${jsel("a")}</label>
+      <span style="flex:1"></span><button class="btn licht klein" onclick="vglExcel()">Excel</button></div>
+    <p class="status" style="margin:6px 0;font-size:12px">Opzetplan: aantal planten per opzetweek. Cel = <b>${nieuw}</b> min <b>${oud}</b>. <span class="vglp">+ groen</span> = meer, <span class="vglm">− rood</span> = minder, 0 = gelijk. Ga met de muis op een cel voor de aantallen.</p>
+    ${oud===nieuw?`<p class="status">Kies twee verschillende jaren.</p>`:!soorten.length?`<p class="status" style="padding:12px 0">Geen opzet gevonden voor deze teelt in ${oud} en ${nieuw}.</p>`:
+    `<div class="vglwrap"><table class="vgltab"><thead><tr><th class="vglsrt">Soort</th>${wk.map(w=>`<th title="Opzetweek ${w}">wk ${w}</th>`).join("")}<th>Totaal</th></tr></thead>
+      <tbody>${soorten.map(rij).join("")}</tbody>
+      <tfoot><tr><th class="vglsrt">Totaal</th>${wk.map(w=>cel(totW(A,w),totW(B,w),"totaal wk "+w)).join("")}${cel(totA,totB,"alles")}</tr></tfoot></table></div>`}`);
+  const m=document.querySelector("#mobPop .mpop");if(m){m.classList.add("breed");m.style.maxWidth="96vw";m.style.width="96vw"}
+  vgl.data={oud,nieuw,soorten,wk,A,B}}
+function vglExcel(){if(!vgl||!vgl.data)return;const{oud,nieuw,soorten,wk,A,B}=vgl.data,t=(data.teeltduren||[]).find(x=>x.id===vgl.tid)||{};
+  const som=(X,nm,w)=>((X[nm]||{})[w])||0,L=[["Soort",...wk.map(w=>"wk "+w),"Totaal"]];
+  for(const nm of soorten){const r=wk.map(w=>som(B,nm,w)-som(A,nm,w));L.push([nm,...r,r.reduce((a,b)=>a+b,0)])}
+  const tr=wk.map(w=>soorten.reduce((a,nm)=>a+som(B,nm,w)-som(A,nm,w),0));L.push(["Totaal",...tr,tr.reduce((a,b)=>a+b,0)]);
+  const csv="﻿"+L.map(r=>r.map(v=>typeof v==="number"?v:`"${String(v).replace(/"/g,'""')}"`).join(";")).join("\r\n");
+  const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([csv],{type:"text/csv"}));a.download=`Opzet ${nieuw} min ${oud} ${teeltLabel(t)}.csv`.replace(/[\\/:*?"<>|]+/g," ");a.click()}
 function prijsTabel(alleen){if(geenPrijs()){melding("Zet eerst Verkoopprijzen aan (Instellingen → vinkje).","#6a3d9a");return}if(niveau()<2||kijker)return;const P=data.vkPrijzen||{},kl=[...data.klanten].filter(k=>k.naam&&(!alleen||k.id===alleen)).sort((a,b)=>a.naam.localeCompare(b.naam,"nl"));
   const ts=data.teeltduren.filter(t=>!teeltFilter||t.id===teeltFilter);let h=`<p class="status" style="margin:0 0 8px">Prijs per plant. <b>Standaard</b> geldt voor iedereen. Laat een klantvak leeg voor de standaardprijs (grijs). Wordt ook gebruikt bij reserveringen en in de Aanbodlijst.</p>
     <div class="prwrap"><table class="prtab"><tr><th class="prsoort">Soort</th><th>Standaard</th>${kl.map(k=>`<th title="${esc(k.naam)}">${esc(k.naam)}</th>`).join("")}</tr>`;
