@@ -1041,7 +1041,7 @@ tr:hover .ovmail{opacity:1}@media (hover:none),(max-width:700px){.ovmail{display
 
 <script>
 "use strict";
-const VERSIE="53.5";
+const VERSIE="53.8";
 const VERSIE_DATUM="03-11-2026";
 /* ---------- Basis ---------- */
 const PALET=["#2d6a4f","#1B5EBE","#E8007D","#c77d1a","#7a4fa0","#0f8b8d","#5b6b2f","#3d5a80","#a0522d","#7AB648"];
@@ -3646,6 +3646,14 @@ function pasBreedte(){const sc=$("#planScroll"),tb=$("#kapTabel");if(!sc||!tb)re
   sc.style.setProperty("--lett",cel<17?"0px":cel<24?"9px":cel<34?"10px":"12px")}
 window.addEventListener("resize",()=>{if(tab==="plan"){pasBreedte();tekenBlokken()}});
 window.addEventListener("resize",()=>{if(tab==="oppot"&&typeof inkRuimteLater==="function")inkRuimteLater()});
+/* geïnstalleerde app op de computer opent in een klein venster? Dan zelf groot maken (mag alleen bij een app-venster, niet in een gewoon tabblad) */
+try{const st=matchMedia("(display-mode: standalone)").matches||matchMedia("(display-mode: window-controls-overlay)").matches;
+  if(st&&screen.availWidth>=1000&&window.innerWidth<900&&!/Android|iPhone|iPad/i.test(navigator.userAgent)){window.moveTo(screen.availLeft||0,screen.availTop||0);window.resizeTo(screen.availWidth,screen.availHeight)}}catch(e){}
+/* mobiele weergave op de computer: venster breder gemaakt → vanzelf naar Afleverplanning */
+window.addEventListener("resize",()=>{clearTimeout(window.__mobBreed);window.__mobBreed=setTimeout(()=>{
+  if(tab!=="mobiel"||window.innerWidth<700||!data.teeltduren.length)return;if(document.querySelector("dialog[open]"))return;
+  const m=document.getElementById("mobPop");if(m&&!m.hidden)return;
+  aflRij="teelt";aflMod=niveau()>1?"vers":"afl";naar("aflever")},400)});
 /* Blokken als afgeronde kaarten onder de (doorzichtige) vakjes tekenen */
 let planBlokken=[];
 function tekenBlokken(){const sc=$("#planScroll"),tb=$("#kapTabel");if(!sc||!tb)return;
@@ -6028,19 +6036,19 @@ async function bhToegang(i,zet){const k=beheerData().klanten[i];if(!k)return;con
   let u=await bhAuthKlaar(app);
   if(!u){try{const p=new firebase.auth.GoogleAuthProvider();p.setCustomParameters({prompt:"select_account"});u=(await app.auth().signInWithPopup(p)).user}catch(e){toonPop("🔑 Toegang",`<div class="let">Inloggen lukt niet: ${esc(e.message)}</div>`);return}}
   const col=app.firestore().collection("planning"),ok=(b,t)=>`<div class="bhchk ${b?"ok":"nee"}">${b?"✅":"❌"} ${t}</div>`;
-  if(zet){try{const d=await col.doc("toegang").get(),o=d.exists?d.data():{};const nw={klant:mails};const goed=x=>/^[^\s@]+@[^\s@]+\.[a-z]{2,}$/i.test(String(x||""));if((!o.baas||!goed(o.baas))&&mails[0])nw.baas=String(k.deelBaas||mails[0]).toLowerCase().replace(/[.,;:]+$/,"");
+  if(zet){try{const d=await col.doc("toegang").get(),o=d.exists?d.data():{},mk=(o.meekijken||[]).map(x=>String(x).toLowerCase());const nw={klant:mails.filter(m=>!mk.includes(m))};const goed=x=>/^[^\s@]+@[^\s@]+\.[a-z]{2,}$/i.test(String(x||""));if((!o.baas||!goed(o.baas))&&mails[0])nw.baas=String(k.deelBaas||mails[0]).toLowerCase().replace(/[.,;:]+$/,"");
       await col.doc("toegang").set(nw,{merge:true});melding("✓ Toegang online gezet","#2d6a4f")}
     catch(e){toonPop("🔑 Toegang · "+esc(k.naam||""),`<div class="let">${e.code==="permission-denied"?"Opslaan mag niet. Plak eerst de nieuwe <b>Regels Firebase</b> bij deze klant en klik op Publish. Log in met "+esc(u.email||wolkMail)+".":esc(e.message)}</div>`);return}}
   let T=null,fout="";try{const d=await col.doc("toegang").get();T=d.exists?d.data():{}}catch(e){fout=e.code||e.message}
   let H=null;try{const d=await col.doc("laatst").get();H=d.exists?d.data():null}catch(e){}
-  const online=Array.isArray(T&&T.klant)?T.klant.map(x=>String(x).toLowerCase()):[],mist=mails.filter(m=>!online.includes(m)),
+  const online=Array.isArray(T&&T.klant)?T.klant.map(x=>String(x).toLowerCase()):[],mk=Array.isArray(T&&T.meekijken)?T.meekijken.map(x=>String(x).toLowerCase()):[],mist=mails.filter(m=>!online.includes(m)&&!mk.includes(m)),
     fout2=[...online,T&&T.baas||""].filter(x=>x&&!/^[^\s@]+@[^\s@]+\.[a-z]{2,}$/i.test(x));
   toonPop("🔑 Toegang & controle · "+esc(k.naam||""),`
     ${ok(!fout,fout?"Regels Firebase: <b>oud of niet gepubliceerd</b>. Klik op Regels Firebase, plak in Firebase → Firestore → Rules → Publish.":"Regels Firebase zijn goed (beheerder "+esc(u.email||"")+" mag de toegang lezen)")}
     ${fout?"":ok(!!T&&Object.keys(T).length,T&&Object.keys(T).length?"Document planning/toegang bestaat":"Document planning/toegang bestaat nog niet")}
     ${fout?"":ok(mails.length&&!mist.length,mails.length?(mist.length?"Nog niet online: <b>"+mist.map(esc).join(", ")+"</b>":"Alle e-mailadressen van de klant staan online"):"Vul eerst de e-mailadressen van de klant in")}
     ${!fout&&fout2.length?ok(false,"Fout e-mailadres online (let op een punt of spatie aan het eind): <b>"+fout2.map(x=>esc(JSON.stringify(x))).join(", ")+"</b> · klik op <b>E-mailadressen online zetten</b> om het te verbeteren"):""}
-    ${fout?"":`<div class="status" style="margin:4px 0 0 26px">Online bij klant: ${online.length?online.map(esc).join(", "):"–"}${T&&T.baas?` · baas: ${esc(T.baas)}`:""}</div>`}
+    ${fout?"":`<div class="status" style="margin:4px 0 0 26px">Online bij klant: ${online.length?online.map(esc).join(", "):"–"}${T&&T.baas?` · baas: ${esc(T.baas)}`:""}${mk.length?`<br>Meekijken (alleen wat de klant deelt): ${mk.map(esc).join(", ")}`:""}</div>`}
     ${fout?"":ok(!!H,H?"Planning is online gebruikt (laatst: "+esc(H.t?new Date(H.t).toLocaleString("nl-NL"):"?")+(H.door?" door "+esc(H.door):"")+")":"Nog geen teken dat de planning online gebruikt is (de klant moet een keer inloggen en iets opslaan, of een json inlezen)")}
     <div class="rij" style="gap:8px;margin-top:12px"><span style="flex:1"></span>${!fout&&mails.length?`<button class="btn" onclick="bhToegang(${i},true)">🔑 E-mailadressen online zetten</button>`:""}<button class="btn licht" onclick="bhToegang(${i})">↻ Opnieuw controleren</button></div>
     <p class="status" style="font-size:12px;margin:8px 0 0">Daarna: de klant opent ${esc(k.appUrl||"de link")} en logt in met Google.</p>`)}
