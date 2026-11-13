@@ -1040,7 +1040,7 @@ tr:hover .ovmail{opacity:1}@media (hover:none),(max-width:700px){.ovmail{display
 
 <script>
 "use strict";
-const VERSIE="53.0";
+const VERSIE="53.1";
 const VERSIE_DATUM="03-11-2026";
 /* ---------- Basis ---------- */
 const PALET=["#2d6a4f","#1B5EBE","#E8007D","#c77d1a","#7a4fa0","#0f8b8d","#5b6b2f","#3d5a80","#a0522d","#7AB648"];
@@ -5628,8 +5628,8 @@ function opzetVergelijk(){const T=(data.teeltduren||[]).filter(t=>t.product);if(
       ${wk.length>1?`<span class="status" style="margin-left:8px">Weken</span><div class="dual vgldual" title="Sleep de knoppen: breder of smaller. Sleep het groene midden: het hele stuk opschuiven">
         <div class="dualtrack"><div class="dualfill" id="vglFill"></div></div><div id="vglGrip" class="vglgrip" title="Sleep om op te schuiven"></div>
         <input type="range" id="vglLo" min="0" max="${n}" value="${vgl.lo}" oninput="vglSchuif(this)"><input type="range" id="vglHi" min="0" max="${n}" value="${vgl.hi}" oninput="vglSchuif(this)"></div>
-        <span id="vglTxt" class="status"></span><button class="btn licht klein" onclick="vglSmal(1)" title="Aan beide kanten 1 week erbij">⟷ breder</button><button class="btn licht klein" onclick="vglSmal(-1)" title="Aan beide kanten 1 week eraf">→← smaller</button><button class="btn licht klein" onclick="vgl.lo=0;vgl.hi=${n};vglSchuif()">Alles</button>`:""}
-      <span style="flex:1"></span><button class="btn licht klein" onclick="vglExcel()">Excel</button></div>
+        <span id="vglTxt" class="status"></span>`:""}
+      </div>
     <p class="status" style="margin:6px 0;font-size:12px">Opzetplan: aantal planten per opzetweek. Cel = <b>${nieuw}</b> min <b>${oud}</b>. <span class="vglp">+ groen</span> = meer, <span class="vglm">− rood</span> = minder, 0 = gelijk. Ga met de muis op een cel voor de aantallen.</p>
     <div id="vglTab"></div>`);
   const m=document.querySelector("#mobPop .mpop");if(m){m.classList.add("breed");m.style.maxWidth="96vw";m.style.width="auto"}
@@ -6243,7 +6243,7 @@ function zoekItemsE(q){q=q.trim().toLowerCase();const r=[],woorden=q.split(/\s+/
     let si=0;for(const x of data.rassen)if(x.naam&&past(x.naam)){const sb=score(x.naam)+.65+(si++)*.01,t=data.teeltduren.find(y=>y.id===x.teeltId),pr=t?(t.product||"")+(t.potmaat?" "+t.potmaat+" cm":""):"";
       r.push({ic:"🏷️",naam:x.naam,sub:t?teeltNaam(t):"",grp:"Soort",f:()=>naarSoort(x.id),s:sb,
         knop:[["Parameters",()=>naarSoort(x.id)],["Inkoop",()=>naarInkoopSoort(x.id)],["Komende weken",()=>{naar("aflever");mobSoort(pr+" · "+x.naam,nu)}]]})}
-    zoekKlanten(r,past,score);zoekFotos(r,past,score)}
+    zoekKlanten(r,past,score);zoekFotos(r,past,score);zoekExtra(r,past,score)}
   return r.sort((a,b)=>a.s-b.s).slice(0,40)}
 function zoekItems(q){if(data.instellingen.eenvoudig)return zoekItemsE(q);q=q.trim().toLowerCase();const r=[];
   const woorden=q.split(/\s+/).filter(Boolean);
@@ -6260,10 +6260,12 @@ function zoekItems(q){if(data.instellingen.eenvoudig)return zoekItemsE(q);q=q.tr
     for(const v of data.vloeren)if(past(v.naam))r.push({ic:"🏠",naam:v.naam,grp:"Vloer",f:()=>naar("kappen"),s:score(v.naam)+.8});
     for(const p of data.partijen)if(past(partijNr(p),p.product,p.ras,p.klant)){const f=fasen(p);
       r.push({ic:"🔖",naam:`${partijNr(p)} · ${p.product}${p.potmaat?" "+p.potmaat+" cm":""} · ${wkJaar(f.s)}`,grp:"Partij",f:()=>{naar("plan");bewerk(p.id)},s:score(partijNr(p))+.9})}
-    zoekKlanten(r,past,score);zoekFotos(r,past,score);
+    zoekKlanten(r,past,score);zoekFotos(r,past,score);zoekExtra(r,past,score);
   }
   return r.sort((a,b)=>a.s-b.s).slice(0,40)}
 /* foto's vinden via het zoekveld bovenin: op fotonaam, artikelcode of soort */
+/* tabellen die je ook via zoeken kunt openen */
+function zoekExtra(r,past,score){if(past("Opzet vergelijken","vergelijk jaren verschil opzetplan"))r.push({ic:"📊",naam:"Opzet vergelijken",sub:"opzetplan van 2 jaren naast elkaar",grp:"Tabel",s:score("Opzet vergelijken")+.3,f:()=>opzetVergelijk()})}
 function zoekFotos(r,past,score){if(!fotoMag()||!wolkDoc)return;let i=0;const gehad=new Set();
   for(const{tid,x}of fmAlle()){const t=data.teeltduren.find(y=>y.id===tid),tl=t?teeltLabel(t):"",ras=fmRas(x),nm=fmN(x)||(ras?ras.naam:"");if(!nm)continue;
     if(!past(nm,tl,ras?ras.naam:"",ras&&ras.fdArt||"",x.se||"",x.k||""))continue;
