@@ -852,7 +852,8 @@ tr:hover .ovmail{opacity:1}@media (hover:none),(max-width:700px){.ovmail{display
 .fbtegel .galfoto{position:relative}.fbicoon{position:absolute;top:4px;left:4px;background:rgba(255,255,255,.9);border-radius:6px;padding:0 4px;font-size:14px}
 .fbteelt>summary.slepen,.fbse>summary.slepen,.fbk>summary.slepen{background:#dff0e6;outline:2px dashed #2d6a4f}.fbtegel.amsel{outline:3px solid #2d6a4f}.fbin{font-size:12px;padding:3px 5px;border:1px solid #ddd;border-radius:6px;width:100%;box-sizing:border-box}
 .vglwrap{overflow:auto;max-height:70vh;border:1px solid #d8d2c4;border-radius:8px}
-.vgltab{border-collapse:collapse;font-size:14px;background:#f5f1e8}.vgltab th,.vgltab td{border:1px solid #d8d2c4;padding:5px 8px;text-align:right;white-space:nowrap}
+.vglwrap{display:inline-block;max-width:100%}.vgltab{width:auto!important;border-collapse:collapse;font-size:13px;background:#f5f1e8}.vgltab th,.vgltab td{border:1px solid #d8d2c4;padding:4px 6px;text-align:right;white-space:nowrap;min-width:0}
+.vgldual{width:240px}.vglgrip{position:absolute;top:4px;height:14px;cursor:grab;z-index:1;border-radius:3px}.vglgrip:active{cursor:grabbing}.vglgrip:hover{background:rgba(45,106,79,.15)}
 .vgltab thead th{position:sticky;top:0;background:#c9c9c9;z-index:1}.vgltab .vglsrt{position:sticky;left:0;background:#f5f1e8;text-align:left;font-weight:600;z-index:1}
 .vgltab thead .vglsrt{z-index:2;background:#c9c9c9}.vgltab tfoot th,.vgltab tfoot td{background:#e3f1e7;font-weight:700}.vgltab tfoot .vglsrt{background:#e3f1e7}
 .vglp{color:#1a7f37;font-weight:700}.vglm{color:#c0262d;font-weight:700}.vgln{color:#111}.vgl0{color:#aaa}
@@ -1039,7 +1040,7 @@ tr:hover .ovmail{opacity:1}@media (hover:none),(max-width:700px){.ovmail{display
 
 <script>
 "use strict";
-const VERSIE="52.9";
+const VERSIE="53.0";
 const VERSIE_DATUM="03-11-2026";
 /* ---------- Basis ---------- */
 const PALET=["#2d6a4f","#1B5EBE","#E8007D","#c77d1a","#7a4fa0","#0f8b8d","#5b6b2f","#3d5a80","#a0522d","#7AB648"];
@@ -5618,24 +5619,44 @@ function opzetVergelijk(){const T=(data.teeltduren||[]).filter(t=>t.product);if(
   const oud=Math.min(vgl.a,vgl.b),nieuw=Math.max(vgl.a,vgl.b),A=M[oud]||{},B=M[nieuw]||{};
   const soorten=[...new Set([...Object.keys(A),...Object.keys(B)])].sort((x,y)=>x.localeCompare(y,"nl"));
   const wk=[...new Set([...Object.values(A),...Object.values(B)].flatMap(o=>Object.keys(o).map(Number)))].sort((x,y)=>x-y);
-  const g=v=>v?getal(Math.abs(v)):"0",cel=(o,n,tt)=>{if(!o&&!n)return`<td class="vgl0">—</td>`;const d=n-o;return`<td class="${d>0?"vglp":d<0?"vglm":"vgln"}" title="${tt?esc(tt)+" · ":""}${nieuw}: ${getal(n)} · ${oud}: ${getal(o)}">${d>0?"+":d<0?"−":""}${g(d)}</td>`};
-  const som=(X,nm,w)=>((X[nm]||{})[w])||0,tot=(X,nm)=>Object.values(X[nm]||{}).reduce((a,b)=>a+b,0);
-  const rij=nm=>{const alleen=!A[nm]?` <span class="vglnw" title="Alleen in ${nieuw}">nieuw</span>`:!B[nm]?` <span class="vglweg" title="Alleen in ${oud}">alleen ${oud}</span>`:"";
-    return`<tr><th class="vglsrt">${esc(nm)}${alleen}</th>${wk.map(w=>cel(som(A,nm,w),som(B,nm,w),nm+" wk "+w)).join("")}${cel(tot(A,nm),tot(B,nm),nm+" totaal")}</tr>`};
-  const totW=(X,w)=>soorten.reduce((a,nm)=>a+som(X,nm,w),0),totA=soorten.reduce((a,nm)=>a+tot(A,nm),0),totB=soorten.reduce((a,nm)=>a+tot(B,nm),0);
-  const jsel=k=>`<select onchange="vgl.${k}=+this.value;opzetVergelijk()">${jaren.map(j=>`<option ${j===vgl[k]?"selected":""}>${j}</option>`).join("")}</select>`;
+  const key=vgl.tid+"|"+oud+"|"+nieuw;if(vgl.key!==key){vgl.key=key;vgl.lo=0;vgl.hi=Math.max(0,wk.length-1)}
+  vgl.data={oud,nieuw,soorten,wk,A,B};
+  const jsel=k=>`<select onchange="vgl.${k}=+this.value;opzetVergelijk()">${jaren.map(j=>`<option ${j===vgl[k]?"selected":""}>${j}</option>`).join("")}</select>`,n=Math.max(0,wk.length-1);
   toonPop("📊 Opzet vergelijken",`<div class="rij" style="gap:10px;flex-wrap:wrap;align-items:center">
       <label class="status">Teelt <select onchange="vgl.tid=this.value;opzetVergelijk()">${T.map(t=>`<option value="${t.id}" ${t.id===vgl.tid?"selected":""}>${esc(teeltLabel(t))}</option>`).join("")}</select></label>
       <label class="status">Jaar ${jsel("b")}</label><span class="status">min</span><label class="status">jaar ${jsel("a")}</label>
+      ${wk.length>1?`<span class="status" style="margin-left:8px">Weken</span><div class="dual vgldual" title="Sleep de knoppen: breder of smaller. Sleep het groene midden: het hele stuk opschuiven">
+        <div class="dualtrack"><div class="dualfill" id="vglFill"></div></div><div id="vglGrip" class="vglgrip" title="Sleep om op te schuiven"></div>
+        <input type="range" id="vglLo" min="0" max="${n}" value="${vgl.lo}" oninput="vglSchuif(this)"><input type="range" id="vglHi" min="0" max="${n}" value="${vgl.hi}" oninput="vglSchuif(this)"></div>
+        <span id="vglTxt" class="status"></span><button class="btn licht klein" onclick="vglSmal(1)" title="Aan beide kanten 1 week erbij">⟷ breder</button><button class="btn licht klein" onclick="vglSmal(-1)" title="Aan beide kanten 1 week eraf">→← smaller</button><button class="btn licht klein" onclick="vgl.lo=0;vgl.hi=${n};vglSchuif()">Alles</button>`:""}
       <span style="flex:1"></span><button class="btn licht klein" onclick="vglExcel()">Excel</button></div>
     <p class="status" style="margin:6px 0;font-size:12px">Opzetplan: aantal planten per opzetweek. Cel = <b>${nieuw}</b> min <b>${oud}</b>. <span class="vglp">+ groen</span> = meer, <span class="vglm">− rood</span> = minder, 0 = gelijk. Ga met de muis op een cel voor de aantallen.</p>
-    ${oud===nieuw?`<p class="status">Kies twee verschillende jaren.</p>`:!soorten.length?`<p class="status" style="padding:12px 0">Geen opzet gevonden voor deze teelt in ${oud} en ${nieuw}.</p>`:
-    `<div class="vglwrap"><table class="vgltab"><thead><tr><th class="vglsrt">Soort</th>${wk.map(w=>`<th title="Opzetweek ${w}">wk ${w}</th>`).join("")}<th>Totaal</th></tr></thead>
+    <div id="vglTab"></div>`);
+  const m=document.querySelector("#mobPop .mpop");if(m){m.classList.add("breed");m.style.maxWidth="96vw";m.style.width="auto"}
+  const g=document.getElementById("vglGrip");if(g)g.onpointerdown=e=>{e.preventDefault();g.setPointerCapture(e.pointerId);const W=g.parentNode.getBoundingClientRect().width-12,x0=e.clientX,lo0=vgl.lo,hi0=vgl.hi;
+    g.onpointermove=ev=>{let d=Math.round((ev.clientX-x0)/W*n);d=Math.max(-lo0,Math.min(n-hi0,d));if(vgl.lo!==lo0+d){vgl.lo=lo0+d;vgl.hi=hi0+d;vglSchuif()}};
+    g.onpointerup=()=>{g.onpointermove=null}};
+  vglSchuif()}
+/* breder/smaller vanuit het midden: aan beide kanten evenveel erbij of eraf */
+function vglSmal(d){const n=Math.max(0,vgl.data.wk.length-1);let lo=vgl.lo-d,hi=vgl.hi+d;if(lo>hi){const m=Math.round((vgl.lo+vgl.hi)/2);lo=hi=m}vgl.lo=Math.max(0,lo);vgl.hi=Math.min(n,hi);vglSchuif()}
+function vglSchuif(el){const lo=document.getElementById("vglLo"),hi=document.getElementById("vglHi"),W=vgl.data.wk;
+  if(el&&lo){let a=+lo.value,b=+hi.value;if(a>b){if(el===lo)a=b;else b=a}vgl.lo=a;vgl.hi=b}
+  if(lo){lo.value=vgl.lo;hi.value=vgl.hi;const n=+lo.max||1,f=document.getElementById("vglFill"),g=document.getElementById("vglGrip"),L=vgl.lo/n*100,B=(vgl.hi-vgl.lo)/n*100;
+    if(f){f.style.left=L+"%";f.style.width=B+"%"}if(g){g.style.left=`calc(6px + (100% - 12px) * ${L/100})`;g.style.width=`calc((100% - 12px) * ${B/100})`}
+    const t=document.getElementById("vglTxt");if(t&&W.length)t.textContent=`wk ${W[vgl.lo]} t/m ${W[vgl.hi]}`}
+  vglTabel()}
+function vglTabel(){const el=document.getElementById("vglTab");if(!el)return;const{oud,nieuw,soorten,A,B}=vgl.data,wk=vgl.data.wk.slice(vgl.lo,vgl.hi+1);
+  if(oud===nieuw){el.innerHTML=`<p class="status">Kies twee verschillende jaren.</p>`;return}
+  if(!soorten.length){el.innerHTML=`<p class="status" style="padding:12px 0">Geen opzet gevonden voor deze teelt in ${oud} en ${nieuw}.</p>`;return}
+  const g=v=>v?getal(Math.abs(v)):"0",cel=(o,n,tt)=>{if(!o&&!n)return`<td class="vgl0">—</td>`;const d=n-o;return`<td class="${d>0?"vglp":d<0?"vglm":"vgln"}" title="${tt?esc(tt)+" · ":""}${nieuw}: ${getal(n)} · ${oud}: ${getal(o)}">${d>0?"+":d<0?"−":""}${g(d)}</td>`};
+  const som=(X,nm,w)=>((X[nm]||{})[w])||0,tot=(X,nm)=>wk.reduce((a,w)=>a+som(X,nm,w),0);
+  const rij=nm=>{const alleen=!A[nm]?` <span class="vglnw" title="Alleen in ${nieuw}">nieuw</span>`:!B[nm]?` <span class="vglweg" title="Alleen in ${oud}">alleen ${oud}</span>`:"";
+    return`<tr><th class="vglsrt">${esc(nm)}${alleen}</th>${wk.map(w=>cel(som(A,nm,w),som(B,nm,w),nm+" wk "+w)).join("")}${cel(tot(A,nm),tot(B,nm),nm+" totaal")}</tr>`};
+  const totW=(X,w)=>soorten.reduce((a,nm)=>a+som(X,nm,w),0),totA=soorten.reduce((a,nm)=>a+tot(A,nm),0),totB=soorten.reduce((a,nm)=>a+tot(B,nm),0);
+  el.innerHTML=`<div class="vglwrap"><table class="vgltab"><thead><tr><th class="vglsrt">Soort</th>${wk.map(w=>`<th title="Opzetweek ${w}">wk ${w}</th>`).join("")}<th>Totaal</th></tr></thead>
       <tbody>${soorten.map(rij).join("")}</tbody>
-      <tfoot><tr><th class="vglsrt">Totaal</th>${wk.map(w=>cel(totW(A,w),totW(B,w),"totaal wk "+w)).join("")}${cel(totA,totB,"alles")}</tr></tfoot></table></div>`}`);
-  const m=document.querySelector("#mobPop .mpop");if(m){m.classList.add("breed");m.style.maxWidth="96vw";m.style.width="96vw"}
-  vgl.data={oud,nieuw,soorten,wk,A,B}}
-function vglExcel(){if(!vgl||!vgl.data)return;const{oud,nieuw,soorten,wk,A,B}=vgl.data,t=(data.teeltduren||[]).find(x=>x.id===vgl.tid)||{};
+      <tfoot><tr><th class="vglsrt">Totaal</th>${wk.map(w=>cel(totW(A,w),totW(B,w),"totaal wk "+w)).join("")}${cel(totA,totB,"alles")}</tr></tfoot></table></div>`}
+function vglExcel(){if(!vgl||!vgl.data)return;const{oud,nieuw,soorten,A,B}=vgl.data,wk=vgl.data.wk.slice(vgl.lo,vgl.hi+1),t=(data.teeltduren||[]).find(x=>x.id===vgl.tid)||{};
   const som=(X,nm,w)=>((X[nm]||{})[w])||0,L=[["Soort",...wk.map(w=>"wk "+w),"Totaal"]];
   for(const nm of soorten){const r=wk.map(w=>som(B,nm,w)-som(A,nm,w));L.push([nm,...r,r.reduce((a,b)=>a+b,0)])}
   const tr=wk.map(w=>soorten.reduce((a,nm)=>a+som(B,nm,w)-som(A,nm,w),0));L.push(["Totaal",...tr,tr.reduce((a,b)=>a+b,0)]);
