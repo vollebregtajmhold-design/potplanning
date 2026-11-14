@@ -859,6 +859,9 @@ tr:hover .ovmail{opacity:1}@media (hover:none),(max-width:700px){.ovmail{display
 .vglp{color:#1a7f37;font-weight:700}.vglm{color:#c0262d;font-weight:700}.vgln{color:#111}.vgl0{color:#aaa}
 .vglnw,.vglweg{font-size:11px;font-weight:600;border-radius:5px;padding:0 4px;margin-left:4px}.vglnw{background:#dff0e6;color:#1a7f37}.vglweg{background:#fbe3e4;color:#c0262d}
 .bhchk{padding:5px 0;font-size:14px}.bhchk.nee{color:#b00020}
+.fmmgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}.fmmkaart{display:flex;flex-direction:column;gap:3px;border:1px solid #e6e0d4;border-radius:10px;padding:6px;background:#fbf9f4}
+.fmmimg{aspect-ratio:1;border-radius:8px;overflow:hidden;background:#eee}.fmmimg img{width:100%;height:100%;object-fit:cover}
+@media (max-width:600px){.fmmgrid{grid-template-columns:repeat(2,1fr)}}
 .galkop{margin:12px 0 6px;font-size:14px;color:#1f4d39}.galbalk{gap:6px;flex-wrap:wrap;align-items:center;margin:6px 0;padding:6px 0;position:sticky;top:-1px;background:#fff;z-index:2}
 .galfoto.amsel{outline:3px solid #2d6a4f;outline-offset:1px}
 .fzbesch{margin-top:10px;padding:10px;border:1px solid #cfe3d8;background:#f3faf6;border-radius:10px}
@@ -1041,7 +1044,7 @@ tr:hover .ovmail{opacity:1}@media (hover:none),(max-width:700px){.ovmail{display
 
 <script>
 "use strict";
-const VERSIE="53.9";
+const VERSIE="54.0";
 const VERSIE_DATUM="03-11-2026";
 /* ---------- Basis ---------- */
 const PALET=["#2d6a4f","#1B5EBE","#E8007D","#c77d1a","#7a4fa0","#0f8b8d","#5b6b2f","#3d5a80","#a0522d","#7AB648"];
@@ -5093,7 +5096,7 @@ function galBalk(){const el=document.getElementById("galBalk");if(!el)return;
     <button class="btn rood klein" ${galSel.size?"":"disabled"} onclick="galWeg()">🗑</button>
     <span style="flex:1"></span><button class="btn licht klein" onclick="galKies=0;galSel.clear();fotoGalerij()">Klaar</button>`
     :`<button class="btn licht klein" onclick="galKies=1;galSel.clear();fotoGalerij()" title="Meerdere foto's tegelijk in een serie en kleur zetten">☑ Meerdere indelen</button>
-      <button class="btn licht klein" onclick="galDicht=new Set();galBewaarOpen();fotoGalerij()">Alles open</button><button class="btn licht klein" onclick="fbAllesDicht()">Alles dicht</button>`}
+      <button class="btn licht klein" onclick="galDicht=new Set();galBewaarOpen();fotoGalerij()">Alles open</button>${fmMandItems().length?`<button class="btn klein" onclick="fmMailPop()">✉ Mail maken (${fmMandItems().length})</button>`:""}<button class="btn licht klein" onclick="fbAllesDicht()">Alles dicht</button>`}
 function fbAllesDicht(){galDicht=new Set();for(const t of data.teeltduren||[]){galDicht.add(t.id);for(const se of Object.keys(fbBoom(t.id))){galDicht.add(t.id+"|"+se);for(const k of Object.keys(fbBoom(t.id)[se]))galDicht.add(t.id+"|"+se+"|"+k)}}galBewaarOpen();fotoGalerij()}
 function galZet(){let n=0;for(const key of galSel){let[tid,s]=key.split("|");if(galDoel.t&&galDoel.t!==tid){fbTeelt(tid,s,galDoel.t);tid=galDoel.t}const x=fmapLijst(tid).find(q=>q.s===s);if(!x)continue;n++;
     const se=galDoel.se.trim(),k=galDoel.k.trim();if(se)x.se=se;if(k)x.k=k}
@@ -5223,6 +5226,45 @@ async function fotoMapErbij(tid,files,terugGal,extra){files=[...(files||[])].fil
     melding(`📁 Foto's bewaren… ${n+fout}/${files.length}`)}};
   await Promise.all([werk(),werk(),werk()]);
   opslaanLater();melding("📁 "+n+" foto"+(n===1?"":"'s")+" bewaard"+(kop?` · ${kop} meteen gekoppeld aan een soort`:"")+(fout?` · ${fout} lukte niet (bijv. HEIC van iPhone)`:""),fout?"#b45309":"#2d6a4f");if(terugGal)fotoGalerij();else fotoMapPop(tid)}
+/* ---------- ✉ Foto's mailen uit de fotobibliotheek: foto's verzamelen, dan één mail met 3 naast elkaar ---------- */
+let fmMand=[],fmMandP={},fmMandK="",fmMandT="";
+try{fmMand=JSON.parse(localStorage.getItem("potplanning-fotomail")||"[]")}catch(e){}
+const fmMandBew=()=>{try{localStorage.setItem("potplanning-fotomail",JSON.stringify(fmMand))}catch(e){}};
+function fmMandBij(tid,s,her){const k=tid+"|"+s,i=fmMand.indexOf(k);if(i>=0){fmMand.splice(i,1);melding("Uit de mail gehaald")}
+  else{fmMand.push(k);melding(`✉ In de mail gezet (${fmMand.length})`+(fmMand.length%3===0?" · rij vol":""),"#2d6a4f")}fmMandBew();if(her)her()}
+function fmMandItems(){return fmMand.map(k=>{const[tid,s]=k.split("|"),x=fmapLijst(tid).find(q=>q.s===s);return x?{k,tid,s,x}:null}).filter(Boolean)}
+function fmMandKnop(){const n=fmMandItems().length;return n?`<button class="btn" onclick="fmMailPop()" title="De gekozen foto's in één mail zetten">✉ Mail maken (${n})</button>`:""}
+function fmMailPop(){const L=fmMandItems();fmMand=L.map(o=>o.k);fmMandBew();if(!L.length){alert("Er staan nog geen foto's in de mail. Klik bij een foto op ✉ In mail.");return}
+  toonPop("✉ Foto's mailen",`<p class="status" style="margin:0 0 8px">${L.length} foto${L.length===1?"":"'s"} · in de mail komen er 3 naast elkaar.</p>
+    <div class="fmmgrid">${L.map(o=>`<div class="fmmkaart"><div class="fmmimg" data-gm="${o.tid}" data-gs="${o.s}"></div>
+      <b>${esc(fmN(o.x)||"foto")}</b>${o.x.fd?`<span class="status">FD: ${esc(o.x.fd)}</span>`:""}${o.x.b?`<span class="status">Belading: ${esc(o.x.b)}</span>`:""}
+      <label class="status">Prijs € <input style="width:70px" value="${esc(fmMandP[o.k]||"")}" placeholder="0,00" oninput="fmMandP['${o.k}']=this.value"></label>
+      <button class="btn licht klein" onclick="fmMandBij('${o.tid}','${o.s}',fmMailPop)">✕ Eruit</button></div>`).join("")}</div>
+    <label class="status" style="display:block;margin-top:10px">Klant <input class="mwveld" style="margin:0;width:100%" list="fmmKl" value="${esc(fmMandK)}" placeholder="leeg = zelf invullen in de mail" oninput="fmMandK=this.value"><datalist id="fmmKl">${data.klanten.filter(k=>k.naam).map(k=>`<option value="${esc(k.naam)}">`).join("")}</datalist></label>
+    <textarea class="mwveld" rows="2" style="width:100%;margin-top:8px" placeholder="Extra tekst (mag leeg)" oninput="fmMandT=this.value">${esc(fmMandT)}</textarea>
+    <div class="rij" style="margin-top:10px;gap:8px"><button class="btn licht" onclick="if(confirm('Alle foto\\'s uit de mail halen?')){fmMand=[];fmMandBew();sluitMobSoort()}">Leegmaken</button><span style="flex:1"></span>
+      <button class="btn licht" onclick="fotoGalerij()">+ Meer foto's</button><button class="btn" onclick="fmMailMaak()">✉ Mail maken</button></div>`);
+  const m=document.querySelector("#mobPop .mpop");if(m){m.style.maxWidth="760px";m.style.width="auto"}
+  document.querySelectorAll("#mobPop .fmmimg").forEach(async d=>{const u=await fmapLaad(d.dataset.gm,d.dataset.gs);if(u&&d.isConnected)d.innerHTML=`<img src="${u}" alt="">`})}
+async function fmMailMaak(){const L=fmMandItems();if(!L.length)return;const k=klantVan(fmMandK),aan=k?(k.contact||k.naam):fmMandK.trim(),G="#2d6a4f",F="font-family:Arial,Helvetica,sans-serif;";
+  const P=[];for(const o of L){const pr=prijsLees(fmMandP[o.k]||"");P.push({nm:fmN(o.x)||"foto",fd:o.x.fd||"",bel:o.x.b||"",img:await fmapLaad(o.tid,o.s),prT:pr!=null?"€ "+pr.toLocaleString("nl-NL",{minimumFractionDigits:2,maximumFractionDigits:3})+" per stuk":""})}
+  const su=`Aanbieding: ${P.map(x=>x.nm).join(", ")}${KLANT.appNaam?" – "+KLANT.appNaam:""}`;
+  let t=`Beste${aan?" "+aan:""},\n\nGraag bieden wij u aan:\n`;for(const x of P)t+=`\n${x.nm}${x.fd?"\nFD art.code: "+x.fd:""}${x.bel?"\nBelading: "+x.bel:""}${x.prT?"\nPrijs: "+x.prT:""}\n`;
+  t+=(fmMandT.trim()?"\n"+fmMandT.trim()+"\n":"")+"\nOnder voorbehoud van tussentijdse verkoop.\n";
+  const blok=x=>`<td width="210" style="width:210px;vertical-align:top;padding:0 14px 16px 0;${F}">
+    ${x.img?`<img src="${x.img}" width="200" style="width:200px;height:200px;object-fit:cover;border-radius:10px;display:block;margin-bottom:6px" alt="${esc(x.nm)}">`:""}
+    <div style="font-size:15px;font-weight:bold;color:${G}">${esc(x.nm)}</div>
+    ${x.fd?`<div style="font-size:12px;color:#555">FD art.code: ${esc(x.fd)}</div>`:""}${x.bel?`<div style="font-size:12px;color:#555">Belading: ${esc(x.bel)}</div>`:""}
+    ${x.prT?`<div style="font-size:13px;margin-top:2px"><b>${esc(x.prT)}</b></div>`:""}</td>`;
+  let rij="";for(let i=0;i<P.length;i+=3)rij+=`<tr>${P.slice(i,i+3).map(blok).join("")}</tr>`;
+  const h=`<div style="${F}color:#222"><p>Beste${aan?" "+esc(aan):""},</p><p>Graag bieden wij u aan:</p><table style="border-collapse:collapse;width:auto">${rij}</table>
+    ${fmMandT.trim()?`<p>${esc(fmMandT.trim()).replace(/\n/g,"<br>")}</p>`:""}<p style="font-size:12px;color:#555">Onder voorbehoud van tussentijdse verkoop.</p></div>`;
+  const to=k&&k.email||"";
+  if(mailProg()==="standaard"){mailGa(mailUrl(to,su,t));return}
+  const w=window.open("about:blank","_blank");let ok=false;
+  try{await navigator.clipboard.write([new ClipboardItem({"text/html":new Blob([h],{type:"text/html"}),"text/plain":new Blob([t],{type:"text/plain"})})]);ok=true}catch(e){}
+  mailGa(mailUrl(to,su,ok?"":t),w);
+  melding(ok?`✉ ${mailNaam()} gaat open${to?" naar "+esc(to):""} · klik in de mail en druk op Ctrl + V`:`✉ ${mailNaam()} gaat open met de tekst`,"#2d6a4f")}
 async function fotoMapToon(tid,s){const u=await fmapLaad(tid,s),t=(data.teeltduren||[]).find(x=>x.id===tid)||{},nr=fmapLijst(tid).findIndex(x=>x.s===s)+1;
   const xm=fmapLijst(tid).find(x=>x.s===s)||{},RT=data.rassen.filter(r=>r.teeltId===tid),B=fbBoom(tid),dis=kijker?"disabled":"",
     rij=(lbl,inh)=>`<div class="rij" style="gap:8px;margin-top:6px;align-items:center"><label class="status" style="width:92px">${lbl}</label>${inh}</div>`,
@@ -5240,6 +5282,7 @@ async function fotoMapToon(tid,s){const u=await fmapLaad(tid,s),t=(data.teeltdur
     ${fzVia&&xm.r&&u?fotoBeschBlok(xm.r,"m",tid,s,fmN(xm)):""}
     <div class="rij" style="margin-top:10px;gap:8px;flex-wrap:wrap"><button class="btn licht" onclick="${galOpen?"fotoGalerij()":`fotoMapPop('${tid}')`}">‹ Terug</button><span style="flex:1"></span>
       ${mod4()?`<button class="btn licht" onclick="fotoMapKies('${tid}','${s}')">📤 Voor aanbod</button>`:""}
+      <button class="btn licht" onclick="fmMandBij('${tid}','${s}',()=>fotoMapToon('${tid}','${s}'))" title="Deze foto in de mail zetten (3 naast elkaar)">${fmMand.includes(tid+"|"+s)?"✓ In mail":"✉ In mail"}</button>${fmMandKnop()}
       <button class="btn licht" onclick="fotoMapDown('${tid}','${s}',${nr})">⬇ Download</button>
       ${!kijker?`<button class="btn rood" onclick="fotoMapWeg('${tid}','${s}')">🗑 Weghalen</button>`:""}</div>`)}
 async function fmapNaamZet(tid,s,v){const x=fmapLijst(tid).find(x=>x.s===s);if(!x)return;v=String(v||"").trim();if(v)x.n=v;else delete x.n;opslaanLater();melding(v?"✓ Naam: "+esc(v):"Naam weggehaald","#2d6a4f")}
