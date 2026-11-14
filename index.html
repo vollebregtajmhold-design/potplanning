@@ -1041,7 +1041,7 @@ tr:hover .ovmail{opacity:1}@media (hover:none),(max-width:700px){.ovmail{display
 
 <script>
 "use strict";
-const VERSIE="53.8";
+const VERSIE="53.9";
 const VERSIE_DATUM="03-11-2026";
 /* ---------- Basis ---------- */
 const PALET=["#2d6a4f","#1B5EBE","#E8007D","#c77d1a","#7a4fa0","#0f8b8d","#5b6b2f","#3d5a80","#a0522d","#7AB648"];
@@ -4796,7 +4796,7 @@ function soortPop(ks){const[pr,so]=ks.split(" · "),k=pr+"|"+so,nu=+dezeWeek(),p
 let am=null;
 const amWk=()=>{try{return +localStorage.getItem("potplanning-amwk")||6}catch(e){return 6}};
 function amFotos(){const L=[];for(const{tid,x}of fmAlle()){const r=fmRas(x),t=data.teeltduren.find(q=>q.id===tid)||{};
-    L.push({k:"m",a:tid,b:x.s,n:fmN(x)||(r?r.naam:"foto"),rid:r?r.id:"",tid,v:x.v||"",z:[fmN(x),x.se,x.k,x.b,r&&r.naam,r&&r.fdArt,teeltLabel(t)].join(" ")})}return L}
+    L.push({k:"m",a:tid,b:x.s,n:fmN(x)||(r?r.naam:"foto"),rid:r?r.id:"",tid,v:x.v||"",z:[fmN(x),x.fd,x.se,x.k,x.b,r&&r.naam,r&&r.fdArt,teeltLabel(t)].join(" ")})}return L}
 /* belading: uit de verpakking van de foto, anders de eerste verpakking met een kar-waarde */
 function amBelVan(it){const fx=it.foto&&fmZoek(it.foto.b);if(fx&&fx.x.b)return fx.x.b;const r=data.rassen.find(x=>x.id===it.rid)||{},V=r.verp||[],v=(it.foto&&V.find(x=>x.id===it.foto.v))||V.find(x=>x.kar);return v&&v.kar?String(v.kar):(r.kar?String(r.kar):"")}
 function amItem(rid){const it={rid,prijs:"",prijsAuto:true,foto:null,bel:"",belAuto:true,zoek:""};const F=fotoMag()?amFotos():[];
@@ -5063,7 +5063,7 @@ function fbBoom(tid){const B={},E=((data.fotoBoom||{})[tid])||{};for(const[se,K]
   for(const x of fmapLijst(tid)){const se=x.se||ZS,k=x.k||ZK;(B[se]=B[se]||{});(B[se][k]=B[se][k]||[]).push(x)}return B}
 const fbSort=a=>a.sort((x,y)=>(x===ZS||x===ZK)-(y===ZS||y===ZK)||x.localeCompare(y,"nl"));
 function fbVeld(tid,s,veld,v){const x=fmapLijst(tid).find(q=>q.s===s);if(!x)return;v=String(v||"").trim();if(v)x[veld]=v;else delete x[veld];opslaanLater();
-  melding({n:"✓ Naam",b:"✓ Belading",se:"✓ Serie",k:"✓ Kleur"}[veld]+(v?": "+esc(v):" weggehaald"),"#2d6a4f")}
+  melding({n:"✓ Naam",b:"✓ Belading",fd:"✓ FD art.code",se:"✓ Serie",k:"✓ Kleur"}[veld]+(v?": "+esc(v):" weggehaald"),"#2d6a4f")}
 /* foto naar een andere teelt: het plaatje blijft in hetzelfde document (d) */
 function fbTeelt(tid,s,nt){if(!nt||nt===tid)return;const M=data.fotoMap=data.fotoMap||{},x=fmapLijst(tid).find(q=>q.s===s);if(!x)return;
   if(!x.d)x.d="fmap_"+tid+"_"+s;const c=fotoCache["fmap|"+tid+"|"+s];M[tid]=M[tid].filter(q=>q!==x);if(!M[tid].length)delete M[tid];(M[nt]=M[nt]||[]).push(x);if(c)fotoCache["fmap|"+nt+"|"+s]=c;
@@ -5107,10 +5107,11 @@ function fotoGalerij(tid){if(!isBeheerder()||!fotoMag())return;galOpen=0;if(!wol
   const q=v=>esc(String(v).replace(/\\/g,"\\\\").replace(/'/g,"\\'")),SE=new Set(),KL=new Set();
   /* tegel = foto + naam + belading; het hele blok kan naar een andere teelt, serie of kleur gesleept worden */
   const tegel=(t,x)=>{const r=fmRas(x),nm=x.n||fmN(x)||(r?r.naam:""),bel=x.b||(r?amBelVan({rid:r.id,foto:{b:x.s,v:x.v}}):""),ik=kijker?"disabled":`onfocus="this.parentNode.draggable=false" onblur="this.parentNode.draggable=true"`;
-    return`<div class="fbtegel ${galSel.has(t.id+"|"+x.s)?"amsel":""}" ${kijker?"":`draggable="true" ondragstart="fbSleep(event,'${t.id}|${x.s}')" ondragend="document.querySelectorAll('#mobPop .slepen').forEach(e=>e.classList.remove('slepen'))"`} data-z="${esc([nm,bel,x.se,x.k,teeltLabel(t),r&&r.naam].filter(Boolean).join(" "))}" title="${kijker?"":"Sleep dit blok naar een andere teelt, serie of kleur"}">
+    return`<div class="fbtegel ${galSel.has(t.id+"|"+x.s)?"amsel":""}" ${kijker?"":`draggable="true" ondragstart="fbSleep(event,'${t.id}|${x.s}')" ondragend="document.querySelectorAll('#mobPop .slepen').forEach(e=>e.classList.remove('slepen'))"`} data-z="${esc([nm,bel,x.fd,x.se,x.k,teeltLabel(t),r&&r.naam].filter(Boolean).join(" "))}" title="${kijker?"":"Sleep dit blok naar een andere teelt, serie of kleur"}">
       <button class="galfoto" data-gm="${t.id}" data-gs="${x.s}" onclick="galTik(this)" title="Klik: groot, met alle velden${r?" · gekoppeld aan "+esc(r.naam):""}">${r?`<b class="fbicoon" title="${(data.fotoHoofd||{})[r.id]===x.s?"Hoofdfoto van ":"Gekoppeld aan "}${esc(r.naam)}">${(data.fotoHoofd||{})[r.id]===x.s?"⭐":"🔗"}</b>`:""}</button>
       <input class="fbin" placeholder="naam" value="${esc(nm)}" title="Naam" ${ik} onchange="fbVeld('${t.id}','${x.s}','n',this.value)">
-      <input class="fbin" placeholder="belading (30x6)" value="${esc(bel)}" title="Belading per kar" ${ik} onchange="fbVeld('${t.id}','${x.s}','b',this.value)"></div>`};
+      <input class="fbin" placeholder="belading (30x6)" value="${esc(bel)}" title="Belading per kar" ${ik} onchange="fbVeld('${t.id}','${x.s}','b',this.value)">
+      <input class="fbin" placeholder="FD art.code" value="${esc(x.fd||"")}" title="Floriday artikelcode" ${ik} onchange="fbVeld('${t.id}','${x.s}','fd',this.value)"></div>`};
   const dz=(tid,se,k)=>kijker?"":`ondragover="event.preventDefault();this.classList.add('slepen')" ondragleave="this.classList.remove('slepen')" ondrop="fbDrop(event,'${tid}',${se==null?"null":`'${q(se)}'`},${k==null?"null":`'${q(k)}'`})"`;
   const blok=T.map(t=>{const B=fbBoom(t.id),n=fmapLijst(t.id).length;const sers=fbSort(Object.keys(B));
     const body=sers.map(se=>{if(se!==ZS)SE.add(se);const kls=fbSort(Object.keys(B[se])),ns=kls.reduce((a,k)=>a+B[se][k].length,0);
@@ -5122,7 +5123,7 @@ function fotoGalerij(tid){if(!isBeheerder()||!fotoMag())return;galOpen=0;if(!wol
     return`<details class="fbteelt" ${open(t.id)} ontoggle="fbToggle(this,'${t.id}')"><summary ${dz(t.id,null,null)}>🌱 ${esc(teeltLabel(t))} <span class="status">(${n})</span>${!kijker?`<span class="fbacties"><button class="ovk ovlink" onclick="event.preventDefault();fbNieuw('${t.id}')">➕ Serie</button><label class="ovk ovlink" style="cursor:pointer" onclick="event.stopPropagation()">➕ Foto's<input type="file" accept="image/*" multiple hidden onchange="fbUpload('${t.id}','','',this.files)"></label></span>`:""}</summary>${body||`<div class="status" style="padding:6px 0;font-size:12px">Nog leeg. Klik op ➕ Serie.</div>`}</details>`}).join("");
   toonPop("🖼 Fotobibliotheek",`<select class="mwveld" onchange="fotoGalerij(this.value)"><option value="">Alle teelten</option>${(data.teeltduren||[]).map(t=>`<option value="${t.id}" ${t.id===galTeelt?"selected":""}>${esc(teeltLabel(t))} (${fmapLijst(t.id).length})</option>`).join("")}</select>
     <div id="galBalk" class="rij galbalk"></div>
-    <input type="search" class="mwveld" style="margin:6px 0" placeholder="🔍 Zoek op naam, serie, kleur of belading…" value="${esc(fzT)}" oninput="fzT=this.value;clearTimeout(window.fbZT);window.fbZT=setTimeout(()=>{fotoGalerij();const i=document.querySelector('#mobPop input[type=search]');if(i){i.focus();i.setSelectionRange(i.value.length,i.value.length)}},350)"><div id="fzLeeg" class="status" style="padding:10px 0;display:none">Niets gevonden.</div>
+    <input type="search" class="mwveld" style="margin:6px 0" placeholder="🔍 Zoek op naam, FD-code, serie, kleur of belading…" value="${esc(fzT)}" oninput="fzT=this.value;clearTimeout(window.fbZT);window.fbZT=setTimeout(()=>{fotoGalerij();const i=document.querySelector('#mobPop input[type=search]');if(i){i.focus();i.setSelectionRange(i.value.length,i.value.length)}},350)"><div id="fzLeeg" class="status" style="padding:10px 0;display:none">Niets gevonden.</div>
     ${blok}<datalist id="fbSeL">${[...SE].map(x=>`<option value="${esc(x)}">`).join("")}</datalist><datalist id="fbKL">${[...KL].map(x=>`<option value="${esc(x)}">`).join("")}</datalist>`);
   galIn=1;galBalk();fbFilter();const m=document.querySelector("#mobPop .mpop");if(m){m.classList.add("breed");m.style.maxWidth="980px"}
   const laad=async b=>{const u=await fmapLaad(b.dataset.gm,b.dataset.gs);if(u&&b.isConnected)b.insertAdjacentHTML("afterbegin",`<img src="${u}" alt="" loading="lazy">`)};
@@ -5229,6 +5230,7 @@ async function fotoMapToon(tid,s){const u=await fmapLaad(tid,s),t=(data.teeltdur
   toonPop("🖼 "+esc(fmN(xm)||teeltLabel(t)),`<div class="fotogroot">${u?`<img src="${u}" alt="">`:"–"}</div>
     ${rij("Naam",inp("n","bijv. VIN MIX X3"))}
     ${rij("Belading",inp("b","bijv. 30x6 (per kar)"))}
+    ${rij("FD art.code",inp("fd","Floriday artikelcode"))}
     ${rij("🌱 Teelt",`<select class="mwveld" style="margin:0;flex:1" ${dis} onchange="const nt=fbTeelt('${tid}','${s}',this.value);if(nt)fotoMapToon(nt,'${s}')">${(data.teeltduren||[]).map(x=>`<option value="${x.id}" ${x.id===tid?"selected":""}>${esc(teeltLabel(x))}</option>`).join("")}</select>`)}
     ${rij("📂 Serie",inp("se","bijv. Vin","fbSeT"))}<datalist id="fbSeT">${Object.keys(B).filter(x=>x!==ZS).map(x=>`<option value="${esc(x)}">`).join("")}</datalist>
     ${rij("🎨 Kleur",inp("k","bijv. Mix","fbKT"))}<datalist id="fbKT">${Object.keys(B[xm.se||ZS]||{}).filter(x=>x!==ZK).map(x=>`<option value="${esc(x)}">`).join("")}</datalist>
@@ -6304,7 +6306,7 @@ function zoekItems(q){if(data.instellingen.eenvoudig)return zoekItemsE(q);q=q.tr
 function zoekExtra(r,past,score){if(past("Opzet vergelijken","vergelijk jaren verschil opzetplan"))r.push({ic:"📊",naam:"Opzet vergelijken",sub:"opzetplan van 2 jaren naast elkaar",grp:"Tabel",s:score("Opzet vergelijken")+.3,f:()=>opzetVergelijk()})}
 function zoekFotos(r,past,score){if(!fotoMag()||!wolkDoc)return;let i=0;const gehad=new Set();
   for(const{tid,x}of fmAlle()){const t=data.teeltduren.find(y=>y.id===tid),tl=t?teeltLabel(t):"",ras=fmRas(x),nm=fmN(x)||(ras?ras.naam:"");if(!nm)continue;
-    if(!past(nm,tl,ras?ras.naam:"",ras&&ras.fdArt||"",x.se||"",x.k||""))continue;
+    if(!past(nm,tl,ras?ras.naam:"",ras&&ras.fdArt||"",x.se||"",x.k||"",x.fd||""))continue;
     if(ras&&!fmN(x)){if(gehad.has(ras.id))continue;gehad.add(ras.id);const L=fotoLijst(ras.id);
       r.push({ic:"📷",naam:"Foto's · "+ras.naam+" ("+L.length+")",sub:tl,grp:"Foto",s:score(ras.naam)+.75+(i++)*.001,f:()=>{galOpen=0;fzVia=1;fotoIdx[ras.id]=0;fotoPop(ras.id)}});continue}
     r.push({ic:ras?"📷":"🖼",naam:"Foto · "+nm,sub:[ras&&ras.naam,x.se,x.k,tl].filter(Boolean).join(" · "),grp:"Foto",s:score(nm)+.4+(i++)*.001,
