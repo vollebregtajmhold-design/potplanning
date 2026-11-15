@@ -1044,7 +1044,7 @@ tr:hover .ovmail{opacity:1}@media (hover:none),(max-width:700px){.ovmail{display
 
 <script>
 "use strict";
-const VERSIE="54.1";
+const VERSIE="54.2";
 const VERSIE_DATUM="03-11-2026";
 /* ---------- Basis ---------- */
 const PALET=["#2d6a4f","#1B5EBE","#E8007D","#c77d1a","#7a4fa0","#0f8b8d","#5b6b2f","#3d5a80","#a0522d","#7AB648"];
@@ -3889,7 +3889,7 @@ function mobSoort(k,start){const t=+dezeWeek(),l=afleverRegels().filter(r=>r.pro
 function mobInfo(ras,k){const pv=vkPrijs("",ras.id),mag=!kijker&&niveau()>1,K=esc(k).replace(/'/g,"&#39;");
   const vak=(ic,naam,waarde,f,tx)=>`<div class="minfo ${waarde&&!tx?"":"noshot"}" ${tx&&waarde?`data-deeltxt="${esc(tx)}"`:""} ${mag?`onclick="${f}('${ras.id}',this.closest('#mobPop').dataset.k)"`:""}><span class="status">${ic} ${naam}</span><b>${waarde?esc(waarde):`<span class="status">+ invullen</span>`}</b></div>`;
   setTimeout(()=>{const m=document.getElementById("mobPop");if(m)m.dataset.k=k});
-  return`<div class="minfos">${geenPrijs()?"":vak("💶","Prijs",pv!=null?prijsTxt(pv):"","mobPrijs",pv!=null?"Prijs: "+prijsTxt(pv)+" per stuk":"")}${vak("🛒","Max op kar",ras.kar||rasBel(ras),"mobKar")}${(()=>{const fd=rasFd(ras);return vak("🏷","FD art.code",fd,"mobFd")+(fd?`<span hidden data-deeltxt="${esc("FD art.code: "+fd)}"></span>`:"")})()}</div>`}
+  return`<div class="minfos">${geenPrijs()?"":vak("💶","Prijs",pv!=null?prijsTxt(pv):"","mobPrijs",pv!=null?"Prijs: "+prijsTxt(pv)+" per stuk":"")}${vak("🛒","Max op kar",ras.kar||rasBel(ras),"mobKar")}${(()=>{const fd=rasFd(ras);return vak("🏷","FD art.code",fd,"mobFd")})()}</div>`}
 /* FD art.code van een soort: eerst van de foto's (hoofdfoto eerst), anders van de soort zelf */
 function rasFd(ras){if(!ras)return"";for(const s of fotoLijst(ras.id)){const o=fmZoek(s);if(o&&o.x.fd)return o.x.fd}return ras.fdArt||""}
 function mobFd(id,k){const r=data.rassen.find(x=>x.id===id);if(!r)return;const v=prompt("FD art.code (Floriday artikelcode) — leeg = weghalen:",rasFd(r));if(v===null)return;
@@ -3934,9 +3934,8 @@ function aanbodLeeg(){if(!confirm("Foto en tekst weghalen en opnieuw beginnen?")
 async function aanbodDelen(){const A=aanbod;if(!A.img&&!A.naam){alert("Maak eerst een foto of vul een naam in.");return}
   /* op het plaatje: naam, soort, max op kar en tekst. De prijs gaat als losse tekst mee (niet op het plaatje) */
   const pr=prijsLees(A.prijs),pt=geenPrijs()?"":pr!=null?prijsTxt(pr):String(A.prijs||"").trim();
-  /* FD art.code staat op het plaatje én in de tekst (dan kan de klant hem kopiëren voor Floriday) */
-  const fd=String(A.fd||"").trim(),tx=[fd?"FD art.code: "+fd:"",pt?"Prijs: "+pt+" per stuk":""].filter(Boolean).join("\n");
-  await mobDelenIn(A.naam||A.soort||"aanbod",false,tx)}
+  /* FD art.code staat alleen op het plaatje; de prijs gaat als losse tekst eronder */
+  await mobDelenIn(A.naam||A.soort||"aanbod",false,pt?"Prijs: "+pt+" per stuk":"")}
 /* mobiel oppotten: afdeling en vloer invullen voor één soort in één week */
 function mobOpPlek(rid,y,w,naam){const v=vloerEff(rid,y,w),eigen=vloerVan(rid,y,w)||{},st="width:100%;box-sizing:border-box;font:inherit;font-size:17px;padding:9px 10px;border:1px solid #cfc6b4;border-radius:8px";
   toonPop(`📍 ${esc(naam)} · wk ${w}`,`<label class="status">Afdeling</label><input id="mpAfd" style="${st}" value="${esc(eigen.opAfd||"")}" placeholder="${esc(v.opAfd||"bijv. 3")}">
