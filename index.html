@@ -1049,7 +1049,7 @@ tr:hover .ovmail{opacity:1}@media (hover:none),(max-width:700px){.ovmail{display
 
 <script>
 "use strict";
-const VERSIE="54.4";
+const VERSIE="54.5";
 const VERSIE_DATUM="03-11-2026";
 /* ---------- Basis ---------- */
 const PALET=["#2d6a4f","#1B5EBE","#E8007D","#c77d1a","#7a4fa0","#0f8b8d","#5b6b2f","#3d5a80","#a0522d","#7AB648"];
@@ -1741,7 +1741,7 @@ function toonLogin(fout){let m=document.getElementById("login");
   const ic=(document.querySelector('link[rel=apple-touch-icon]')||{}).href||"";
   m.innerHTML=`<div class="kaart">${ic?`<img src="${ic}" alt="">`:""}<h2>${esc(KLANT.appNaam)}</h2><div class="ondertitel">Planning · voorraad · verkoop</div><div class="status">Log in om uw planning te openen.</div>
     <button type="button" onclick="wolkLogin()">Inloggen met Google</button>
-    ${mwAan()?`<div class="lgof">of met e-mail en wachtwoord</div><form onsubmit="wwLogin(event)"><input id="lgMail" type="email" autocomplete="username" placeholder="e-mailadres" required><input id="lgWw" type="password" autocomplete="current-password" placeholder="wachtwoord" required><button type="submit">Inloggen</button></form><a href="#" class="lgvg" onclick="wwVergeten();return false">Wachtwoord vergeten?</a>`:""}${fout?`<div class="fout">${esc(fout)}</div>`:""}${KLANT.code?`<div class="vwregel">Door in te loggen gaat u akkoord met de <a href="#" onclick="toonVoorwaarden();return false">voorwaarden</a>.</div>`:""}</div>`;m.hidden=false}
+    ${true?`<div class="lgof">of met e-mail en wachtwoord</div><form onsubmit="wwLogin(event)"><input id="lgMail" type="email" autocomplete="username" placeholder="e-mailadres" required><input id="lgWw" type="password" autocomplete="current-password" placeholder="wachtwoord" required><button type="submit">Inloggen</button></form><a href="#" class="lgvg" onclick="wwVergeten();return false">Wachtwoord vergeten?</a>`:""}${fout?`<div class="fout">${esc(fout)}</div>`:""}${KLANT.code?`<div class="vwregel">Door in te loggen gaat u akkoord met de <a href="#" onclick="toonVoorwaarden();return false">voorwaarden</a>.</div>`:""}</div>`;m.hidden=false}
 async function wolkLogin(){const p=new firebase.auth.GoogleAuthProvider();p.setCustomParameters({prompt:"select_account"});
   try{await firebase.auth().signInWithPopup(p)}
   catch(e){if(e.code==="auth/popup-blocked"||e.code==="auth/operation-not-supported-in-this-environment"){try{await firebase.auth().signInWithRedirect(p)}catch(x){toonLogin(x.message)}}
@@ -6110,8 +6110,22 @@ async function bhToegang(i,zet){const k=beheerData().klanten[i];if(!k)return;con
     ${!fout&&fout2.length?ok(false,"Fout e-mailadres online (let op een punt of spatie aan het eind): <b>"+fout2.map(x=>esc(JSON.stringify(x))).join(", ")+"</b> · klik op <b>E-mailadressen online zetten</b> om het te verbeteren"):""}
     ${fout?"":`<div class="status" style="margin:4px 0 0 26px">Online bij klant: ${online.length?online.map(esc).join(", "):"–"}${T&&T.baas?` · baas: ${esc(T.baas)}`:""}${mk.length?`<br>Meekijken (alleen wat de klant deelt): ${mk.map(esc).join(", ")}`:""}</div>`}
     ${fout?"":ok(!!H,H?"Planning is online gebruikt (laatst: "+esc(H.t?new Date(H.t).toLocaleString("nl-NL"):"?")+(H.door?" door "+esc(H.door):"")+")":"Nog geen teken dat de planning online gebruikt is (de klant moet een keer inloggen en iets opslaan, of een json inlezen)")}
+    ${mails.length?`<details style="margin-top:10px"><summary class="status">✉ Klant zonder Google-account? Inloggen met e-mail + wachtwoord</summary>
+      <p class="status" style="font-size:12px;margin:6px 0">Klik op het adres. De klant krijgt een mail om zelf een wachtwoord te kiezen. Het adres moet ook online bij de klant staan (hierboven).</p>
+      <div class="rij" style="gap:6px;flex-wrap:wrap">${mails.map(m=>`<button class="btn licht klein" onclick="bhWwAccount(${i},'${esc(m)}')">🔑 ${esc(m)}</button>`).join("")}</div></details>`:""}
     <div class="rij" style="gap:8px;margin-top:12px"><span style="flex:1"></span>${!fout&&mails.length?`<button class="btn" onclick="bhToegang(${i},true)">🔑 E-mailadressen online zetten</button>`:""}<button class="btn licht" onclick="bhToegang(${i})">↻ Opnieuw controleren</button></div>
     <p class="status" style="font-size:12px;margin:8px 0 0">Daarna: de klant opent ${esc(k.appUrl||"de link")} en logt in met Google.</p>`)}
+/* Beheer: voor een klant zonder Google-account een account met e-mail + wachtwoord maken.
+   De klant krijgt een mail van Firebase en kiest daarmee zelf zijn wachtwoord. (In Firebase moet "E-mail/wachtwoord" aanstaan.) */
+async function bhWwAccount(i,mail){const k=beheerData().klanten[i];if(!k)return;const cfg=fbLees(k.firebase);if(!cfg.apiKey){alert("Vul eerst de firebaseConfig in.");return}
+  if(!confirm(`Een account met wachtwoord maken voor ${mail}?\n\n${mail} krijgt een mail om zelf een wachtwoord te kiezen. Daarna kan hij inloggen met e-mail en wachtwoord (zonder Google).`))return;
+  const app=firebase.initializeApp(cfg,"ww_"+Date.now());let nieuw=true;
+  try{try{await app.auth().createUserWithEmailAndPassword(mail,Math.random().toString(36).slice(2)+"Aa9!"+Date.now().toString(36))}
+      catch(e){if(e.code==="auth/email-already-in-use")nieuw=false;else throw e}
+    await app.auth().sendPasswordResetEmail(mail);
+    alert(`✓ ${nieuw?"Account gemaakt.":"Er was al een account."} Er is een mail gestuurd naar ${mail}.\n\nVertel de klant:\n1. Open de mail (kijk ook bij spam) en kies een wachtwoord.\n2. Open de app en log in met e-mail + wachtwoord.`)}
+  catch(e){alert(e.code==="auth/operation-not-allowed"?"Inloggen met e-mail staat nog niet aan.\n\nFirebase → Authentication → Sign-in method → Add new provider → Email/Password → aanzetten (alleen de eerste schakelaar) → Save.":wwFout(e))}
+  finally{try{await app.auth().signOut();await app.delete()}catch(e){}}}
 async function bhMwMax(){const b=window.__bhMw;if(!b)return;const n=Math.max(0,Math.round(+document.getElementById("bhMwMax").value||0));
   try{await b.col.doc("toegang").set({maxMw:n},{merge:true});const k=beheerData().klanten[b.i];k.maxMw=n;wijzig();melding("✓ Maximum: "+n+" medewerkers","#2d6a4f");bhMw(b.i)}
   catch(e){alert(e.code==="permission-denied"?"Geen toestemming. Plak eerst de nieuwe Regels Firebase bij deze klant.":e.message)}}
