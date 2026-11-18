@@ -253,7 +253,11 @@ tr.ruimterij td{font-size:11px;font-weight:700;text-align:center;background:#f3e
 .ovrijkeus{font:inherit;font-weight:700;background:#fff;border:1px solid #999;border-radius:6px;padding:2px 6px;cursor:pointer}.ovtabel .ovleeg{color:#aaa;font-weight:400}
 .ovtabel tr.ovtot td{background:#e3f3ea}
 .ovtabel td[data-k]{cursor:pointer}.ovtabel tr.hlr td,.ovtabel .hlc{background:#dbeafe!important}.ovtabel tr td.hlx{background:#a9cdfa!important}.ovtabel th.hlc{background:#dbeafe!important}
-.dual{position:relative;width:140px;height:22px;flex:none}.dual input[type=range]{width:100%!important;border:0!important;padding:0!important;box-shadow:none!important;outline:none!important;background:transparent!important;border-radius:0!important}.dual input{position:absolute;left:0;top:0;width:100%;height:22px;margin:0;background:none;pointer-events:none;-webkit-appearance:none;appearance:none}
+.dual{position:relative;width:140px;height:22px;flex:none}
+/* twee schuiven onder elkaar: boven = eerste week, onder = laatste week */
+.dual2{display:flex;flex-direction:column;justify-content:center;gap:3px;width:170px;flex:none}.dual2 .dualtrack{display:none}
+.dual2 input[type=range]{width:100%!important;height:12px;margin:0;accent-color:var(--groen);cursor:pointer}
+.dual2 input[type=range]:first-of-type{accent-color:#9fb8ab}.dual input[type=range]{width:100%!important;border:0!important;padding:0!important;box-shadow:none!important;outline:none!important;background:transparent!important;border-radius:0!important}.dual input{position:absolute;left:0;top:0;width:100%;height:22px;margin:0;background:none;pointer-events:none;-webkit-appearance:none;appearance:none}
 .dual input::-webkit-slider-runnable-track{background:none;height:22px}.dual input::-moz-range-track{background:none}
 .dual input::-webkit-slider-thumb{pointer-events:auto;-webkit-appearance:none;width:12px;height:18px;margin-top:2px;background:#fff;border:3px solid var(--groen);border-radius:3px;cursor:ew-resize}
 .dual input::-moz-range-thumb{pointer-events:auto;width:8px;height:14px;background:#fff;border:3px solid var(--groen);border-radius:3px;cursor:ew-resize}
@@ -1045,7 +1049,7 @@ tr:hover .ovmail{opacity:1}@media (hover:none),(max-width:700px){.ovmail{display
 
 <script>
 "use strict";
-const VERSIE="54.3";
+const VERSIE="54.4";
 const VERSIE_DATUM="03-11-2026";
 /* ---------- Basis ---------- */
 const PALET=["#2d6a4f","#1B5EBE","#E8007D","#c77d1a","#7a4fa0","#0f8b8d","#5b6b2f","#3d5a80","#a0522d","#7AB648"];
@@ -1464,7 +1468,7 @@ function toonMeekijkBesch(){const B=meekijk&&meekijk.besch,ob=document.getElemen
   if(!mkS||mkS.n!==C.length)mkS={n:C.length,start:0,eind:Math.min(M,12)};
   ob.innerHTML=`<span class="ovtitel">Beschikbaar</span>${teeltKeuze()}
     <div class="ovschuif" title="Sleep de linker- of rechterknop: van welke t/m welke week u ziet">
-      <div class="dual"><div class="dualtrack"><div class="dualfill" id="ovFill" style="left:${pc(mkS.start)}%;width:${M?pc(mkS.eind-mkS.start):100}%"></div></div>
+      <div class="dual2" title="Bovenste schuif: eerste week (van links). Onderste schuif: laatste week (van rechts)."><div class="dualtrack"><div class="dualfill" id="ovFill" style="left:${pc(mkS.start)}%;width:${M?pc(mkS.eind-mkS.start):100}%"></div></div>
         <input type="range" id="ovLo" min="0" max="${M}" value="${mkS.start}" oninput="ovSchuifLive()" onchange="ovSchuifLive()">
         <input type="range" id="ovHi" min="0" max="${M}" value="${mkS.eind}" oninput="ovSchuifLive()" onchange="ovSchuifLive()"></div>
       <span id="ovSchuifTxt" class="ovinfo"></span></div>
@@ -4582,7 +4586,7 @@ function toonOppotOv(){
   document.body.style.setProperty("--aflW",Math.max(1180,Math.min(window.innerWidth-40,2400,320+weken.length*72))+"px");
   const pc=v=>M?v/M*100:0;
   const schuif=`<div class="ovschuif" title="Sleep de linker- of rechterknop: van welke t/m welke week u ziet">
-      <div class="dual"><div class="dualtrack"><div class="dualfill" id="ovFill" style="left:${pc(ovStart)}%;width:${M?pc(ovEind-ovStart):100}%"></div></div>
+      <div class="dual2" title="Bovenste schuif: eerste week (van links). Onderste schuif: laatste week (van rechts)."><div class="dualtrack"><div class="dualfill" id="ovFill" style="left:${pc(ovStart)}%;width:${M?pc(ovEind-ovStart):100}%"></div></div>
         <input type="range" id="ovLo" min="0" max="${M}" value="${ovStart}" oninput="ovSchuifLive()" onchange="ovSchuifLive()">
         <input type="range" id="ovHi" min="0" max="${M}" value="${ovEind}" oninput="ovSchuifLive()" onchange="ovSchuifLive()"></div>
       <span id="ovSchuifTxt" class="ovinfo"></span></div>`;
@@ -4744,7 +4748,7 @@ function toonAflever(){syncSoorten();
     <select class="ovjaar" onchange="planJaar=+this.value;render()" title="Seizoen: wk ${S} t/m wk ${eindWk.w}">${[-2,-1,0,1,2].map(d=>jaar+d).map(j=>`<option value="${j}" ${j===jaar?"selected":""}>Seizoen ${j}/${String(j+1).slice(2)}</option>`).join("")}</select>
     ${teeltKeuze()}
     <div class="ovschuif" title="Sleep de linker- of rechterknop: van welke t/m welke week u ziet">
-      <div class="dual"><div class="dualtrack"><div class="dualfill" id="ovFill" style="left:${pc(aflS.start)}%;width:${M?pc(aflS.eind-aflS.start):100}%"></div></div>
+      <div class="dual2" title="Bovenste schuif: eerste week (van links). Onderste schuif: laatste week (van rechts)."><div class="dualtrack"><div class="dualfill" id="ovFill" style="left:${pc(aflS.start)}%;width:${M?pc(aflS.eind-aflS.start):100}%"></div></div>
         <input type="range" id="ovLo" min="0" max="${M}" value="${aflS.start}" oninput="ovSchuifLive()" onchange="ovSchuifLive()">
         <input type="range" id="ovHi" min="0" max="${M}" value="${aflS.eind}" oninput="ovSchuifLive()" onchange="ovSchuifLive()"></div>
       <span id="ovSchuifTxt" class="ovinfo"></span></div>
@@ -5694,8 +5698,8 @@ function opzetVergelijk(){const T=(data.teeltduren||[]).filter(t=>t.product);if(
   toonPop("📊 Opzet vergelijken",`<div class="rij" style="gap:10px;flex-wrap:wrap;align-items:center">
       <label class="status">Teelt <select onchange="vgl.tid=this.value;opzetVergelijk()">${T.map(t=>`<option value="${t.id}" ${t.id===vgl.tid?"selected":""}>${esc(teeltLabel(t))}</option>`).join("")}</select></label>
       <label class="status">Jaar ${jsel("b")}</label><span class="status">min</span><label class="status">jaar ${jsel("a")}</label>
-      ${wk.length>1?`<span class="status" style="margin-left:8px">Weken</span><div class="dual vgldual" title="Sleep de knoppen: breder of smaller. Sleep het groene midden: het hele stuk opschuiven">
-        <div class="dualtrack"><div class="dualfill" id="vglFill"></div></div><div id="vglGrip" class="vglgrip" title="Sleep om op te schuiven"></div>
+      ${wk.length>1?`<span class="status" style="margin-left:8px">Weken</span><div class="dual2" title="Bovenste schuif: eerste week (van links). Onderste schuif: laatste week (van rechts).">
+        <div class="dualtrack"><div class="dualfill" id="vglFill"></div></div>
         <input type="range" id="vglLo" min="0" max="${n}" value="${vgl.lo}" oninput="vglSchuif(this)"><input type="range" id="vglHi" min="0" max="${n}" value="${vgl.hi}" oninput="vglSchuif(this)"></div>
         <span id="vglTxt" class="status"></span>`:""}
       </div>
@@ -5842,7 +5846,7 @@ function toonRuimteGraf(){const jaar=planJaar,{kaart}=ruimteBerekening(),nu=deze
     <select class="ovjaar" onchange="planJaar=+this.value;render()">${[-2,-1,0,1,2].map(d=>jaar+d).map(j=>`<option value="${j}" ${j===jaar?"selected":""}>Jaar ${j}</option>`).join("")}</select>
     ${teeltKeuze()}
     <div class="ovschuif" title="Sleep de linker- of rechterknop: van welke t/m welke week u ziet">
-      <div class="dual"><div class="dualtrack"><div class="dualfill" id="rgFill" style="left:${pc(rgS.start)}%;width:${pc(rgS.eind-rgS.start)}%"></div></div>
+      <div class="dual2" title="Bovenste schuif: eerste week (van links). Onderste schuif: laatste week (van rechts)."><div class="dualtrack"><div class="dualfill" id="rgFill" style="left:${pc(rgS.start)}%;width:${pc(rgS.eind-rgS.start)}%"></div></div>
         <input type="range" id="rgLo" min="0" max="${M}" value="${rgS.start}" oninput="rgSchuif()">
         <input type="range" id="rgHi" min="0" max="${M}" value="${rgS.eind}" oninput="rgSchuif()"></div>
       <span id="rgTxt" class="ovinfo"></span></div>
