@@ -866,6 +866,10 @@ tr:hover .ovmail{opacity:1}@media (hover:none),(max-width:700px){.ovmail{display
 .fmmgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}.fmmkaart{display:flex;flex-direction:column;gap:3px;border:1px solid #e6e0d4;border-radius:10px;padding:6px;background:#fbf9f4}
 .fmmimg{aspect-ratio:1;border-radius:8px;overflow:hidden;background:#eee}.fmmimg img{width:100%;height:100%;object-fit:cover}
 @media (max-width:600px){.fmmgrid{grid-template-columns:repeat(2,1fr)}}
+.klkz{position:relative}.kllijst{position:absolute;left:0;right:0;top:100%;z-index:60;margin-top:4px;background:#fff;border:2px solid var(--groen);border-radius:10px;box-shadow:0 10px 28px rgba(0,0,0,.28);max-height:280px;overflow:auto}
+.klitem{padding:10px 14px;font-size:16px;font-weight:600;color:#1f2d26;cursor:pointer;border-bottom:1px solid #eee}.klitem small{font-weight:400;color:#777;margin-left:8px;font-size:13px}
+.klitem:hover,.klitem.akt{background:var(--groen);color:#fff}.klitem:hover small,.klitem.akt small{color:#e3f1e7}.klitem.klwis{font-weight:400;color:#b00020;font-size:14px}.klitem.klwis:hover{color:#fff;background:#b00020}
+.klleeg{padding:10px 14px;color:#777;font-size:14px}
 .galkop{margin:12px 0 6px;font-size:14px;color:#1f4d39}.galbalk{gap:6px;flex-wrap:wrap;align-items:center;margin:6px 0;padding:6px 0;position:sticky;top:-1px;background:#fff;z-index:2}
 .galfoto.amsel{outline:3px solid #2d6a4f;outline-offset:1px}
 .fzbesch{margin-top:10px;padding:10px;border:1px solid #cfe3d8;background:#f3faf6;border-radius:10px}
@@ -1049,7 +1053,7 @@ tr:hover .ovmail{opacity:1}@media (hover:none),(max-width:700px){.ovmail{display
 
 <script>
 "use strict";
-const VERSIE="54.5";
+const VERSIE="54.6";
 const VERSIE_DATUM="03-11-2026";
 /* ---------- Basis ---------- */
 const PALET=["#2d6a4f","#1B5EBE","#E8007D","#c77d1a","#7a4fa0","#0f8b8d","#5b6b2f","#3d5a80","#a0522d","#7AB648"];
@@ -4812,6 +4816,20 @@ function soortPop(ks){const[pr,so]=ks.split(" · "),k=pr+"|"+so,nu=+dezeWeek(),p
 
 /* ---------- ✉ Aanbieding mailen (computer): soort + weken + prijs + foto + klant → opgemaakte mail ---------- */
 let am=null;
+/* ---------- duidelijke klantenkeuze (i.p.v. de kleine lijst van de browser): typen filtert, klikken of Enter kiest ---------- */
+function klKeuze(val,fn){return`<div class="klkz"><input class="mwveld klkzin" style="margin:0;width:100%" value="${esc(val||"")}" placeholder="🔍 Kies of typ een klant (leeg = zelf invullen)" autocomplete="off" data-fn="${fn}"
+  onfocus="klkzOpen(this)" onclick="klkzOpen(this)" oninput="klkzOpen(this);if(window[this.dataset.fn+'Typ'])window[this.dataset.fn+'Typ'](this.value)" onkeydown="klkzToets(event,this)" onblur="setTimeout(()=>klkzDicht(this,true),180)"><div class="kllijst" hidden></div></div>`}
+function klkzOpen(inp){const L=inp.parentNode.querySelector(".kllijst"),q=inp.value.trim().toLowerCase(),K=data.klanten.filter(k=>k.naam);
+  const exact=K.some(k=>k.naam.toLowerCase()===q),T=(q&&!exact?K.filter(k=>[k.naam,k.contact,k.email,k.plaats].join(" ").toLowerCase().includes(q)):K).sort((a,b)=>a.naam.localeCompare(b.naam,"nl"));
+  L.innerHTML=(T.length?T.slice(0,80).map((k,i)=>`<div class="klitem${i===0&&q?" akt":""}" data-n="${esc(k.naam)}" onmousedown="event.preventDefault();klkzKies(this)">${esc(k.naam)}${k.contact||k.plaats?`<small>${esc([k.contact,k.plaats].filter(Boolean).join(" · "))}</small>`:""}</div>`).join(""):`<div class="klleeg">Geen klant gevonden · de naam wordt zo in de mail gezet</div>`)
+    +(inp.value?`<div class="klitem klwis" data-n="" onmousedown="event.preventDefault();klkzKies(this)">✕ Geen klant (zelf invullen in de mail)</div>`:"");L.hidden=false}
+function klkzKies(el){const w=el.closest(".klkz"),inp=w.querySelector("input");inp.value=el.dataset.n;w.querySelector(".kllijst").hidden=true;inp.blur();const f=window[inp.dataset.fn];if(f)f(el.dataset.n)}
+function klkzDicht(inp,zet){const L=inp.parentNode&&inp.parentNode.querySelector(".kllijst");if(L)L.hidden=true;if(zet&&inp.isConnected){const f=window[inp.dataset.fn];if(f&&inp.dataset.laatst!==inp.value){inp.dataset.laatst=inp.value;f(inp.value.trim())}}}
+function klkzToets(e,inp){const L=inp.parentNode.querySelector(".kllijst"),I=[...L.querySelectorAll(".klitem")];if(L.hidden&&e.key!=="Escape")klkzOpen(inp);let a=I.findIndex(x=>x.classList.contains("akt"));
+  if(e.key==="ArrowDown"||e.key==="ArrowUp"){e.preventDefault();a=e.key==="ArrowDown"?Math.min(I.length-1,a+1):Math.max(0,a-1);I.forEach((x,i)=>x.classList.toggle("akt",i===a));if(I[a])I[a].scrollIntoView({block:"nearest"})}
+  else if(e.key==="Enter"){e.preventDefault();if(I[a])klkzKies(I[a]);else klkzDicht(inp,true)}else if(e.key==="Escape"){L.hidden=true}}
+function amKlZet(v){if(!am||am.klant===v)return;am.klant=v;amTeken()}
+function fmKlZet(v){fmMandK=v}function fmKlZetTyp(v){fmMandK=v}
 const amWk=()=>{try{return +localStorage.getItem("potplanning-amwk")||6}catch(e){return 6}};
 function amFotos(){const L=[];for(const{tid,x}of fmAlle()){const r=fmRas(x),t=data.teeltduren.find(q=>q.id===tid)||{};
     L.push({k:"m",a:tid,b:x.s,n:fmN(x)||(r?r.naam:"foto"),rid:r?r.id:"",tid,v:x.v||"",z:[fmN(x),x.fd,x.se,x.k,x.b,r&&r.naam,r&&r.fdArt,teeltLabel(t)].join(" ")})}return L}
@@ -4837,7 +4855,7 @@ function amTeken(){const k=klantVan(am.klant);
   toonPop("✉ Aanbieding mailen",`
     <div class="rij" style="gap:8px;flex-wrap:wrap;align-items:center"><label class="status" title="Welk deel van wat echt beschikbaar is u laat zien. Afgerond naar beneden op 100-tallen. Zelfde instelling als de aanbodlijst.">Tonen <select onchange="blPct=+this.value;try{localStorage.setItem('potplanning-blpct',blPct)}catch(e){}amTeken()">${[100,90,80,70,60,50,40,30,20,10].map(x=>`<option value="${x}" ${x===blPct?"selected":""}>${x}%</option>`).join("")}</select></label>
       <label class="status">Komende <select onchange="am.wk=+this.value;try{localStorage.setItem('potplanning-amwk',am.wk)}catch(e){}amTeken()">${[2,4,6,8,10,13].map(n=>`<option ${n===am.wk?"selected":""}>${n}</option>`).join("")}</select> weken</label>
-      <label class="status" style="flex:1;min-width:200px">Klant <input class="mwveld" style="margin:0;width:100%" list="amKlL" value="${esc(am.klant)}" placeholder="leeg = zelf invullen in de mail" onchange="am.klant=this.value.trim();amTeken()"><datalist id="amKlL">${data.klanten.filter(k=>k.naam).map(k=>`<option value="${esc(k.naam)}">`).join("")}</datalist></label></div>
+      <label class="status" style="flex:1;min-width:200px">Klant ${klKeuze(am.klant,"amKlZet")}</label></div>
     ${am.items.map(kaart).join("")}
     ${am.items.length<5?`<div class="rij" style="gap:8px;margin-top:8px;align-items:center"><input class="mwveld" style="margin:0;flex:1" list="amRL" placeholder="➕ Nog een soort erbij (typ een paar letters)…" onchange="const o=[...document.querySelectorAll('#amRL option')].find(x=>x.value===this.value);if(o)aanbMailPop(o.dataset.id)"><datalist id="amRL">${R.map(([id,n])=>`<option data-id="${id}" value="${esc(n)}">`).join("")}</datalist></div>`:""}
     <textarea class="mwveld" rows="2" style="width:100%;margin-top:8px" placeholder="Extra tekst (mag leeg)" oninput="am.tekst=this.value">${esc(am.tekst)}</textarea>
@@ -5255,7 +5273,7 @@ function fmMailPop(){const L=fmMandItems();fmMand=L.map(o=>o.k);fmMandBew();if(!
       <b>${esc(fmN(o.x)||"foto")}</b>${o.x.fd?`<span class="status">FD: ${esc(o.x.fd)}</span>`:""}${o.x.b?`<span class="status">Belading: ${esc(o.x.b)}</span>`:""}
       <label class="status">Prijs € <input style="width:70px" value="${esc(fmMandP[o.k]||"")}" placeholder="0,00" oninput="fmMandP['${o.k}']=this.value"></label>
       <button class="btn licht klein" onclick="fmMandBij('${o.tid}','${o.s}',fmMailPop)">✕ Eruit</button></div>`).join("")}</div>
-    <label class="status" style="display:block;margin-top:10px">Klant <input class="mwveld" style="margin:0;width:100%" list="fmmKl" value="${esc(fmMandK)}" placeholder="leeg = zelf invullen in de mail" oninput="fmMandK=this.value"><datalist id="fmmKl">${data.klanten.filter(k=>k.naam).map(k=>`<option value="${esc(k.naam)}">`).join("")}</datalist></label>
+    <label class="status" style="display:block;margin-top:10px">Klant ${klKeuze(fmMandK,"fmKlZet")}</label>
     <textarea class="mwveld" rows="2" style="width:100%;margin-top:8px" placeholder="Extra tekst (mag leeg)" oninput="fmMandT=this.value">${esc(fmMandT)}</textarea>
     <div class="rij" style="margin-top:10px;gap:8px"><button class="btn licht" onclick="if(confirm('Alle foto\\'s uit de mail halen?')){fmMand=[];fmMandBew();sluitMobSoort()}">Leegmaken</button><span style="flex:1"></span>
       <button class="btn licht" onclick="fotoGalerij()">+ Meer foto's</button><button class="btn" onclick="fmMailMaak()">✉ Mail maken</button></div>`);
