@@ -871,6 +871,8 @@ tr:hover .ovmail{opacity:1}@media (hover:none),(max-width:700px){.ovmail{display
 .klitem:hover,.klitem.akt{background:var(--groen);color:#fff}.klitem:hover small,.klitem.akt small{color:#e3f1e7}.klitem.klwis{font-weight:400;color:#b00020;font-size:14px}.klitem.klwis:hover{color:#fff;background:#b00020}
 .dlbox{position:fixed;right:auto;margin:0;z-index:2147483000}
 .klleeg{padding:10px 14px;color:#777;font-size:14px}
+.fbgwrap canvas{max-width:100%;max-height:55vh;display:block;margin:0 auto;border-radius:10px}
+.fbgsw{width:28px;height:28px;border-radius:50%;border:2px solid #ccc;cursor:pointer;padding:0}.fbgsw.aan{border:3px solid var(--groen);box-shadow:0 0 0 2px #fff inset}
 .galkop{margin:12px 0 6px;font-size:14px;color:#1f4d39}.galbalk{gap:6px;flex-wrap:wrap;align-items:center;margin:6px 0;padding:6px 0;position:sticky;top:-1px;background:#fff;z-index:2}
 .galfoto.amsel{outline:3px solid #2d6a4f;outline-offset:1px}
 .fzbesch{margin-top:10px;padding:10px;border:1px solid #cfe3d8;background:#f3faf6;border-radius:10px}
@@ -1054,7 +1056,7 @@ tr:hover .ovmail{opacity:1}@media (hover:none),(max-width:700px){.ovmail{display
 
 <script>
 "use strict";
-const VERSIE="54.8";
+const VERSIE="54.9";
 const VERSIE_DATUM="03-11-2026";
 /* ---------- Basis ---------- */
 const PALET=["#2d6a4f","#1B5EBE","#E8007D","#c77d1a","#7a4fa0","#0f8b8d","#5b6b2f","#3d5a80","#a0522d","#7AB648"];
@@ -5322,6 +5324,50 @@ async function fmMailMaak(){const L=fmMandItems();if(!L.length)return;const k=kl
   try{await navigator.clipboard.write([new ClipboardItem({"text/html":new Blob([h],{type:"text/html"}),"text/plain":new Blob([t],{type:"text/plain"})})]);ok=true}catch(e){}
   mailGa(mailUrl(to,su,ok?"":t),w);
   melding(ok?`✉ ${mailNaam()} gaat open${to?" naar "+esc(to):""} · klik in de mail en druk op Ctrl + V`:`✉ ${mailNaam()} gaat open met de tekst`,"#2d6a4f")}
+/* ---------- 🎨 Achtergrond van een foto vervangen (bijv. licht antraciet). Werkt in de browser:
+   de lichte, grijze/witte achtergrond die aan de rand vastzit wordt gevonden en vervangen. Het origineel blijft bewaard. ---------- */
+let fbg=null;
+const FBG_KLEUR=[["#6b7075","Licht antraciet"],["#4b5055","Antraciet"],["#c8c1c3","Zacht grijs-roze"],["#e3e3e3","Lichtgrijs"],["#ffffff","Wit"]];
+async function fotoAchtergrond(tid,s){const u=await fmapLaad(tid,s);if(!u){alert("Foto laden lukt niet.");return}
+  let orig=u;try{const d=await fmapDoc(tid,s).get();if(d.exists&&d.data().orig)orig=d.data().orig}catch(e){}
+  const im=new Image();im.src=orig;await im.decode().catch(()=>{});
+  fbg={tid,s,im,heeftOrig:orig!==u,kleur:(()=>{try{return localStorage.getItem("potplanning-fbgkleur")||"#6b7075"}catch(e){return"#6b7075"}})(),gev:(()=>{try{return +localStorage.getItem("potplanning-fbggev")||45}catch(e){return 45}})(),binnen:false};
+  toonPop("🎨 Achtergrond vervangen",`<div class="fbgwrap"><canvas id="fbgC"></canvas><div class="status" id="fbgInfo" style="font-size:12px;margin-top:4px"></div></div>
+    <div class="rij" style="gap:6px;margin-top:8px;flex-wrap:wrap;align-items:center"><span class="status">Kleur</span>${FBG_KLEUR.map(([c,n])=>`<button class="fbgsw${c===fbg.kleur?" aan":""}" style="background:${c}" title="${n}" onclick="fbg.kleur='${c}';document.querySelectorAll('.fbgsw').forEach(b=>b.classList.toggle('aan',b===this));fbgReken()"></button>`).join("")}
+      <input type="color" value="${fbg.kleur}" title="Eigen kleur" oninput="fbg.kleur=this.value;document.querySelectorAll('.fbgsw').forEach(b=>b.classList.remove('aan'));fbgReken()"></div>
+    <div class="rij" style="gap:8px;margin-top:6px;align-items:center;flex-wrap:wrap"><label class="status">Gevoeligheid <input type="range" min="10" max="110" value="${fbg.gev}" oninput="fbg.gev=+this.value;clearTimeout(window.__fbgT);window.__fbgT=setTimeout(fbgReken,120)"></label>
+      <label class="status"><input type="checkbox" onchange="fbg.binnen=this.checked;fbgReken()"> ook tussen de bladeren</label>
+      <button class="btn licht klein" onpointerdown="fbgToon(true)" onpointerup="fbgToon(false)" onpointerleave="fbgToon(false)">👁 Houd vast: origineel</button></div>
+    <p class="status" style="font-size:12px;margin:6px 0 0">Te veel weg (bijv. witte bloemen)? Zet de gevoeligheid lager. Blijft er achtergrond staan? Zet hem hoger.</p>
+    <div class="rij" style="gap:8px;margin-top:10px;flex-wrap:wrap"><button class="btn licht" onclick="fotoMapToon('${tid}','${s}')">‹ Terug</button>${fbg.heeftOrig?`<button class="btn licht" onclick="fbgBewaar(true)">↶ Origineel terugzetten</button>`:""}<span style="flex:1"></span>
+      <button class="btn" onclick="fbgBewaar()">✓ Opslaan</button></div>`);
+  fbgReken()}
+function fbgReken(){if(!fbg)return;const c=document.getElementById("fbgC");if(!c)return;const im=fbg.im,W=im.naturalWidth,H=im.naturalHeight;if(!W)return;
+  c.width=W;c.height=H;const g=c.getContext("2d",{willReadFrequently:true});g.drawImage(im,0,0);const D=g.getImageData(0,0,W,H),P=D.data,N=W*H;
+  /* referentiekleur = mediaan van de randpixels */
+  const rand=[];for(let x=0;x<W;x+=2){rand.push(x,(H-1)*W+x)}for(let y=0;y<H;y+=2){rand.push(y*W,y*W+W-1)}
+  const med=k=>{const a=rand.map(i=>P[i*4+k]).sort((a,b)=>a-b);return a[a.length>>1]},R=med(0),G=med(1),B=med(2),Lr=Math.max(R,G,B);
+  const T=fbg.gev,T2=T*T*3,kan=new Uint8Array(N);
+  for(let i=0;i<N;i++){const r=P[i*4],gg=P[i*4+1],b=P[i*4+2],mx=Math.max(r,gg,b),mn=Math.min(r,gg,b),dr=r-R,dg=gg-G,db=b-B;
+    kan[i]=(dr*dr+dg*dg+db*db<T2)||((mx-mn)<T*0.45&&mx>Lr-T*1.6&&mx>90)?1:0}
+  let M;if(fbg.binnen)M=kan;else{M=new Uint8Array(N);const st=[];for(const i of rand)if(kan[i]&&!M[i]){M[i]=1;st.push(i)}
+    while(st.length){const i=st.pop(),x=i%W;const nb=[x>0?i-1:-1,x<W-1?i+1:-1,i-W,i+W];for(const j of nb)if(j>=0&&j<N&&kan[j]&&!M[j]){M[j]=1;st.push(j)}}}
+  /* rand 1 pixel groter (geen witte rand) en zacht maken */
+  const M2=new Uint8Array(N);for(let i=0;i<N;i++)if(M[i]){M2[i]=1;const x=i%W;if(x>0)M2[i-1]=1;if(x<W-1)M2[i+1]=1;if(i>=W)M2[i-W]=1;if(i+W<N)M2[i+W]=1}
+  const A=new Float32Array(N),rr=2;for(let y=0;y<H;y++)for(let x=0;x<W;x++){let s=0,n=0;for(let dy=-rr;dy<=rr;dy++){const yy=y+dy;if(yy<0||yy>=H)continue;for(let dx=-rr;dx<=rr;dx++){const xx=x+dx;if(xx<0||xx>=W)continue;s+=M2[yy*W+xx];n++}}A[y*W+x]=s/n}
+  const h=fbg.kleur.replace("#",""),cr=parseInt(h.slice(0,2),16),cg=parseInt(h.slice(2,4),16),cb=parseInt(h.slice(4,6),16);let weg=0;
+  for(let i=0;i<N;i++){const a=A[i];if(!a)continue;if(M[i])weg++;P[i*4]=P[i*4]*(1-a)+cr*a;P[i*4+1]=P[i*4+1]*(1-a)+cg*a;P[i*4+2]=P[i*4+2]*(1-a)+cb*a}
+  g.putImageData(D,0,0);fbg.res=c.toDataURL("image/jpeg",0.88);const inf=document.getElementById("fbgInfo");if(inf)inf.textContent=`Achtergrond: ${Math.round(weg/N*100)}% van de foto`;
+  try{localStorage.setItem("potplanning-fbgkleur",fbg.kleur);localStorage.setItem("potplanning-fbggev",fbg.gev)}catch(e){}}
+function fbgToon(orig){const c=document.getElementById("fbgC");if(!c||!fbg)return;const g=c.getContext("2d");const im=new Image();im.onload=()=>g.drawImage(im,0,0);im.src=orig?fbg.im.src:fbg.res}
+async function fbgBewaar(terug){if(!fbg)return;const{tid,s}=fbg,img=terug?fbg.im.src:fbg.res;if(!img)return;
+  try{const d=await fmapDoc(tid,s).get(),o=d.exists?d.data():{};let orig=o.orig||o.img,nieuw=img;
+    /* een document mag niet groter dan 1 MB: dan kleiner opslaan, of zonder origineel */
+    if(!terug&&nieuw.length+(orig||"").length>950000){const c=document.getElementById("fbgC");if(c)nieuw=c.toDataURL("image/jpeg",0.72)}
+    if(!terug&&nieuw.length+(orig||"").length>950000){orig=null;melding("Let op: de foto is groot; het origineel kon niet extra bewaard worden","#b45309")}
+    await fmapDoc(tid,s).set(Object.assign({},o,{img:terug?img:nieuw,t:new Date().toISOString(),door:wolkMail},terug?{orig:null}:{orig}));fotoCache["fmap|"+tid+"|"+s]=terug?img:nieuw;
+    melding(terug?"↶ Origineel teruggezet":"🎨 Nieuwe achtergrond opgeslagen · het origineel blijft bewaard","#2d6a4f");fbg=null;fotoMapToon(tid,s)}
+  catch(e){alert("Opslaan lukt niet: "+e.message)}}
 async function fotoMapToon(tid,s){const u=await fmapLaad(tid,s),t=(data.teeltduren||[]).find(x=>x.id===tid)||{},nr=fmapLijst(tid).findIndex(x=>x.s===s)+1;
   const xm=fmapLijst(tid).find(x=>x.s===s)||{},RT=data.rassen.filter(r=>r.teeltId===tid),B=fbBoom(tid),dis=kijker?"disabled":"",
     rij=(lbl,inh)=>`<div class="rij" style="gap:8px;margin-top:6px;align-items:center"><label class="status" style="width:92px">${lbl}</label>${inh}</div>`,
@@ -5340,6 +5386,7 @@ async function fotoMapToon(tid,s){const u=await fmapLaad(tid,s),t=(data.teeltdur
     <div class="rij" style="margin-top:10px;gap:8px;flex-wrap:wrap"><button class="btn licht" onclick="${galOpen?"fotoGalerij()":`fotoMapPop('${tid}')`}">‹ Terug</button><span style="flex:1"></span>
       ${mod4()?`<button class="btn licht" onclick="fotoMapKies('${tid}','${s}')">📤 Voor aanbod</button>`:""}
       <button class="btn licht" onclick="fmMandBij('${tid}','${s}',()=>fotoMapToon('${tid}','${s}'))" title="Deze foto in de mail zetten (3 naast elkaar)">${fmMand.includes(tid+"|"+s)?"✓ In mail":"✉ In mail"}</button>${fmMandKnop()}
+      ${!kijker&&u?`<button class="btn licht" onclick="fotoAchtergrond('${tid}','${s}')" title="Achtergrond vervangen door bijv. licht antraciet">🎨 Achtergrond</button>`:""}
       <button class="btn licht" onclick="fotoMapDown('${tid}','${s}',${nr})">⬇ Download</button>
       ${!kijker?`<button class="btn rood" onclick="fotoMapWeg('${tid}','${s}')">🗑 Weghalen</button>`:""}</div>`)}
 async function fmapNaamZet(tid,s,v){const x=fmapLijst(tid).find(x=>x.s===s);if(!x)return;v=String(v||"").trim();if(v)x.n=v;else delete x.n;opslaanLater();melding(v?"✓ Naam: "+esc(v):"Naam weggehaald","#2d6a4f")}
