@@ -872,6 +872,7 @@ tr:hover .ovmail{opacity:1}@media (hover:none),(max-width:700px){.ovmail{display
 .dlbox{position:fixed;right:auto;margin:0;z-index:2147483000}
 .klleeg{padding:10px 14px;color:#777;font-size:14px}
 .fbgwrap canvas{max-width:100%;max-height:55vh;display:block;margin:0 auto;border-radius:10px}
+.fbgmod.aan{background:var(--groen)!important;color:#fff!important}
 .fbgsw{width:28px;height:28px;border-radius:50%;border:2px solid #ccc;cursor:pointer;padding:0}.fbgsw.aan{border:3px solid var(--groen);box-shadow:0 0 0 2px #fff inset}
 .galkop{margin:12px 0 6px;font-size:14px;color:#1f4d39}.galbalk{gap:6px;flex-wrap:wrap;align-items:center;margin:6px 0;padding:6px 0;position:sticky;top:-1px;background:#fff;z-index:2}
 .galfoto.amsel{outline:3px solid #2d6a4f;outline-offset:1px}
@@ -1056,7 +1057,7 @@ tr:hover .ovmail{opacity:1}@media (hover:none),(max-width:700px){.ovmail{display
 
 <script>
 "use strict";
-const VERSIE="54.9";
+const VERSIE="55.0";
 const VERSIE_DATUM="03-11-2026";
 /* ---------- Basis ---------- */
 const PALET=["#2d6a4f","#1B5EBE","#E8007D","#c77d1a","#7a4fa0","#0f8b8d","#5b6b2f","#3d5a80","#a0522d","#7AB648"];
@@ -5331,34 +5332,59 @@ const FBG_KLEUR=[["#6b7075","Licht antraciet"],["#4b5055","Antraciet"],["#c8c1c3
 async function fotoAchtergrond(tid,s){const u=await fmapLaad(tid,s);if(!u){alert("Foto laden lukt niet.");return}
   let orig=u;try{const d=await fmapDoc(tid,s).get();if(d.exists&&d.data().orig)orig=d.data().orig}catch(e){}
   const im=new Image();im.src=orig;await im.decode().catch(()=>{});
-  fbg={tid,s,im,heeftOrig:orig!==u,kleur:(()=>{try{return localStorage.getItem("potplanning-fbgkleur")||"#6b7075"}catch(e){return"#6b7075"}})(),gev:(()=>{try{return +localStorage.getItem("potplanning-fbggev")||45}catch(e){return 45}})(),binnen:false};
-  toonPop("🎨 Achtergrond vervangen",`<div class="fbgwrap"><canvas id="fbgC"></canvas><div class="status" id="fbgInfo" style="font-size:12px;margin-top:4px"></div></div>
+  fbg={tid,s,im,heeftOrig:orig!==u,klik:[],modus:"h",kleur:(()=>{try{return localStorage.getItem("potplanning-fbgkleur")||"#6b7075"}catch(e){return"#6b7075"}})(),gev:(()=>{try{return +localStorage.getItem("potplanning-fbggev")||45}catch(e){return 45}})(),binnen:false};
+  toonPop("🎨 Achtergrond vervangen",`<div class="rij" style="gap:6px;margin-bottom:6px;flex-wrap:wrap;align-items:center"><span class="status">Klik op de foto:</span>
+      <button class="btn licht klein fbgmod aan" onclick="fbgModus('h',this)" title="Klik op een deel dat moet blijven, bijv. witte bloemen">✋ Houden</button><button class="btn licht klein fbgmod" onclick="fbgModus('w',this)" title="Klik op een stuk achtergrond dat nog weg moet">🧽 Weg</button>
+      <button class="btn licht klein" onclick="fbg.klik=[];fbgReken()">↺ Kliks wissen</button><button class="btn licht klein" onclick="(fbg.klik||[]).pop();fbgReken()">↶ Laatste klik</button></div>
+    <div class="fbgwrap"><canvas id="fbgC" style="cursor:crosshair" onclick="fbgKlik(event)"></canvas><div class="status" id="fbgInfo" style="font-size:12px;margin-top:4px"></div></div>
     <div class="rij" style="gap:6px;margin-top:8px;flex-wrap:wrap;align-items:center"><span class="status">Kleur</span>${FBG_KLEUR.map(([c,n])=>`<button class="fbgsw${c===fbg.kleur?" aan":""}" style="background:${c}" title="${n}" onclick="fbg.kleur='${c}';document.querySelectorAll('.fbgsw').forEach(b=>b.classList.toggle('aan',b===this));fbgReken()"></button>`).join("")}
       <input type="color" value="${fbg.kleur}" title="Eigen kleur" oninput="fbg.kleur=this.value;document.querySelectorAll('.fbgsw').forEach(b=>b.classList.remove('aan'));fbgReken()"></div>
     <div class="rij" style="gap:8px;margin-top:6px;align-items:center;flex-wrap:wrap"><label class="status">Gevoeligheid <input type="range" min="10" max="110" value="${fbg.gev}" oninput="fbg.gev=+this.value;clearTimeout(window.__fbgT);window.__fbgT=setTimeout(fbgReken,120)"></label>
       <label class="status"><input type="checkbox" onchange="fbg.binnen=this.checked;fbgReken()"> ook tussen de bladeren</label>
       <button class="btn licht klein" onpointerdown="fbgToon(true)" onpointerup="fbgToon(false)" onpointerleave="fbgToon(false)">👁 Houd vast: origineel</button></div>
-    <p class="status" style="font-size:12px;margin:6px 0 0">Te veel weg (bijv. witte bloemen)? Zet de gevoeligheid lager. Blijft er achtergrond staan? Zet hem hoger.</p>
+    <p class="status" style="font-size:12px;margin:6px 0 0">Witte bloemen of iets anders kwijt? Kies <b>✋ Houden</b> en klik erop. Blijft er vloer of muur staan? Kies <b>🧽 Weg</b> en klik erop. Of schuif de gevoeligheid.</p>
     <div class="rij" style="gap:8px;margin-top:10px;flex-wrap:wrap"><button class="btn licht" onclick="fotoMapToon('${tid}','${s}')">‹ Terug</button>${fbg.heeftOrig?`<button class="btn licht" onclick="fbgBewaar(true)">↶ Origineel terugzetten</button>`:""}<span style="flex:1"></span>
       <button class="btn" onclick="fbgBewaar()">✓ Opslaan</button></div>`);
   fbgReken()}
 function fbgReken(){if(!fbg)return;const c=document.getElementById("fbgC");if(!c)return;const im=fbg.im,W=im.naturalWidth,H=im.naturalHeight;if(!W)return;
   c.width=W;c.height=H;const g=c.getContext("2d",{willReadFrequently:true});g.drawImage(im,0,0);const D=g.getImageData(0,0,W,H),P=D.data,N=W*H;
-  /* referentiekleur = mediaan van de randpixels */
+  /* 1. vloer/muur-kleur = mediaan van de rand */
   const rand=[];for(let x=0;x<W;x+=2){rand.push(x,(H-1)*W+x)}for(let y=0;y<H;y+=2){rand.push(y*W,y*W+W-1)}
-  const med=k=>{const a=rand.map(i=>P[i*4+k]).sort((a,b)=>a-b);return a[a.length>>1]},R=med(0),G=med(1),B=med(2),Lr=Math.max(R,G,B);
-  const T=fbg.gev,T2=T*T*3,kan=new Uint8Array(N);
-  for(let i=0;i<N;i++){const r=P[i*4],gg=P[i*4+1],b=P[i*4+2],mx=Math.max(r,gg,b),mn=Math.min(r,gg,b),dr=r-R,dg=gg-G,db=b-B;
-    kan[i]=(dr*dr+dg*dg+db*db<T2)||((mx-mn)<T*0.45&&mx>Lr-T*1.6&&mx>90)?1:0}
-  let M;if(fbg.binnen)M=kan;else{M=new Uint8Array(N);const st=[];for(const i of rand)if(kan[i]&&!M[i]){M[i]=1;st.push(i)}
-    while(st.length){const i=st.pop(),x=i%W;const nb=[x>0?i-1:-1,x<W-1?i+1:-1,i-W,i+W];for(const j of nb)if(j>=0&&j<N&&kan[j]&&!M[j]){M[j]=1;st.push(j)}}}
-  /* rand 1 pixel groter (geen witte rand) en zacht maken */
+  const med=a=>{a.sort((x,y)=>x-y);return a[a.length>>1]},R=med(rand.map(i=>P[i*4])),G=med(rand.map(i=>P[i*4+1])),B=med(rand.map(i=>P[i*4+2])),Lr=Math.max(R,G,B);
+  /* 2. wat is plant? (blad = groen, bloem/pot = kleur, tray = heel donker, witte bloem = lichter dan de vloer) */
+  const k=fbg.gev/50,sat0=0.20*k,FG=new Uint8Array(N),WIT=new Uint8Array(N);
+  for(let i=0;i<N;i++){const r=P[i*4],gg=P[i*4+1],b=P[i*4+2],mx=Math.max(r,gg,b),mn=Math.min(r,gg,b),sat=mx?(mx-mn)/mx:0;
+    const dr=r-R,dg=gg-G,db=b-B,dicht=dr*dr+dg*dg+db*db<900*k*k;
+    const wit=mx>Lr+30*k&&mn>Lr+10*k;if(wit)WIT[i]=1;
+    FG[i]=(!dicht&&sat>sat0)||(gg>r+6*k&&gg>=b&&sat>0.08*k)||mx<50/k||wit?1:0}
+  /* wit dat aan de rand vastzit is lichte vloer/muur, geen witte bloem */
+  {const st=[];for(const i of rand)if(WIT[i]&&FG[i]){FG[i]=0;st.push(i)}while(st.length){const i=st.pop(),x=i%W;for(const j of [x>0?i-1:-1,x<W-1?i+1:-1,i-W,i+W])if(j>=0&&j<N&&WIT[j]&&FG[j]){const r=P[j*4],gg=P[j*4+1],b=P[j*4+2],mx=Math.max(r,gg,b),mn=Math.min(r,gg,b);if(mx-mn<40){FG[j]=0;st.push(j)}}}}
+  /* 3. handmatig: ✋ houden / 🧽 weg (toverstaf: gelijke kleur rond de klik) */
+  const wand=(x0,y0,tol,straal,f)=>{const i0=y0*W+x0,r0=P[i0*4],g0=P[i0*4+1],b0=P[i0*4+2],gezien=new Uint8Array(N),st=[i0];gezien[i0]=1;
+    while(st.length){const i=st.pop(),x=i%W,y=(i/W)|0;f(i);for(const j of [x>0?i-1:-1,x<W-1?i+1:-1,i-W,i+W]){if(j<0||j>=N||gezien[j])continue;const xj=j%W,yj=(j/W)|0;
+      if((xj-x0)**2+(yj-y0)**2>straal*straal)continue;const dr=P[j*4]-r0,dg=P[j*4+1]-g0,db=P[j*4+2]-b0;if(dr*dr+dg*dg+db*db<tol*tol){gezien[j]=1;st.push(j)}}}};
+  const S=Math.max(W,H),HOUD=new Uint8Array(N),WEG=new Uint8Array(N);
+  for(const m of fbg.klik||[]){const x=Math.round(m.x*W),y=Math.round(m.y*H);if(x<0||y<0||x>=W||y>=H)continue;
+    if(m.t==="h")wand(x,y,45,S*0.12,i=>{HOUD[i]=1;FG[i]=1});else wand(x,y,38,S*0.35,i=>{WEG[i]=1;FG[i]=0})}
+  /* 4. achtergrond = niet-plant die aan de rand vastzit (gaten in de plant blijven plant) */
+  let M=new Uint8Array(N);const st=[];const zaai=i=>{if(!FG[i]&&!M[i]){M[i]=1;st.push(i)}};for(const i of rand)zaai(i);for(let i=0;i<N;i++)if(WEG[i])zaai(i);
+  if(fbg.binnen)for(let i=0;i<N;i++)if(!FG[i]&&!HOUD[i])M[i]=1;
+  while(st.length){const i=st.pop(),x=i%W;for(const j of [x>0?i-1:-1,x<W-1?i+1:-1,i-W,i+W])if(j>=0&&j<N&&!FG[j]&&!M[j]){M[j]=1;st.push(j)}}
+  /* 5. losse kleine vlekjes (zand, steentjes) ook weg; kleine gaatjes in de achtergrond dicht */
+  const lab=new Int32Array(N).fill(-1),grootte=[];for(let i=0;i<N;i++){if(M[i]||lab[i]>=0)continue;const id=grootte.length;let n=0;const q=[i];lab[i]=id;
+    while(q.length){const a=q.pop(),x=a%W;n++;for(const j of [x>0?a-1:-1,x<W-1?a+1:-1,a-W,a+W])if(j>=0&&j<N&&!M[j]&&lab[j]<0){lab[j]=id;q.push(j)}}grootte.push(n)}
+  const min=N*0.004;for(let i=0;i<N;i++)if(!M[i]&&grootte[lab[i]]<min&&!HOUD[i])M[i]=1;
+  /* 6. zachte rand */
   const M2=new Uint8Array(N);for(let i=0;i<N;i++)if(M[i]){M2[i]=1;const x=i%W;if(x>0)M2[i-1]=1;if(x<W-1)M2[i+1]=1;if(i>=W)M2[i-W]=1;if(i+W<N)M2[i+W]=1}
-  const A=new Float32Array(N),rr=2;for(let y=0;y<H;y++)for(let x=0;x<W;x++){let s=0,n=0;for(let dy=-rr;dy<=rr;dy++){const yy=y+dy;if(yy<0||yy>=H)continue;for(let dx=-rr;dx<=rr;dx++){const xx=x+dx;if(xx<0||xx>=W)continue;s+=M2[yy*W+xx];n++}}A[y*W+x]=s/n}
+  for(let i=0;i<N;i++)if(HOUD[i])M2[i]=0;
+  const A=new Float32Array(N),rr=2;for(let y=0;y<H;y++)for(let x=0;x<W;x++){let sm=0,n=0;for(let dy=-rr;dy<=rr;dy++){const yy=y+dy;if(yy<0||yy>=H)continue;for(let dx=-rr;dx<=rr;dx++){const xx=x+dx;if(xx<0||xx>=W)continue;sm+=M2[yy*W+xx];n++}}A[y*W+x]=sm/n}
   const h=fbg.kleur.replace("#",""),cr=parseInt(h.slice(0,2),16),cg=parseInt(h.slice(2,4),16),cb=parseInt(h.slice(4,6),16);let weg=0;
   for(let i=0;i<N;i++){const a=A[i];if(!a)continue;if(M[i])weg++;P[i*4]=P[i*4]*(1-a)+cr*a;P[i*4+1]=P[i*4+1]*(1-a)+cg*a;P[i*4+2]=P[i*4+2]*(1-a)+cb*a}
-  g.putImageData(D,0,0);fbg.res=c.toDataURL("image/jpeg",0.88);const inf=document.getElementById("fbgInfo");if(inf)inf.textContent=`Achtergrond: ${Math.round(weg/N*100)}% van de foto`;
+  g.putImageData(D,0,0);fbg.res=c.toDataURL("image/jpeg",0.88);const inf=document.getElementById("fbgInfo");if(inf)inf.textContent=`Achtergrond: ${Math.round(weg/N*100)}% van de foto`+((fbg.klik||[]).length?` · ${fbg.klik.length} klik(s)`:"");
   try{localStorage.setItem("potplanning-fbgkleur",fbg.kleur);localStorage.setItem("potplanning-fbggev",fbg.gev)}catch(e){}}
+/* klik op de foto: ✋ houden of 🧽 weg (afhankelijk van de gekozen knop) */
+function fbgKlik(e){if(!fbg)return;const c=e.currentTarget,r=c.getBoundingClientRect();(fbg.klik=fbg.klik||[]).push({t:fbg.modus||"h",x:(e.clientX-r.left)/r.width,y:(e.clientY-r.top)/r.height});fbgReken()}
+function fbgModus(m,b){fbg.modus=m;document.querySelectorAll(".fbgmod").forEach(x=>x.classList.toggle("aan",x===b))}
 function fbgToon(orig){const c=document.getElementById("fbgC");if(!c||!fbg)return;const g=c.getContext("2d");const im=new Image();im.onload=()=>g.drawImage(im,0,0);im.src=orig?fbg.im.src:fbg.res}
 async function fbgBewaar(terug){if(!fbg)return;const{tid,s}=fbg,img=terug?fbg.im.src:fbg.res;if(!img)return;
   try{const d=await fmapDoc(tid,s).get(),o=d.exists?d.data():{};let orig=o.orig||o.img,nieuw=img;
