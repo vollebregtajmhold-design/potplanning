@@ -873,6 +873,7 @@ tr:hover .ovmail{opacity:1}@media (hover:none),(max-width:700px){.ovmail{display
 .klleeg{padding:10px 14px;color:#777;font-size:14px}
 .fbgwrap canvas{max-width:100%;max-height:55vh;display:block;margin:0 auto;border-radius:10px}
 .fbgmod.aan{background:var(--groen)!important;color:#fff!important}
+.faistap{padding-left:20px;margin:0 0 10px;line-height:1.5}.faistap li{margin-bottom:6px}
 .fbgsw{width:28px;height:28px;border-radius:50%;border:2px solid #ccc;cursor:pointer;padding:0}.fbgsw.aan{border:3px solid var(--groen);box-shadow:0 0 0 2px #fff inset}
 .galkop{margin:12px 0 6px;font-size:14px;color:#1f4d39}.galbalk{gap:6px;flex-wrap:wrap;align-items:center;margin:6px 0;padding:6px 0;position:sticky;top:-1px;background:#fff;z-index:2}
 .galfoto.amsel{outline:3px solid #2d6a4f;outline-offset:1px}
@@ -1057,7 +1058,7 @@ tr:hover .ovmail{opacity:1}@media (hover:none),(max-width:700px){.ovmail{display
 
 <script>
 "use strict";
-const VERSIE="55.0";
+const VERSIE="55.1";
 const VERSIE_DATUM="03-11-2026";
 /* ---------- Basis ---------- */
 const PALET=["#2d6a4f","#1B5EBE","#E8007D","#c77d1a","#7a4fa0","#0f8b8d","#5b6b2f","#3d5a80","#a0522d","#7AB648"];
@@ -5329,7 +5330,45 @@ async function fmMailMaak(){const L=fmMandItems();if(!L.length)return;const k=kl
    de lichte, grijze/witte achtergrond die aan de rand vastzit wordt gevonden en vervangen. Het origineel blijft bewaard. ---------- */
 let fbg=null;
 const FBG_KLEUR=[["#6b7075","Licht antraciet"],["#4b5055","Antraciet"],["#c8c1c3","Zacht grijs-roze"],["#e3e3e3","Lichtgrijs"],["#ffffff","Wit"]];
-async function fotoAchtergrond(tid,s){const u=await fmapLaad(tid,s);if(!u){alert("Foto laden lukt niet.");return}
+/* ---------- ✨ Achtergrond met AI (Photoroom). De sleutel staat alleen op dit apparaat (niet in de app of online).
+   De AI knipt de plant 1 keer uit (≈ 2 cent); kleur en schaduw worden daarna gratis in de app gemaakt. ---------- */
+const prKey=()=>{try{return localStorage.getItem("potplanning-photoroom")||""}catch(e){return""}};
+let fai=null;
+async function fotoAchtergrond(tid,s){if(!prKey()){faiSetup(tid,s);return}
+  const u=await fmapLaad(tid,s);if(!u){alert("Foto laden lukt niet.");return}
+  let orig=u;try{const d=await fmapDoc(tid,s).get();if(d.exists&&d.data().orig)orig=d.data().orig}catch(e){}
+  fai={tid,s,orig,heeftOrig:orig!==u,kleur:(()=>{try{return localStorage.getItem("potplanning-fbgkleur")||"#6b7075"}catch(e){return"#6b7075"}})(),schaduw:true,cut:null};
+  toonPop("✨ Achtergrond met AI",`<div class="fbgwrap"><canvas id="faiC"></canvas><div class="status" id="faiInfo" style="margin-top:6px">⏳ De AI knipt de plant uit… (een paar seconden)</div></div>
+    <div class="rij" style="gap:6px;margin-top:8px;flex-wrap:wrap;align-items:center"><span class="status">Kleur</span>${FBG_KLEUR.map(([c,n])=>`<button class="fbgsw${c===fai.kleur?" aan":""}" style="background:${c}" title="${n}" onclick="fai.kleur='${c}';document.querySelectorAll('.fbgsw').forEach(b=>b.classList.toggle('aan',b===this));faiTeken()"></button>`).join("")}
+      <input type="color" value="${fai.kleur}" title="Eigen kleur" oninput="fai.kleur=this.value;document.querySelectorAll('.fbgsw').forEach(b=>b.classList.remove('aan'));faiTeken()">
+      <label class="status" style="margin-left:8px"><input type="checkbox" checked onchange="fai.schaduw=this.checked;faiTeken()"> schaduw</label></div>
+    <div class="rij" style="gap:8px;margin-top:10px;flex-wrap:wrap"><button class="btn licht" onclick="fai=null;fotoMapToon('${tid}','${s}')">‹ Terug</button>${fai.heeftOrig?`<button class="btn licht" onclick="faiOrigTerug()">↶ Origineel terugzetten</button>`:""}<span style="flex:1"></span>
+      <button class="btn" id="faiOk" disabled onclick="faiBewaar()">✓ Opslaan</button></div>
+    <p class="status" style="font-size:11px;margin:8px 0 0">AI via Photoroom · <a href="#" onclick="event.preventDefault();faiSetup('${tid}','${s}')">sleutel wijzigen</a> · <a href="#" onclick="event.preventDefault();fotoAchtergrondHand('${tid}','${s}')">zonder AI</a></p>`);
+  const c=document.getElementById("faiC"),g=c.getContext("2d"),im=new Image();im.onload=()=>{c.width=im.naturalWidth;c.height=im.naturalHeight;g.drawImage(im,0,0)};im.src=orig;
+  try{const bl=await (await fetch(orig)).blob(),fd=new FormData();fd.append("image_file",bl,"foto.jpg");
+    const r=await fetch("https://sdk.photoroom.com/v1/segment",{method:"POST",headers:{"x-api-key":prKey()},body:fd});
+    if(!r.ok){let t="";try{t=(await r.json()).detail||""}catch(e){}throw new Error(r.status===401||r.status===403?"De sleutel klopt niet (of is verlopen). Klik op 'sleutel wijzigen'.":r.status===402?"Je tegoed bij Photoroom is op. Voeg een betaalmethode toe in je Photoroom-account.":"Photoroom gaf fout "+r.status+(t?": "+t:""))}
+    const cut=new Image();cut.src=URL.createObjectURL(await r.blob());await cut.decode();if(!fai)return;fai.cut=cut;faiTeken();
+    const b=document.getElementById("faiOk");if(b)b.disabled=false;const i=document.getElementById("faiInfo");if(i)i.textContent="✓ Klaar. Kies een kleur en klik op Opslaan."}
+  catch(e){const i=document.getElementById("faiInfo");if(i)i.innerHTML=`<span style="color:#b00020">⚠ ${esc(e.message==="Failed to fetch"?"Geen verbinding met Photoroom. Controleer het internet.":e.message)}</span>`}}
+/* plant op de gekozen kleur zetten, met een zachte schaduw eronder */
+function faiTeken(){if(!fai||!fai.cut)return;const c=document.getElementById("faiC");if(!c)return;const im=fai.cut,W=im.naturalWidth,H=im.naturalHeight;c.width=W;c.height=H;const g=c.getContext("2d");
+  g.fillStyle=fai.kleur;g.fillRect(0,0,W,H);
+  if(fai.schaduw){const t=document.createElement("canvas");t.width=W;t.height=H;const tg=t.getContext("2d");tg.drawImage(im,0,0);tg.globalCompositeOperation="source-in";tg.fillStyle="#000";tg.fillRect(0,0,W,H);
+    g.save();g.globalAlpha=0.38;g.filter=`blur(${Math.round(Math.max(W,H)/60)}px)`;g.drawImage(t,Math.round(W*0.012),Math.round(H*0.02));g.restore()}
+  g.drawImage(im,0,0);fai.res=c.toDataURL("image/jpeg",0.88);try{localStorage.setItem("potplanning-fbgkleur",fai.kleur)}catch(e){}}
+async function faiBewaar(){if(!fai||!fai.res)return;fbg={tid:fai.tid,s:fai.s,im:{src:fai.orig},res:fai.res};fai=null;await fbgBewaar()}
+async function faiOrigTerug(){if(!fai)return;fbg={tid:fai.tid,s:fai.s,im:{src:fai.orig},res:null};fai=null;await fbgBewaar(true)}
+function faiSetup(tid,s){toonPop("✨ AI-achtergrond instellen (1 keer)",`<ol class="faistap">
+    <li>Ga naar <a href="https://www.photoroom.com/api" target="_blank" rel="noopener"><b>photoroom.com/api</b></a> en klik op <b>Get API key</b> (of <b>Sign up</b>). Maak een gratis account.</li>
+    <li>Ga in je Photoroom-account naar <b>API</b> → <b>API keys</b>. Kopieer de sleutel die begint met <b>sk_pr_</b> (niet de sandbox-sleutel).</li>
+    <li>Plak de sleutel hieronder en klik op <b>Bewaren</b>.</li></ol>
+    <input id="faiKey" class="mwveld" style="width:100%" placeholder="sk_pr_…" value="${esc(prKey())}" autocomplete="off">
+    <p class="status" style="font-size:12px;margin:6px 0">De eerste 10 foto's zijn gratis. Daarna kost het ongeveer 2 cent per foto (dan vraagt Photoroom om een betaalmethode). De sleutel blijft alleen op dit apparaat.</p>
+    <div class="rij" style="gap:8px;margin-top:8px"><button class="btn licht" onclick="fotoMapToon('${tid}','${s}')">‹ Terug</button><span style="flex:1"></span><button class="btn licht" onclick="fotoAchtergrondHand('${tid}','${s}')">Zonder AI</button>
+      <button class="btn" onclick="const v=document.getElementById('faiKey').value.trim();try{if(v)localStorage.setItem('potplanning-photoroom',v);else localStorage.removeItem('potplanning-photoroom')}catch(e){}if(v)fotoAchtergrond('${tid}','${s}');else fotoMapToon('${tid}','${s}')">Bewaren</button></div>`)}
+async function fotoAchtergrondHand(tid,s){const u=await fmapLaad(tid,s);if(!u){alert("Foto laden lukt niet.");return}
   let orig=u;try{const d=await fmapDoc(tid,s).get();if(d.exists&&d.data().orig)orig=d.data().orig}catch(e){}
   const im=new Image();im.src=orig;await im.decode().catch(()=>{});
   fbg={tid,s,im,heeftOrig:orig!==u,klik:[],modus:"h",kleur:(()=>{try{return localStorage.getItem("potplanning-fbgkleur")||"#6b7075"}catch(e){return"#6b7075"}})(),gev:(()=>{try{return +localStorage.getItem("potplanning-fbggev")||45}catch(e){return 45}})(),binnen:false};
